@@ -59,11 +59,13 @@ function testMobileAttendancePhotoPayloadFitsBackendLimit() {
 }
 
 function testAttendanceCameraIsNotMirrored() {
-    assertContains(faceRecognitionJs, 'ctx.setTransform(1, 0, 0, 1, 0, 0);', 'captured attendance photo should be drawn without mirror transform');
+    assertContains(faceRecognitionJs, 'shouldUnmirrorFrontCamera: true', 'front camera capture should be explicitly unmirrored');
+    assertContains(faceRecognitionJs, 'drawVideoFrameToCanvas(ctx, this.canvas.width, this.canvas.height)', 'captured attendance photo should use a dedicated non-mirror draw helper');
+    assertContains(faceRecognitionJs, 'ctx.scale(-1, 1);', 'captured attendance photo should flip front-camera mirror output back to normal');
     assertContains(faceRecognitionJs, 'capturePreviewObjectFit: \'cover\'', 'captured photo should preserve the camera crop without mirroring');
     assert(
-        /\.camera-preview\s+video\s*\{[^}]*transform:\s*none;/s.test(faceRecCss),
-        'camera preview should explicitly avoid mirror transforms'
+        /\.camera-preview\s+video\s*\{[^}]*transform:\s*scaleX\(-1\);/s.test(faceRecCss),
+        'front camera preview should match social-media style orientation'
     );
     assert(
         /\.captured-photo\s*\{[^}]*transform:\s*none;/s.test(faceRecCss),

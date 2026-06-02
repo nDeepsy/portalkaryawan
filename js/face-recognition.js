@@ -26,6 +26,7 @@ const faceRecognition = {
     minCaptureDimension: 220,
     maxPhotoDataLength: 42000,
     capturePreviewObjectFit: 'cover',
+    shouldUnmirrorFrontCamera: true,
 
     init(action) {
         this.cleanup();
@@ -440,8 +441,7 @@ const faceRecognition = {
         const scale = Math.min(1, this.maxCaptureDimension / Math.max(this.video.videoWidth, this.video.videoHeight));
         this.canvas.width = Math.max(1, Math.round(this.video.videoWidth * scale));
         this.canvas.height = Math.max(1, Math.round(this.video.videoHeight * scale));
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+        this.drawVideoFrameToCanvas(ctx, this.canvas.width, this.canvas.height);
 
         const scanningLine = document.getElementById('scanning-line');
         if (scanningLine) scanningLine.style.display = 'block';
@@ -502,6 +502,22 @@ const faceRecognition = {
         }
 
         return photo;
+    },
+
+    drawVideoFrameToCanvas(ctx, width, height) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+
+        if (this.shouldUnmirrorFrontCamera) {
+            ctx.save();
+            ctx.translate(width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(this.video, 0, 0, width, height);
+            ctx.restore();
+            return;
+        }
+
+        ctx.drawImage(this.video, 0, 0, width, height);
     },
 
     retakePhoto() {

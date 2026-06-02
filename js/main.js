@@ -605,7 +605,7 @@ const notificationCenter = {
     initialized: false,
     isLoading: false,
     refreshTimer: null,
-    refreshIntervalMs: 5000,
+    refreshIntervalMs: 2000,
     mutationVersion: 0,
     mutationInFlight: 0,
     unreadCount: 0,

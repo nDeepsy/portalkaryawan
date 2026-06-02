@@ -166,6 +166,15 @@ function testBackendDeletesNotificationsBySameMenu() {
     assert(apiSource.includes('async markNotificationsForMenu(page, role, userId)'), 'frontend API should expose markNotificationsForMenu');
 }
 
+function testNotificationPollingIsFastEnoughForCrossDeviceActivity() {
+    const mainSource = fs.readFileSync(path.join(__dirname, '..', 'js', 'main.js'), 'utf8');
+
+    assert(
+        mainSource.includes('refreshIntervalMs: 2000'),
+        'notification center should poll quickly so cross-device activity appears without manual refresh'
+    );
+}
+
 async function testMarkAllIgnoresStaleRefresh() {
     const loadRequest = createDeferred();
     const markAllRequest = createDeferred();
@@ -313,6 +322,7 @@ function testRouterClearsNotificationsWhenShowingPage() {
 
 Promise.resolve()
     .then(testBackendDeletesNotificationsBySameMenu)
+    .then(testNotificationPollingIsFastEnoughForCrossDeviceActivity)
     .then(testMarkAllIgnoresStaleRefresh)
     .then(testMarkSingleDecrementsTotalUnreadCount)
     .then(testMarkSingleClearsNotificationsInSameMenu)
