@@ -5,6 +5,8 @@ const path = require('path');
 const root = path.join(__dirname, '..');
 const projectRoot = path.join(root, '..');
 const absensiJs = fs.readFileSync(path.join(root, 'js', 'absensi.js'), 'utf8');
+const faceRecognitionJs = fs.readFileSync(path.join(root, 'js', 'face-recognition.js'), 'utf8');
+const faceRecCss = fs.readFileSync(path.join(root, 'css', 'face-rec.css'), 'utf8');
 const adminReportsJs = fs.readFileSync(path.join(root, 'js', 'admin-reports.js'), 'utf8');
 const attendanceGs = fs.readFileSync(path.join(projectRoot, 'apps-script-absensi', 'Attendance.js'), 'utf8');
 
@@ -49,7 +51,29 @@ function testBackendEmptyTodayAttendanceTemplateIncludesEvidenceFields() {
     });
 }
 
+function testMobileAttendancePhotoPayloadFitsBackendLimit() {
+    assertContains(faceRecognitionJs, 'maxPhotoDataLength: 42000', 'face verification should keep mobile photos safely under backend limit');
+    assertContains(faceRecognitionJs, 'compressCanvasPhoto()', 'face verification should compress captured photos before saving attendance');
+    assertContains(faceRecognitionJs, 'while (photo.length > this.maxPhotoDataLength', 'face verification should lower quality/dimensions until payload is safe');
+    assertContains(attendanceGs, 'const MAX_ATTENDANCE_PHOTO_LENGTH = 49000;', 'backend photo limit should remain higher than frontend target');
+}
+
+function testAttendanceCameraIsNotMirrored() {
+    assertContains(faceRecognitionJs, 'ctx.setTransform(1, 0, 0, 1, 0, 0);', 'captured attendance photo should be drawn without mirror transform');
+    assertContains(faceRecognitionJs, 'capturePreviewObjectFit: \'cover\'', 'captured photo should preserve the camera crop without mirroring');
+    assert(
+        /\.camera-preview\s+video\s*\{[^}]*transform:\s*none;/s.test(faceRecCss),
+        'camera preview should explicitly avoid mirror transforms'
+    );
+    assert(
+        /\.captured-photo\s*\{[^}]*transform:\s*none;/s.test(faceRecCss),
+        'captured attendance photo preview should explicitly avoid mirror transforms'
+    );
+}
+
 testFrontendAdminAndBackendUseSameAttendanceEvidenceFields();
 testBackendPreservesAllAttendanceEvidenceFieldsDuringMerge();
 testBackendEmptyTodayAttendanceTemplateIncludesEvidenceFields();
+testMobileAttendancePhotoPayloadFitsBackendLimit();
+testAttendanceCameraIsNotMirrored();
 console.log('attendance backend/frontend sync tests passed');

@@ -8,7 +8,7 @@ const mainCss = fs.readFileSync(path.join(root, 'css', 'main.css'), 'utf8');
 const mobileCss = fs.readFileSync(path.join(root, 'css', 'mobile.css'), 'utf8');
 
 assert(
-    dashboardJs.includes('this.loadCachedData();\n        this.renderDashboard();'),
+    /this\.loadCachedData\(\);\s*this\.renderDashboard\(\);/.test(dashboardJs),
     'dashboard should render cached/session data immediately before remote refresh'
 );
 assert(
@@ -24,7 +24,7 @@ assert(
     'night shift users should not be stuck with the default morning greeting'
 );
 assert(
-    !dashboardJs.includes('await this.loadingPromise;\n        this.initialized = true;'),
+    !/await\s+this\.loadingPromise;\s*this\.initialized\s*=\s*true;/.test(dashboardJs),
     'dashboard init should not block first render while waiting for remote data'
 );
 assert(

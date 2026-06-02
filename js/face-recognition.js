@@ -23,6 +23,9 @@ const faceRecognition = {
     maxAcceptableAccuracyMeters: 150,
     locationMaxWaitMs: 15000,
     maxCaptureDimension: 440,
+    minCaptureDimension: 220,
+    maxPhotoDataLength: 42000,
+    capturePreviewObjectFit: 'cover',
 
     init(action) {
         this.cleanup();
@@ -437,6 +440,7 @@ const faceRecognition = {
         const scale = Math.min(1, this.maxCaptureDimension / Math.max(this.video.videoWidth, this.video.videoHeight));
         this.canvas.width = Math.max(1, Math.round(this.video.videoWidth * scale));
         this.canvas.height = Math.max(1, Math.round(this.video.videoHeight * scale));
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
 
         const scanningLine = document.getElementById('scanning-line');
@@ -445,7 +449,7 @@ const faceRecognition = {
         setTimeout(() => {
             if (scanningLine) scanningLine.style.display = 'none';
 
-            this.capturedPhotoData = this.canvas.toDataURL('image/jpeg', 0.76);
+            this.capturedPhotoData = this.compressCanvasPhoto();
             this.photoCaptured = true;
             this.isCapturing = false;
             this.stopCamera();
@@ -453,7 +457,7 @@ const faceRecognition = {
             const preview = document.getElementById('camera-preview');
             if (preview) {
                 preview.innerHTML = `
-                    <img src="${this.capturedPhotoData}" class="captured-photo" alt="Foto verifikasi">
+                    <img src="${this.capturedPhotoData}" class="captured-photo" alt="Foto verifikasi" style="object-fit: ${this.capturePreviewObjectFit};">
                     <div class="verification-status show" id="verification-status">
                         <div class="status-icon"><i class="fas fa-check-circle"></i></div>
                         <p>Wajah Terverifikasi</p>
@@ -468,6 +472,36 @@ const faceRecognition = {
 
             this.checkCanSubmit();
         }, 700);
+    },
+
+    compressCanvasPhoto() {
+        let quality = 0.72;
+        let photo = this.canvas.toDataURL('image/jpeg', quality);
+
+        while (photo.length > this.maxPhotoDataLength && quality > 0.38) {
+            quality -= 0.08;
+            photo = this.canvas.toDataURL('image/jpeg', quality);
+        }
+
+        while (photo.length > this.maxPhotoDataLength && Math.max(this.canvas.width, this.canvas.height) > this.minCaptureDimension) {
+            const source = document.createElement('canvas');
+            source.width = this.canvas.width;
+            source.height = this.canvas.height;
+            source.getContext('2d').drawImage(this.canvas, 0, 0);
+
+            const nextWidth = Math.max(1, Math.round(this.canvas.width * 0.84));
+            const nextHeight = Math.max(1, Math.round(this.canvas.height * 0.84));
+            this.canvas.width = nextWidth;
+            this.canvas.height = nextHeight;
+
+            const ctx = this.canvas.getContext('2d');
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.drawImage(source, 0, 0, nextWidth, nextHeight);
+            quality = Math.max(0.36, quality);
+            photo = this.canvas.toDataURL('image/jpeg', quality);
+        }
+
+        return photo;
     },
 
     retakePhoto() {

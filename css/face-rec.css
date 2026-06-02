@@ -58,6 +58,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transform: none;
 }
 
 .camera-preview canvas {
@@ -532,6 +533,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transform: none;
     border-radius: var(--border-radius);
 }
 

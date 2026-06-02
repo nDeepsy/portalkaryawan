@@ -301,7 +301,9 @@ assert.strictEqual(absensi.attendanceData.attendanceLogs.length, 2, 'incomplete 
 function testFaceCaptureUsesSmallCompressedProofPhoto() {
     assert(faceRecognitionJs.includes('maxCaptureDimension'), 'face recognition should define a proof photo size limit');
     assert(faceRecognitionJs.includes('maxCaptureDimension: 440'), 'face recognition should keep proof photos clearer');
-    assert(faceRecognitionJs.includes("toDataURL('image/jpeg', 0.76)"), 'face recognition should use lighter proof photo compression');
+    assert(faceRecognitionJs.includes('maxPhotoDataLength: 42000'), 'face recognition should keep proof photos under backend limits');
+    assert(faceRecognitionJs.includes('compressCanvasPhoto()'), 'face recognition should use adaptive proof photo compression');
+    assert(faceRecognitionJs.includes('while (photo.length > this.maxPhotoDataLength'), 'face recognition should keep shrinking photos until payload is safe');
 }
 
 function testLocationRefreshButtonExistsAndIsBound() {
