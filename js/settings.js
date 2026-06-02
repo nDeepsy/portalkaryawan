@@ -8,6 +8,7 @@ const settings = {
     draftShifts: [],
     originalShifts: [],
     pendingDeletedShiftIds: [],
+    dirtySections: new Set(),
     localOverrideKey: 'settings_local_override',
 
     async init() {
@@ -20,9 +21,9 @@ const settings = {
 
         this.applyCachedSettings();
         this.renderCachedShifts();
-        await this.loadSettings();
         this.initForms();
-        this.renderShifts();
+        await this.loadSettings();
+        if (this.canApplySection('shifts')) this.renderShifts();
     },
 
     async loadSettings() {
@@ -33,13 +34,16 @@ const settings = {
             ]);
 
             // Fix shift times - Google Sheets converts "08:00" to Date objects
-            this.shifts = (shiftsResult.data || []).map(shift => ({
+            const loadedShifts = (shiftsResult.data || []).map(shift => ({
                 ...shift,
                 startTime: this.normalizeTime(shift.startTime),
                 endTime: this.normalizeTime(shift.endTime)
             }));
-            storage.set('shifts', this.shifts);
-            this.resetShiftDrafts();
+            storage.set('shifts', loadedShifts);
+            if (this.canApplySection('shifts')) {
+                this.shifts = loadedShifts;
+                this.resetShiftDrafts();
+            }
 
             const savedLocalSettings = this.getLocalSettingsOverride();
             const allSettings = { ...(settingsResult.data || {}), ...storage.get('app_settings', {}), ...savedLocalSettings };
@@ -89,13 +93,25 @@ const settings = {
         this.pendingDeletedShiftIds = [];
     },
 
+    markSectionDirty(section) {
+        this.dirtySections.add(section);
+    },
+
+    clearSectionDirty(section) {
+        this.dirtySections.delete(section);
+    },
+
+    canApplySection(section) {
+        return !this.dirtySections.has(section);
+    },
+
     cloneShifts(shifts = []) {
         return (Array.isArray(shifts) ? shifts : []).map(shift => ({ ...shift }));
     },
 
     applySettingsToForm(allSettings = {}) {
         const workdays = this.parseWorkdays(allSettings.working_days);
-        if (workdays) {
+        if (workdays && this.canApplySection('workdays')) {
             const days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
             days.forEach(day => {
                 const el = document.getElementById(`day-${day}`);
@@ -103,12 +119,12 @@ const settings = {
             });
         }
 
-        if (allSettings.late_tolerance !== undefined) {
+        if (allSettings.late_tolerance !== undefined && this.canApplySection('system')) {
             const el = document.getElementById('setting-late-tolerance');
             if (el) el.value = allSettings.late_tolerance;
         }
 
-        if (allSettings.annual_leave_days !== undefined) {
+        if (allSettings.annual_leave_days !== undefined && this.canApplySection('system')) {
             const el = document.getElementById('setting-annual-leave-days');
             if (el) el.value = allSettings.annual_leave_days;
         }
@@ -187,12 +203,25 @@ const settings = {
         }
 
         // Save working days
+        const workdayInputs = document.querySelectorAll('#working-days-container input[type="checkbox"]');
+        workdayInputs.forEach(input => {
+            input.onchange = () => this.markSectionDirty('workdays');
+        });
+
         const saveWorkdaysBtn = document.getElementById('btn-save-workdays');
         if (saveWorkdaysBtn) {
             saveWorkdaysBtn.onclick = () => this.saveWorkdays();
         }
 
         // Save system settings
+        ['setting-late-tolerance', 'setting-annual-leave-days'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.oninput = () => this.markSectionDirty('system');
+                input.onchange = () => this.markSectionDirty('system');
+            }
+        });
+
         const saveSystemBtn = document.getElementById('btn-save-system');
         if (saveSystemBtn) {
             saveSystemBtn.onclick = () => this.saveSystemSettings();
@@ -208,6 +237,7 @@ const settings = {
         });
 
         this.setLocalSettingsOverride({ working_days: JSON.stringify(workdays) });
+        this.clearSectionDirty('workdays');
         if (window.api?.clearRequestCacheForMutation) api.clearRequestCacheForMutation('saveSetting');
         this.syncCurrentMonthScheduleWithWorkdays(workdays);
         this.refreshShiftConsumers();
@@ -303,6 +333,7 @@ const settings = {
         if (annualLeaveInput) annualLeaveInput.value = annualLeaveDays;
 
         this.setLocalSettingsOverride({ late_tolerance: tolerance, annual_leave_days: annualLeaveDays });
+        this.clearSectionDirty('system');
         if (window.api?.clearRequestCacheForMutation) api.clearRequestCacheForMutation('saveSetting');
         if (window.cuti && typeof cuti.applyAnnualLeaveSetting === 'function') {
             cuti.applyAnnualLeaveSetting(annualLeaveDays);
@@ -332,18 +363,21 @@ const settings = {
                 <div class="shift-input-group">
                     <label>Nama Shift</label>
                     <input type="text" value="${shift.name}" placeholder="Nama Shift" 
+                           oninput="settings.updateShift(${index}, 'name', this.value, false)"
                            onchange="settings.updateShift(${index}, 'name', this.value)">
                 </div>
                 <div class="shift-input-group">
                     <label>Jam Masuk</label>
                     <input type="text" inputmode="numeric" maxlength="5" pattern="[0-2][0-9]:[0-5][0-9]"
                            value="${this.normalizeTime(shift.startTime)}" placeholder="00:00"
+                           oninput="settings.updateShift(${index}, 'startTime', this.value, false)"
                            onchange="settings.updateShift(${index}, 'startTime', this.value)">
                 </div>
                 <div class="shift-input-group">
                     <label>Jam Pulang</label>
                     <input type="text" inputmode="numeric" maxlength="5" pattern="[0-2][0-9]:[0-5][0-9]"
                            value="${this.normalizeTime(shift.endTime)}" placeholder="12:00"
+                           oninput="settings.updateShift(${index}, 'endTime', this.value, false)"
                            onchange="settings.updateShift(${index}, 'endTime', this.value)">
                 </div>
                 <button type="button" class="btn-delete-shift" onclick="settings.deleteShift(${index})">
@@ -361,12 +395,18 @@ const settings = {
             endTime: '18:00'
         };
 
+        this.markSectionDirty('shifts');
         this.draftShifts.push(newShift);
         this.renderShifts();
     },
 
-    updateShift(index, field, value) {
+    updateShift(index, field, value, validate = true) {
         if (this.draftShifts[index]) {
+            this.markSectionDirty('shifts');
+            if (!validate) {
+                this.draftShifts[index][field] = value;
+                return;
+            }
             if (field === 'startTime' || field === 'endTime') {
                 value = this.normalizeTime(value);
             }
@@ -445,6 +485,7 @@ const settings = {
             this.shifts = savedShifts;
             storage.set('shifts', this.shifts);
             this.resetShiftDrafts();
+            this.clearSectionDirty('shifts');
             this.renderShifts();
             this.refreshShiftConsumers();
             toast.success('Pengaturan shift berhasil disimpan!');
@@ -548,6 +589,7 @@ const settings = {
             if (shift?.id) {
                 this.pendingDeletedShiftIds.push(shift.id);
             }
+            this.markSectionDirty('shifts');
             this.draftShifts.splice(index, 1);
             this.renderShifts();
             toast.info('Shift akan dihapus setelah pengaturan disimpan');

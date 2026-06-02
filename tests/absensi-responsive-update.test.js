@@ -521,6 +521,128 @@ async function testApprovedLeaveLocksEmployeeAttendanceButtons() {
     });
 }
 
+async function testConfiguredHolidayLocksEmployeeAttendanceButtons() {
+    const { absensi, elements } = createAbsensiHarness({
+        dateTime: {
+            getLocalDate: () => '2026-05-24'
+        },
+        api: {
+            batch: async () => ({
+                success: true,
+                data: {
+                    todayAttendance: {
+                        success: true,
+                        data: {}
+                    },
+                    leaves: { success: true, data: [] },
+                    izin: { success: true, data: [] },
+                    settings: {
+                        success: true,
+                        data: {
+                            working_days: JSON.stringify({
+                                senin: true,
+                                selasa: true,
+                                rabu: true,
+                                kamis: true,
+                                jumat: true,
+                                sabtu: false,
+                                minggu: false
+                            })
+                        }
+                    },
+                    shifts: { success: true, data: [] }
+                }
+            }),
+            getAllAttendance: async () => ({ success: true, data: [] })
+        }
+    });
+
+    elements.set('status-icon-i', { className: '' });
+    ['btn-clock-in', 'btn-break', 'btn-after-break', 'btn-break-2', 'btn-after-break-2', 'btn-overtime', 'btn-clock-out'].forEach(id => {
+        elements.get(id);
+    });
+
+    absensi.attendanceData = absensi.getDefaultAttendance('KRY001');
+    absensi.renderTimeline = () => {};
+    absensi.loadAttendanceHistory = async () => {};
+
+    await absensi.fetchTodayAttendance();
+
+    assert.strictEqual(absensi.currentState, 'libur', 'configured holiday should put attendance in holiday lock state');
+    assert.strictEqual(elements.get('status-text').textContent, 'Hari Libur', 'holiday status should explain the locked state');
+    assert.strictEqual(elements.get('status-subtext').textContent, 'Anda tidak memiliki jadwal kerja hari ini.', 'holiday status should explain why attendance is locked');
+    assert.strictEqual(elements.get('status-icon-i').className, 'fas fa-calendar-times', 'holiday lock should use a holiday calendar icon');
+    ['btn-clock-in', 'btn-break', 'btn-after-break', 'btn-break-2', 'btn-after-break-2', 'btn-overtime', 'btn-clock-out'].forEach(id => {
+        assert.strictEqual(elements.get(id).disabled, true, `${id} should be disabled on configured holiday`);
+    });
+}
+
+async function testShiftScheduleOverridesConfiguredHoliday() {
+    const store = {
+        shift_schedule: {
+            '2026-4': {
+                KRY001: {
+                    24: 'Pagi'
+                }
+            }
+        }
+    };
+    const { absensi, elements } = createAbsensiHarness({
+        store,
+        dateTime: {
+            getLocalDate: () => '2026-05-24'
+        },
+        api: {
+            batch: async () => ({
+                success: true,
+                data: {
+                    todayAttendance: {
+                        success: true,
+                        data: {}
+                    },
+                    leaves: { success: true, data: [] },
+                    izin: { success: true, data: [] },
+                    settings: {
+                        success: true,
+                        data: {
+                            working_days: JSON.stringify({
+                                senin: true,
+                                selasa: true,
+                                rabu: true,
+                                kamis: true,
+                                jumat: true,
+                                sabtu: false,
+                                minggu: false
+                            }),
+                            'shift_schedule_2026-4': JSON.stringify({
+                                KRY001: {
+                                    24: 'Pagi'
+                                }
+                            })
+                        }
+                    },
+                    shifts: { success: true, data: [] }
+                }
+            }),
+            getAllAttendance: async () => ({ success: true, data: [] })
+        }
+    });
+
+    ['btn-clock-in', 'btn-break', 'btn-after-break', 'btn-break-2', 'btn-after-break-2', 'btn-overtime', 'btn-clock-out'].forEach(id => {
+        elements.get(id);
+    });
+
+    absensi.attendanceData = absensi.getDefaultAttendance('KRY001');
+    absensi.renderTimeline = () => {};
+    absensi.loadAttendanceHistory = async () => {};
+
+    await absensi.fetchTodayAttendance();
+
+    assert.strictEqual(absensi.currentState, 'waiting', 'assigned shift should override a default holiday');
+    assert.strictEqual(absensi.attendanceData.shift, 'Pagi', 'attendance should use the shift assigned by admin schedule');
+    assert.strictEqual(elements.get('btn-clock-in').disabled, false, 'clock in should stay available when admin assigns a shift on a holiday');
+}
+
 function testAttendanceLeaveLockIconMatchesPermissionType() {
     const { absensi } = createAbsensiHarness();
 
@@ -546,6 +668,8 @@ function testAttendanceLeaveLockIconMatchesPermissionType() {
     testAttendanceDurationAlwaysDisplaysShortWorkDurations();
     testAttendanceButtonsUseActionColorEffects();
     await testApprovedLeaveLocksEmployeeAttendanceButtons();
+    await testConfiguredHolidayLocksEmployeeAttendanceButtons();
+    await testShiftScheduleOverridesConfiguredHoliday();
     testAttendanceLeaveLockIconMatchesPermissionType();
     console.log('absensi responsive update tests passed');
 })().catch(error => {

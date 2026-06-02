@@ -139,12 +139,12 @@ const absensi = {
         }));
     },
 
-    getScheduledShiftName(userId = auth.getCurrentUser()?.id || 'demo-user') {
+    getScheduledShiftName(userId = auth.getCurrentUser()?.id || 'demo-user', dateValue = dateTime.getLocalDate()) {
         let currentShift = auth.getCurrentUser()?.shift || 'Pagi';
         try {
             const stringUserId = String(userId);
             const schedules = storage.get('shift_schedule', {});
-            const todayObj = new Date();
+            const todayObj = this.parseLocalDate(dateValue) || new Date();
             const key = `${todayObj.getFullYear()}-${todayObj.getMonth()}`;
             const assignedShift = schedules?.[key]?.[stringUserId]?.[todayObj.getDate()];
             if (assignedShift) {
@@ -257,7 +257,7 @@ const absensi = {
             );
 
             const today = dateTime.getLocalDate();
-            const currentShift = this.getScheduledShiftName(userId);
+            const currentShift = this.getScheduledShiftName(userId, today);
 
             if (!todayAttendance.date) {
                 todayAttendance = this.getDefaultAttendance(userId);
@@ -983,6 +983,7 @@ const absensi = {
             switch (this.currentState) {
                 case 'libur':
                     statusRing.classList.add('waiting'); // Reuse waiting style or custom if desired
+                    if (statusIcon) statusIcon.className = 'fas fa-calendar-times';
                     if (statusText) statusText.textContent = 'Hari Libur';
                     if (statusSubtext) statusSubtext.textContent = 'Anda tidak memiliki jadwal kerja hari ini.';
                     break;
