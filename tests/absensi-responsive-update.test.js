@@ -468,6 +468,29 @@ function testAttendanceButtonsUseActionColorEffects() {
     );
 }
 
+function testAttendancePageDoesNotAutoStartVerification() {
+    assert(
+        absensiJs.includes('clearPendingAttendanceAction()'),
+        'opening attendance page should clear stale pending verification actions'
+    );
+    assert(
+        absensiJs.includes("storage.remove('pending_attendance_action')"),
+        'attendance page should remove pending_attendance_action before waiting for a real button click'
+    );
+    assert(
+        absensiJs.includes('bindAttendanceButton('),
+        'attendance buttons should be bound through a single safe helper'
+    );
+    assert(
+        !/btnClockIn\.addEventListener\('touchend'/.test(absensiJs),
+        'attendance buttons should not use separate touchend handlers that can fire from mobile navigation taps'
+    );
+    assert(
+        absensiJs.includes('button.onclick ='),
+        'attendance button binding should replace old handlers instead of stacking listeners on every page init'
+    );
+}
+
 async function testApprovedLeaveLocksEmployeeAttendanceButtons() {
     const { absensi, elements } = createAbsensiHarness({
         dateTime: {
@@ -667,6 +690,7 @@ function testAttendanceLeaveLockIconMatchesPermissionType() {
     testLocationMapUsesSingleSatelliteEmbed();
     testAttendanceDurationAlwaysDisplaysShortWorkDurations();
     testAttendanceButtonsUseActionColorEffects();
+    testAttendancePageDoesNotAutoStartVerification();
     await testApprovedLeaveLocksEmployeeAttendanceButtons();
     await testConfiguredHolidayLocksEmployeeAttendanceButtons();
     await testShiftScheduleOverridesConfiguredHoliday();

@@ -17,6 +17,8 @@ const absensi = {
     selectedHistoryMonth: '',
 
     async init() {
+        this.clearPendingAttendanceAction();
+
         if (!this.initialized) {
             this.hydrateCachedAttendance();
             this.initLiveClock();
@@ -566,104 +568,62 @@ const absensi = {
     },
 
     initButtons() {
-        // Clock In - Add both click and touch events for mobile
+        // Clock In
         const btnClockIn = document.getElementById('btn-clock-in');
         if (btnClockIn) {
-            btnClockIn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleClockIn();
-            });
-            btnClockIn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.handleClockIn();
-            });
+            this.bindAttendanceButton(btnClockIn, () => this.handleClockIn());
             console.log('Clock In button initialized, disabled:', btnClockIn.disabled);
         }
 
         // Break
         const btnBreak = document.getElementById('btn-break');
         if (btnBreak) {
-            btnBreak.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleBreak();
-            });
-            btnBreak.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.handleBreak();
-            });
+            this.bindAttendanceButton(btnBreak, () => this.handleBreak());
         }
 
         // After Break
         const btnAfterBreak = document.getElementById('btn-after-break');
         if (btnAfterBreak) {
-            btnAfterBreak.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleAfterBreak();
-            });
-            btnAfterBreak.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.handleAfterBreak();
-            });
+            this.bindAttendanceButton(btnAfterBreak, () => this.handleAfterBreak());
         }
 
         // Break 2
         const btnBreak2 = document.getElementById('btn-break-2');
         if (btnBreak2) {
-            btnBreak2.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleBreak2();
-            });
-            btnBreak2.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.handleBreak2();
-            });
+            this.bindAttendanceButton(btnBreak2, () => this.handleBreak2());
         }
 
         // After Break 2
         const btnAfterBreak2 = document.getElementById('btn-after-break-2');
         if (btnAfterBreak2) {
-            btnAfterBreak2.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleAfterBreak2();
-            });
-            btnAfterBreak2.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.handleAfterBreak2();
-            });
+            this.bindAttendanceButton(btnAfterBreak2, () => this.handleAfterBreak2());
         }
 
         // Overtime
         const btnOvertime = document.getElementById('btn-overtime');
         if (btnOvertime) {
-            btnOvertime.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleOvertime();
-            });
-            btnOvertime.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.handleOvertime();
-            });
+            this.bindAttendanceButton(btnOvertime, () => this.handleOvertime());
         }
 
         // Clock Out
         const btnClockOut = document.getElementById('btn-clock-out');
         if (btnClockOut) {
-            btnClockOut.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleClockOut();
-            });
-            btnClockOut.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.handleClockOut();
-            });
+            this.bindAttendanceButton(btnClockOut, () => this.handleClockOut());
         }
+    },
+
+    bindAttendanceButton(button, handler) {
+        if (!button) return;
+        button.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (button.disabled) return;
+            handler();
+        };
+    },
+
+    clearPendingAttendanceAction() {
+        storage.remove('pending_attendance_action');
     },
 
     handleClockIn() {
