@@ -491,6 +491,50 @@ function testAttendancePageDoesNotAutoStartVerification() {
     );
 }
 
+function testClockOutAvailableImmediatelyAfterClockIn() {
+    const { absensi, elements } = createAbsensiHarness();
+
+    ['btn-clock-in', 'btn-break', 'btn-after-break', 'btn-break-2', 'btn-after-break-2', 'btn-overtime', 'btn-clock-out'].forEach(id => {
+        elements.get(id);
+    });
+
+    absensi.attendanceData = absensi.normalizeAttendance({
+        ...absensi.getDefaultAttendance('KRY001'),
+        shift: 'Pagi',
+        clockIn: '09:00',
+        breakStart: null,
+        breakEnd: null,
+        break2Start: null,
+        break2End: null,
+        clockOut: null
+    });
+    absensi.currentState = 'clocked-in';
+    absensi.updateUI();
+
+    assert.strictEqual(elements.get('btn-clock-out').disabled, false, 'clock out should be available right after clock in even before break attendance');
+}
+
+function testClockOutAvailableWhileBreakIsOpen() {
+    const { absensi, elements } = createAbsensiHarness();
+
+    ['btn-clock-in', 'btn-break', 'btn-after-break', 'btn-break-2', 'btn-after-break-2', 'btn-overtime', 'btn-clock-out'].forEach(id => {
+        elements.get(id);
+    });
+
+    absensi.attendanceData = absensi.normalizeAttendance({
+        ...absensi.getDefaultAttendance('KRY001'),
+        shift: 'Malam',
+        clockIn: '21:00',
+        breakStart: '22:00',
+        breakEnd: null,
+        clockOut: null
+    });
+    absensi.currentState = 'on-break';
+    absensi.updateUI();
+
+    assert.strictEqual(elements.get('btn-clock-out').disabled, false, 'clock out should stay available even if employee forgot to end break');
+}
+
 async function testApprovedLeaveLocksEmployeeAttendanceButtons() {
     const { absensi, elements } = createAbsensiHarness({
         dateTime: {
@@ -691,6 +735,8 @@ function testAttendanceLeaveLockIconMatchesPermissionType() {
     testAttendanceDurationAlwaysDisplaysShortWorkDurations();
     testAttendanceButtonsUseActionColorEffects();
     testAttendancePageDoesNotAutoStartVerification();
+    testClockOutAvailableImmediatelyAfterClockIn();
+    testClockOutAvailableWhileBreakIsOpen();
     await testApprovedLeaveLocksEmployeeAttendanceButtons();
     await testConfiguredHolidayLocksEmployeeAttendanceButtons();
     await testShiftScheduleOverridesConfiguredHoliday();

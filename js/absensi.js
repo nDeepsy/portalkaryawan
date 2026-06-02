@@ -1066,7 +1066,7 @@ const absensi = {
 
         // Clock Out button
         if (btnClockOut) {
-            btnClockOut.disabled = isAttendanceLocked || !this.attendanceData.clockIn || this.attendanceData.clockOut !== null || this.isOnAnyBreak();
+            btnClockOut.disabled = isAttendanceLocked || !this.attendanceData.clockIn || this.attendanceData.clockOut !== null;
             if (this.attendanceData.clockOut) {
                 btnClockOut.classList.add('completed');
                 document.getElementById('clock-out-time').textContent = this.formatHistoryTime(this.attendanceData.clockOut);
