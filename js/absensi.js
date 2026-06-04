@@ -106,16 +106,26 @@ const absensi = {
     normalizeAttendance(data) {
         return {
             ...data,
-            clockIn: data.clockIn || null,
-            clockOut: data.clockOut || null,
-            breakStart: data.breakStart || null,
-            breakEnd: data.breakEnd || null,
-            break2Start: data.break2Start || data.break2_start || null,
-            break2End: data.break2End || data.break2_end || null,
-            overtimeStart: data.overtimeStart || null,
+            clockIn: this.normalizeClockField(data.clockIn),
+            clockOut: this.normalizeClockField(data.clockOut),
+            breakStart: this.normalizeClockField(data.breakStart),
+            breakEnd: this.normalizeClockField(data.breakEnd),
+            break2Start: this.normalizeClockField(data.break2Start || data.break2_start),
+            break2End: this.normalizeClockField(data.break2End || data.break2_end),
+            overtimeStart: this.normalizeClockField(data.overtimeStart),
             shift: data.shift || this.getScheduledShiftName(data.userId),
             attendanceLogs: this.normalizeAttendanceLogs(data.attendanceLogs)
         };
+    },
+
+    normalizeClockField(value) {
+        if (value === null || value === undefined) return null;
+        if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+
+        const text = String(value).trim();
+        if (!text || text === '-' || text === '--' || text === '--:--') return null;
+
+        return value;
     },
 
     normalizeAttendanceLogs(value) {
@@ -493,6 +503,7 @@ const absensi = {
 
         const text = String(value).trim();
         if (!text) return '';
+        if (text === '-' || text === '--' || text === '--:--') return '';
 
         const decimalMatch = text.match(/^(\d{1,2})[.](\d{1,2})$/);
         if (decimalMatch) {
@@ -633,13 +644,13 @@ const absensi = {
     },
 
     handleBreak() {
-        if (!this.canStartBreak()) return;
+        if (!this.canStartBreak1()) return;
 
         this.startFaceVerification('break');
     },
 
     handleAfterBreak() {
-        if (!this.canEndBreak()) return;
+        if (!this.canEndBreak1()) return;
 
         this.startFaceVerification('after-break');
     },

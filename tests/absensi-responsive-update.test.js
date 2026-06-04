@@ -515,6 +515,85 @@ function testClockOutAvailableImmediatelyAfterClockIn() {
     assert.strictEqual(elements.get('btn-clock-out').disabled, false, 'clock out should be available right after clock in even before break attendance');
 }
 
+function testBreakButtonAvailableAfterClockInWhenBreakFieldsArePlaceholders() {
+    const { absensi, elements } = createAbsensiHarness();
+
+    ['btn-clock-in', 'btn-break', 'btn-after-break', 'btn-break-2', 'btn-after-break-2', 'btn-overtime', 'btn-clock-out'].forEach(id => {
+        elements.get(id);
+    });
+
+    absensi.attendanceData = absensi.normalizeAttendance({
+        ...absensi.getDefaultAttendance('KRY001'),
+        shift: 'Pagi',
+        clockIn: '09:00',
+        breakStart: '--:--',
+        breakEnd: '-',
+        break2Start: '',
+        break2End: null,
+        clockOut: null
+    });
+    absensi.currentState = 'clocked-in';
+    absensi.updateUI();
+
+    assert.strictEqual(absensi.attendanceData.breakStart, null, 'placeholder break start should be treated as empty');
+    assert.strictEqual(absensi.attendanceData.breakEnd, null, 'placeholder break end should be treated as empty');
+    assert.strictEqual(elements.get('btn-break').disabled, false, 'break button should be available after clock in when break has not started');
+}
+
+function testBreakButtonClickStartsFirstBreakVerificationAfterClockIn() {
+    let requestedAction = '';
+    const { absensi, elements } = createAbsensiHarness();
+
+    ['btn-clock-in', 'btn-break', 'btn-after-break', 'btn-break-2', 'btn-after-break-2', 'btn-overtime', 'btn-clock-out'].forEach(id => {
+        elements.get(id);
+    });
+
+    absensi.attendanceData = absensi.normalizeAttendance({
+        ...absensi.getDefaultAttendance('KRY001'),
+        shift: 'Pagi',
+        clockIn: '09:00',
+        breakStart: null,
+        breakEnd: null,
+        clockOut: null
+    });
+    absensi.currentState = 'clocked-in';
+    absensi.startFaceVerification = action => {
+        requestedAction = action;
+    };
+    absensi.initButtons();
+    absensi.updateUI();
+
+    elements.get('btn-break').onclick({
+        preventDefault: () => {},
+        stopPropagation: () => {}
+    });
+
+    assert.strictEqual(requestedAction, 'break', 'clicking the first break button should open break verification');
+}
+
+function testFirstBreakHandlerCannotStartSecondBreak() {
+    let requestedAction = '';
+    const { absensi } = createAbsensiHarness();
+
+    absensi.attendanceData = absensi.normalizeAttendance({
+        ...absensi.getDefaultAttendance('KRY001'),
+        shift: 'Pagi',
+        clockIn: '09:00',
+        breakStart: '12:00',
+        breakEnd: '12:30',
+        break2Start: null,
+        break2End: null,
+        clockOut: null
+    });
+    absensi.startFaceVerification = action => {
+        requestedAction = action;
+    };
+
+    absensi.handleBreak();
+
+    assert.strictEqual(requestedAction, '', 'first break handler should not trigger second break verification');
+}
+
 function testClockOutAvailableWhileBreakIsOpen() {
     const { absensi, elements } = createAbsensiHarness();
 
@@ -752,6 +831,9 @@ function testMobileAttendanceStatusDoesNotClipPulseAnimation() {
     testAttendanceButtonsUseActionColorEffects();
     testAttendancePageDoesNotAutoStartVerification();
     testClockOutAvailableImmediatelyAfterClockIn();
+    testBreakButtonAvailableAfterClockInWhenBreakFieldsArePlaceholders();
+    testBreakButtonClickStartsFirstBreakVerificationAfterClockIn();
+    testFirstBreakHandlerCannotStartSecondBreak();
     testClockOutAvailableWhileBreakIsOpen();
     await testApprovedLeaveLocksEmployeeAttendanceButtons();
     await testConfiguredHolidayLocksEmployeeAttendanceButtons();
