@@ -107,6 +107,10 @@ const router = {
         if (window.notificationCenter && typeof window.notificationCenter.clearForPage === 'function') {
             window.notificationCenter.clearForPage(page);
         }
+
+        if (window.api && typeof api.prefetchForUser === 'function' && typeof auth !== 'undefined' && auth.getCurrentUser) {
+            api.prefetchForUser(auth.getCurrentUser());
+        }
     },
 
     resolvePageForRole(page) {

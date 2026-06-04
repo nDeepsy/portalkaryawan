@@ -162,6 +162,9 @@ const auth = {
 
             // Show app
             this.showApp({ restorePage: false });
+            if (window.api && typeof api.prefetchForUser === 'function') {
+                api.prefetchForUser(user);
+            }
 
             if (window.notificationCenter) {
                 window.notificationCenter.init();

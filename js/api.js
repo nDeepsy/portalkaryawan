@@ -10,10 +10,11 @@
 const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbzrvlMvDrTzpp4OduHyE7PMdjaH_hfJt03hSd-yV3WfCKxGzjq_BULQZe3O58H_NNhQsQ/exec'; // Kosongkan untuk mode localStorage, isi dengan URL Web App GAS
 
 const api = {
-    cacheTtl: 15000,
+    cacheTtl: 60000,
     requestCachePrefix: 'api_cache_',
     pendingRequests: new Map(),
     cacheableActions: new Set([
+        'batch',
         'getEmployeeProfile',
         'getAttendance',
         'getTodayAttendance',
@@ -221,6 +222,42 @@ const api = {
         }
 
         return this.request('batch', { requests });
+    },
+
+    prefetchForUser(user = {}) {
+        if (!user || !user.role) return;
+
+        const role = String(user.role || '').toLowerCase();
+        const userId = user.id || user.userId || '';
+        const requests = [];
+
+        if (role === 'admin' || role === 'pemilik') {
+            requests.push(
+                { key: 'employees', action: 'getEmployees' },
+                { key: 'attendance', action: 'getAllAttendance' },
+                { key: 'journals', action: 'getAllJournals' },
+                { key: 'leaves', action: 'getAllLeaves' },
+                { key: 'izin', action: 'getAllIzin' },
+                { key: 'settings', action: 'getSettings' },
+                { key: 'shifts', action: 'getShifts' }
+            );
+        } else if (role === 'karyawan') {
+            requests.push(
+                { key: 'todayAttendance', action: 'getTodayAttendance', userId },
+                { key: 'attendance', action: 'getAttendance', userId },
+                { key: 'journals', action: 'getJournals', userId },
+                { key: 'leaves', action: 'getLeaves', userId },
+                { key: 'izin', action: 'getIzin', userId },
+                { key: 'settings', action: 'getSettings' },
+                { key: 'shifts', action: 'getShifts' }
+            );
+        }
+
+        if (!requests.length) return;
+
+        this.batch(requests).catch(error => {
+            console.warn('API prefetch skipped:', error);
+        });
     },
 
     // ========== AUTH ==========
