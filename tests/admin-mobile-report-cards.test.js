@@ -76,6 +76,10 @@ function testAdminEmployeeMobileActionButtonsUseSharedActionLayout() {
         'employee mobile edit button should use a compact icon-only action control'
     );
     assert(
+        /class="btn-action delete employee-card-action"[\s\S]*onclick="adminEmployees\.deleteEmployee/.test(adminEmployeesJs),
+        'employee mobile cards should include a compact delete action for admins'
+    );
+    assert(
         /#employees-mobile-cards\s+\.employee-card-action\s*\{[^}]*width:\s*42px;[^}]*height:\s*38px;/s.test(mobileCss),
         'employee mobile action buttons should use compact PC-like icon button sizing'
     );
@@ -166,6 +170,22 @@ function testPermissionAndLeaveApiReadsAreCacheable() {
     });
 }
 
+function testEmployeeDeleteSyncsFrontendAndBackendRelatedData() {
+    assert(
+        apiJs.includes('_localDeleteEmployeeRelatedData(id)'),
+        'frontend employee delete should clear local related employee data after deletion'
+    );
+    ['attendance', 'jurnals', 'leaves', 'izin'].forEach(key => {
+        assert(apiJs.includes(`storage.set('${key}', filterByUser(storage.get('${key}', [])))`), `frontend delete should clear ${key} cache rows`);
+    });
+
+    const backendEmployeeJs = fs.readFileSync(path.join(root, '..', 'apps-script-absensi', 'Employee.js'), 'utf8');
+    ['Attendance', 'Journals', 'Leaves', 'Izin'].forEach(sheet => {
+        assert(backendEmployeeJs.includes(`deleteRowsByUserId('${sheet}', id)`), `backend delete should clear ${sheet} rows`);
+    });
+    assert(backendEmployeeJs.includes('removeEmployeeFromShiftSchedules(id)'), 'backend delete should remove the employee from shift schedules');
+}
+
 function testAdminEmployeesRenderCachedRowsBeforeBackendRefresh() {
     assert(
         adminEmployeesJs.includes('loadCachedEmployees()'),
@@ -188,4 +208,5 @@ testLeaveReportsKeepConfirmedRowsWithSparseSheetData();
 testAdminReportsRenderCachedDataBeforeBackendRefresh();
 testPermissionAndLeaveApiReadsAreCacheable();
 testAdminEmployeesRenderCachedRowsBeforeBackendRefresh();
+testEmployeeDeleteSyncsFrontendAndBackendRelatedData();
 console.log('admin mobile report card tests passed');

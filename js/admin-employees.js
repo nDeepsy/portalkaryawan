@@ -414,6 +414,9 @@ const adminEmployees = {
                     </button>
                     ${canManage ? `<button class="btn-action edit employee-card-action" onclick="adminEmployees.editEmployee('${String(emp.id).replace(/'/g, "\\'")}')" title="Edit" aria-label="Edit karyawan">
                         <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-action delete employee-card-action" onclick="adminEmployees.deleteEmployee('${String(emp.id).replace(/'/g, "\\'")}')" title="Hapus" aria-label="Hapus karyawan">
+                        <i class="fas fa-trash"></i>
                     </button>` : ''}
                 </div>
             </div>
