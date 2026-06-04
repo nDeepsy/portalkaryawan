@@ -156,6 +156,31 @@ function testAdminReportsShowNewestSubmittedRowsFirst() {
     );
 }
 
+function testJurnalReportsDoNotShowUnusedStatusFilter() {
+    const jurnalFilterBlock = adminReportsJs.match(/getFilteredJurnal\(\)\s*\{[\s\S]*?\n    \},\n\n    getFilteredLeave/)?.[0] || '';
+
+    assert(
+        !indexHtml.includes('id="jurnal-status-filter"'),
+        'journal reports should not show the unused status filter'
+    );
+    assert(
+        /<div class="reports-filters jurnal-reports-filters">/.test(indexHtml),
+        'journal report filters should have a dedicated layout hook after removing status'
+    );
+    assert(
+        !/const statusFilter = document\.getElementById\('jurnal-status-filter'\)/.test(adminReportsJs),
+        'journal report scripts should not bind the removed status filter'
+    );
+    assert(
+        !jurnalFilterBlock.includes('matchesStatus'),
+        'journal filtering should not depend on the removed status filter'
+    );
+    assert(
+        /\.jurnal-reports-filters\s+\.filter-group\s*\{[^}]*flex:\s*0\s+1\s*260px;/s.test(adminCss),
+        'journal report filters should stay aligned with two compact controls'
+    );
+}
+
 function testLeaveReportsKeepConfirmedRowsWithSparseSheetData() {
     assert(
         /filterValidLeaves\(rows\)\s*\{[\s\S]*this\.hasValue\(row,\s*'userId'\)[\s\S]*this\.hasValue\(row,\s*'startDate'\)[\s\S]*this\.hasValue\(row,\s*'endDate'\)/.test(adminReportsJs),
@@ -239,6 +264,7 @@ testShiftScheduleSearchInputDoesNotAutofillItself();
 testAdminEmployeeMobileActionButtonsUseSharedActionLayout();
 testAdminEmployeeDetailUsesCardModalInsteadOfAlert();
 testAdminReportsShowNewestSubmittedRowsFirst();
+testJurnalReportsDoNotShowUnusedStatusFilter();
 testLeaveReportsKeepConfirmedRowsWithSparseSheetData();
 testAdminReportsRenderCachedDataBeforeBackendRefresh();
 testPermissionAndLeaveApiReadsAreCacheable();

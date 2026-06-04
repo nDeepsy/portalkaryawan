@@ -705,14 +705,6 @@ const adminReports = {
             };
         }
 
-        // Status filter
-        const statusFilter = document.getElementById('jurnal-status-filter');
-        if (statusFilter) {
-            statusFilter.onchange = (e) => {
-                this.filters.jurnal.status = e.target.value;
-                this.renderJurnalReports();
-            };
-        }
     },
 
     bindLeaveEvents() {
@@ -844,9 +836,8 @@ const adminReports = {
     getFilteredJurnal() {
         const filtered = this.jurnalData.filter(row => {
             const matchesEmp = !this.filters.jurnal.employee || row.name === this.filters.jurnal.employee;
-            const matchesStatus = !this.filters.jurnal.status || row.status === this.filters.jurnal.status;
             const matchesMonth = !this.filters.jurnal.month || String(row.date || '').startsWith(this.filters.jurnal.month);
-            return matchesEmp && matchesStatus && matchesMonth;
+            return matchesEmp && matchesMonth;
         });
         return this.sortRowsNewestFirst(filtered, row => row.updatedAt || row.date);
     },

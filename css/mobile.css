@@ -679,6 +679,10 @@
     .employees-filters select {
         width: 100%;
     }
+
+    .jurnal-reports-filters .filter-group {
+        flex: 1 1 100%;
+    }
     
     /* Face Recognition */
     .face-rec-container {
