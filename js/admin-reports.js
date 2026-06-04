@@ -754,12 +754,23 @@ const adminReports = {
     getFilteredAttendance() {
         return this.attendanceData.filter(row => {
             const matchesDivision = !this.filters.attendance.division || row.division === this.filters.attendance.division;
-            const matchesStatus = !this.filters.attendance.status ||
-                (this.filters.attendance.status === 'present' && row.present > 0) ||
-                (this.filters.attendance.status === 'absent' && row.absent > 0) ||
-                (this.filters.attendance.status === 'late' && row.late > 0);
+            const matchesStatus = this.matchesAttendanceStatusFilter(row, this.filters.attendance.status);
             return matchesDivision && matchesStatus;
         });
+    },
+
+    matchesAttendanceStatusFilter(row = {}, status = '') {
+        if (!status) return true;
+
+        const present = Number(row.present || 0);
+        const late = Number(row.late || 0);
+        const absent = Number(row.absent || 0);
+
+        if (status === 'present') return present > 0 && late === 0 && absent === 0;
+        if (status === 'late') return late > 0;
+        if (status === 'absent') return absent > 0;
+
+        return true;
     },
 
     getFilteredJurnal() {
