@@ -93,6 +93,13 @@
                                     <span>Admin</span>
                                 </span>
                             </label>
+                            <label class="role-option">
+                                <input type="radio" name="role" value="pemilik">
+                                <span class="role-card">
+                                    <i class="fas fa-user-tie"></i>
+                                    <span>Pemilik</span>
+                                </span>
+                            </label>
                         </div>
                     </div>
                     <button type="submit" class="btn-login">
@@ -196,13 +203,13 @@
                                 <span>Rekap Cuti & Izin</span>
                             </a>
                         </li>
-                        <li class="nav-item" data-page="shift-schedule">
+                        <li class="nav-item" data-page="shift-schedule" data-admin-only="true">
                             <a href="#" class="nav-link">
                                 <i class="fas fa-calendar-alt"></i>
                                 <span>Jadwal Shift</span>
                             </a>
                         </li>
-                        <li class="nav-item" data-page="settings">
+                        <li class="nav-item" data-page="settings" data-admin-only="true">
                             <a href="#" class="nav-link">
                                 <i class="fas fa-cog"></i>
                                 <span>Settings</span>
@@ -1048,7 +1055,7 @@
                                 <h2>Data Karyawan</h2>
                                 <p>Kelola data dan informasi karyawan</p>
                             </div>
-                            <div class="employees-actions"><button class="btn-primary" id="btn-add-employee"><i
+                            <div class="employees-actions"><button class="btn-primary" id="btn-add-employee" data-admin-only="true"><i
                                         class="fas fa-plus"></i><span>Tambah Karyawan</span></button></div>
                         </div>
                         <div class="employees-filters-card">
@@ -1502,8 +1509,8 @@
                     class="fas fa-clipboard-list"></i><span>Absensi</span></a>
             <a href="#" class="bottom-nav-item" data-page="jurnal-reports"><i class="fas fa-book-open"></i><span>Jurnal</span></a>
             <a href="#" class="bottom-nav-item" data-page="leave-reports"><i class="fas fa-umbrella-beach"></i><span>Cuti & Izin</span></a>
-            <a href="#" class="bottom-nav-item" data-page="shift-schedule"><i class="fas fa-calendar-alt"></i><span>Jadwal</span></a>
-            <a href="#" class="bottom-nav-item" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></a>
+            <a href="#" class="bottom-nav-item" data-page="shift-schedule" data-admin-only="true"><i class="fas fa-calendar-alt"></i><span>Jadwal</span></a>
+            <a href="#" class="bottom-nav-item" data-page="settings" data-admin-only="true"><i class="fas fa-cog"></i><span>Settings</span></a>
         </nav>
     </div>
 

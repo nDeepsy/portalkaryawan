@@ -395,24 +395,32 @@ const api = {
         return this.request('submitLeave', data);
     },
 
-    async approveLeave(id) {
+    async approveLeave(id, actor = {}) {
         if (!API_BASE_URL) {
             const all = storage.get('leaves', []);
             const leave = all.find(l => l.id === id);
-            if (leave) { leave.status = 'approved'; storage.set('leaves', all); }
+            if (leave) {
+                leave.status = 'approved';
+                Object.assign(leave, actor, { confirmedAt: new Date().toISOString() });
+                storage.set('leaves', all);
+            }
             return { success: true, data: leave };
         }
-        return this.request('approveLeave', { id });
+        return this.request('approveLeave', { id, ...actor });
     },
 
-    async rejectLeave(id) {
+    async rejectLeave(id, actor = {}) {
         if (!API_BASE_URL) {
             const all = storage.get('leaves', []);
             const leave = all.find(l => l.id === id);
-            if (leave) { leave.status = 'rejected'; storage.set('leaves', all); }
+            if (leave) {
+                leave.status = 'rejected';
+                Object.assign(leave, actor, { confirmedAt: new Date().toISOString() });
+                storage.set('leaves', all);
+            }
             return { success: true, data: leave };
         }
-        return this.request('rejectLeave', { id });
+        return this.request('rejectLeave', { id, ...actor });
     },
 
     async getAllLeaves() {
@@ -449,24 +457,32 @@ const api = {
         return this.request('submitIzin', data);
     },
 
-    async approveIzin(id) {
+    async approveIzin(id, actor = {}) {
         if (!API_BASE_URL) {
             const all = storage.get('izin', []);
             const item = all.find(i => i.id === id);
-            if (item) { item.status = 'approved'; storage.set('izin', all); }
+            if (item) {
+                item.status = 'approved';
+                Object.assign(item, actor, { confirmedAt: new Date().toISOString() });
+                storage.set('izin', all);
+            }
             return { success: true, data: item };
         }
-        return this.request('approveIzin', { id });
+        return this.request('approveIzin', { id, ...actor });
     },
 
-    async rejectIzin(id) {
+    async rejectIzin(id, actor = {}) {
         if (!API_BASE_URL) {
             const all = storage.get('izin', []);
             const item = all.find(i => i.id === id);
-            if (item) { item.status = 'rejected'; storage.set('izin', all); }
+            if (item) {
+                item.status = 'rejected';
+                Object.assign(item, actor, { confirmedAt: new Date().toISOString() });
+                storage.set('izin', all);
+            }
             return { success: true, data: item };
         }
-        return this.request('rejectIzin', { id });
+        return this.request('rejectIzin', { id, ...actor });
     },
 
     async getAllIzin() {
@@ -741,13 +757,14 @@ const api = {
     // ========== LOCAL AUTH FALLBACK ==========
 
     _localLogin(email, password, selectedRole) {
+        const normalizedSelectedRole = selectedRole === 'employee' ? 'karyawan' : selectedRole;
         const employees = storage.get('admin_employees', []);
         const user = employees.find(emp => emp.email.toLowerCase() === email.toLowerCase() && emp.password === password);
 
         if (user) {
             // Validasi bahwa selectedRole cocok dengan role user
             const userRole = user.role || (user.id === 'admin' ? 'admin' : 'karyawan');
-            if (selectedRole === userRole) {
+            if (normalizedSelectedRole === userRole) {
                 return { success: true, data: user };
             } else {
                 return { success: false, error: `Anda tidak bisa login sebagai ${selectedRole}. Akun ini adalah ${userRole === 'admin' ? 'admin' : 'karyawan'}.` };
@@ -757,7 +774,7 @@ const api = {
         // Default local admin account for testing when no backend is configured
         if (email.toLowerCase() === 'admin@admin.com' && password === '12345') {
             // Validasi role untuk admin default
-            if (selectedRole === 'admin') {
+            if (normalizedSelectedRole === 'admin') {
                 return {
                     success: true,
                     data: {
@@ -771,6 +788,22 @@ const api = {
             } else {
                 return { success: false, error: 'Anda tidak bisa login sebagai karyawan dengan akun admin.' };
             }
+        }
+
+        if (email.toLowerCase() === 'pemilik@magtas.com' && password === '12345') {
+            if (normalizedSelectedRole === 'pemilik') {
+                return {
+                    success: true,
+                    data: {
+                        id: 'owner',
+                        email: 'pemilik@magtas.com',
+                        name: 'Pemilik',
+                        role: 'pemilik',
+                        avatar: 'https://ui-avatars.com/api/?name=Pemilik&background=0F766E&color=fff'
+                    }
+                };
+            }
+            return { success: false, error: 'Anda tidak bisa login sebagai admin dengan akun pemilik.' };
         }
 
         return { success: false, error: 'Email atau password salah!' };

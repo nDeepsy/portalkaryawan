@@ -9,6 +9,7 @@ const router = {
              'admin-dashboard', 'employees', 'attendance-reports', 'jurnal-reports', 
              'leave-reports', 'shift-schedule', 'settings'],
     adminPages: ['admin-dashboard', 'employees', 'attendance-reports', 'jurnal-reports', 'leave-reports', 'shift-schedule', 'settings'],
+    pemilikPages: ['admin-dashboard', 'employees', 'attendance-reports', 'jurnal-reports', 'leave-reports'],
     employeePages: ['dashboard', 'absensi', 'face-recognition', 'izin', 'jurnal', 'cuti'],
     
     init() {
@@ -113,6 +114,13 @@ const router = {
         if (!isLoggedIn) return page;
 
         const isAdmin = typeof auth !== 'undefined' && typeof auth.isAdmin === 'function' && auth.isAdmin();
+        const isPemilik = typeof auth !== 'undefined' && typeof auth.isPemilik === 'function' && auth.isPemilik();
+
+        if (isPemilik) {
+            if (this.pemilikPages.includes(page)) return page;
+            return 'admin-dashboard';
+        }
+
         if (isAdmin && this.employeePages.includes(page)) return 'admin-dashboard';
         if (!isAdmin && this.adminPages.includes(page)) return 'dashboard';
         return page;

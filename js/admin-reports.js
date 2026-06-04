@@ -16,8 +16,21 @@ const adminReports = {
         leave: { month: '', type: '', status: '' }
     },
 
+    canAccessAdminReports() {
+        return Boolean(auth && typeof auth.canAccessAdminReports === 'function' && auth.canAccessAdminReports());
+    },
+
+    getConfirmationActor() {
+        const user = auth?.getCurrentUser ? auth.getCurrentUser() : null;
+        return {
+            confirmedBy: user?.id || '',
+            confirmedByName: user?.name || '',
+            confirmedByRole: user?.role || ''
+        };
+    },
+
     async initAttendanceReports() {
-        if (!auth.isAdmin()) {
+        if (!this.canAccessAdminReports()) {
             toast.error('Anda tidak memiliki akses!');
             router.navigate('dashboard');
             return;
@@ -33,7 +46,7 @@ const adminReports = {
     },
 
     async initJurnalReports() {
-        if (!auth.isAdmin()) {
+        if (!this.canAccessAdminReports()) {
             toast.error('Anda tidak memiliki akses!');
             router.navigate('dashboard');
             return;
@@ -47,7 +60,7 @@ const adminReports = {
     },
 
     async initLeaveReports() {
-        if (!auth.isAdmin()) {
+        if (!this.canAccessAdminReports()) {
             toast.error('Anda tidak memiliki akses!');
             router.navigate('dashboard');
             return;
@@ -835,6 +848,7 @@ const adminReports = {
             return;
         }
 
+        const canDeleteJurnal = Boolean(auth && typeof auth.isAdmin === 'function' && auth.isAdmin());
         tbody.innerHTML = data.map((row, index) => {
             const rawTasks = String(row.tasks || '-');
             const tasksPreview = rawTasks.length > 46 ? `${rawTasks.substring(0, 46)}...` : rawTasks;
@@ -861,9 +875,9 @@ const adminReports = {
                         <button class="btn-action view" onclick="adminReports.viewJurnalDetail(${index})">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button class="btn-action delete" onclick="adminReports.deleteJurnal(${index})" title="Hapus">
+                        ${canDeleteJurnal ? `<button class="btn-action delete" onclick="adminReports.deleteJurnal(${index})" title="Hapus">
                             <i class="fas fa-trash"></i>
-                        </button>
+                        </button>` : ''}
                     </div>
                 </td>
             </tr>
@@ -899,9 +913,9 @@ const adminReports = {
                             <button class="btn-action view" onclick="adminReports.viewJurnalDetail(${index})">
                                 <i class="fas fa-eye"></i><span>Lihat</span>
                             </button>
-                            <button class="btn-action delete" onclick="adminReports.deleteJurnal(${index})" title="Hapus">
+                            ${canDeleteJurnal ? `<button class="btn-action delete" onclick="adminReports.deleteJurnal(${index})" title="Hapus">
                                 <i class="fas fa-trash"></i><span>Hapus</span>
-                            </button>
+                            </button>` : ''}
                         </div>
                     </div>
                 `;
@@ -1625,6 +1639,11 @@ const adminReports = {
     },
 
     async deleteJurnal(filteredIndex) {
+        if (!auth?.isAdmin || !auth.isAdmin()) {
+            toast.error('Pemilik hanya dapat melihat rekap jurnal.');
+            return;
+        }
+
         const filtered = this.getFilteredJurnal();
         const jurnal = filtered[filteredIndex];
         if (!jurnal) {
@@ -1867,9 +1886,10 @@ const adminReports = {
         this.renderLeaveReports();
 
         try {
+            const actor = this.getConfirmationActor();
             const result = item.source === 'leave'
-                ? (nextStatus === 'approved' ? await api.approveLeave(item.id) : await api.rejectLeave(item.id))
-                : (nextStatus === 'approved' ? await api.approveIzin(item.id) : await api.rejectIzin(item.id));
+                ? (nextStatus === 'approved' ? await api.approveLeave(item.id, actor) : await api.rejectLeave(item.id, actor))
+                : (nextStatus === 'approved' ? await api.approveIzin(item.id, actor) : await api.rejectIzin(item.id, actor));
 
             if (!result || !result.success) {
                 item.status = previousStatus;

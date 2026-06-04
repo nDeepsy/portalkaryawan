@@ -26,7 +26,7 @@ const adminEmployees = {
     },
 
     async init() {
-        if (!auth.isAdmin()) {
+        if (!auth.canAccessAdminReports()) {
             toast.error('Anda tidak memiliki akses!');
             router.navigate('dashboard');
             return;
@@ -37,7 +37,26 @@ const adminEmployees = {
         this.renderTable();
         this.renderMobileCards();
         this.updatePaginationInfo();
+        this.applyRoleControls();
         this.refreshEmployees();
+    },
+
+    canManageEmployees() {
+        return Boolean(auth && typeof auth.canManageEmployees === 'function' && auth.canManageEmployees());
+    },
+
+    ensureCanManageEmployees() {
+        if (this.canManageEmployees()) return true;
+        toast.error('Pemilik hanya dapat melihat data karyawan.');
+        return false;
+    },
+
+    applyRoleControls() {
+        const addBtn = document.getElementById('btn-add-employee');
+        if (addBtn) {
+            addBtn.hidden = !this.canManageEmployees();
+            addBtn.style.display = this.canManageEmployees() ? '' : 'none';
+        }
     },
 
     loadCachedEmployees() {
@@ -52,6 +71,7 @@ const adminEmployees = {
         this.renderTable();
         this.renderMobileCards();
         this.updatePaginationInfo();
+        this.applyRoleControls();
     },
 
     async loadEmployees() {
@@ -297,6 +317,7 @@ const adminEmployees = {
 
         const start = (this.currentPage - 1) * this.perPage;
         const paginated = filtered.slice(start, start + this.perPage);
+        const canManage = this.canManageEmployees();
 
         if (paginated.length === 0) {
             tbody.innerHTML = `
@@ -335,12 +356,12 @@ const adminEmployees = {
                     <button class="btn-action view" onclick="adminEmployees.viewEmployee('${String(emp.id).replace(/'/g, "\\'")}')" title="Lihat">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn-action edit" onclick="adminEmployees.editEmployee('${String(emp.id).replace(/'/g, "\\'")}')" title="Edit">
+                    ${canManage ? `<button class="btn-action edit" onclick="adminEmployees.editEmployee('${String(emp.id).replace(/'/g, "\\'")}')" title="Edit">
                         <i class="fas fa-edit"></i>
                     </button>
                     <button class="btn-action delete" onclick="adminEmployees.deleteEmployee('${String(emp.id).replace(/'/g, "\\'")}')" title="Hapus">
                         <i class="fas fa-trash"></i>
-                    </button>
+                    </button>` : ''}
                 </td>
             </tr>
         `).join('');
@@ -355,6 +376,7 @@ const adminEmployees = {
         const filtered = this.getFilteredEmployees();
         const start = (this.currentPage - 1) * this.perPage;
         const paginated = filtered.slice(start, start + this.perPage);
+        const canManage = this.canManageEmployees();
 
         container.innerHTML = paginated.map(emp => `
             <div class="mobile-card">
@@ -390,9 +412,9 @@ const adminEmployees = {
                     <button class="btn-action view employee-card-action" onclick="adminEmployees.viewEmployee('${String(emp.id).replace(/'/g, "\\'")}')" title="Lihat" aria-label="Lihat detail karyawan">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn-action edit employee-card-action" onclick="adminEmployees.editEmployee('${String(emp.id).replace(/'/g, "\\'")}')" title="Edit" aria-label="Edit karyawan">
+                    ${canManage ? `<button class="btn-action edit employee-card-action" onclick="adminEmployees.editEmployee('${String(emp.id).replace(/'/g, "\\'")}')" title="Edit" aria-label="Edit karyawan">
                         <i class="fas fa-edit"></i>
-                    </button>
+                    </button>` : ''}
                 </div>
             </div>
         `).join('');
@@ -459,6 +481,7 @@ const adminEmployees = {
     },
 
     async showAddModal() {
+        if (!this.ensureCanManageEmployees()) return;
         await this.refreshShifts();
         this.setModalMode('add');
     },
@@ -537,6 +560,7 @@ const adminEmployees = {
 
     async handleSaveEmployee(e) {
         e.preventDefault();
+        if (!this.ensureCanManageEmployees()) return;
 
         const idValue = document.getElementById('emp-id').value;
         const name = document.getElementById('emp-name').value.trim();
@@ -824,6 +848,7 @@ const adminEmployees = {
     },
 
     async editEmployee(id) {
+        if (!this.ensureCanManageEmployees()) return;
         await this.refreshShifts();
         const emp = this.employees.find(e => String(e.id) === String(id));
         if (!emp) {
@@ -834,6 +859,7 @@ const adminEmployees = {
     },
 
     async deleteEmployee(id) {
+        if (!this.ensureCanManageEmployees()) return;
         if (!confirm('Apakah Anda yakin ingin menghapus karyawan ini?')) {
             return;
         }

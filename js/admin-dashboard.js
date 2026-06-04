@@ -16,7 +16,7 @@ const adminDashboard = {
     periodFilterBound: false,
 
     async init() {
-        if (!auth.isAdmin()) {
+        if (!auth.canAccessAdminReports()) {
             toast.error('Anda tidak memiliki akses!');
             router.navigate('dashboard');
             return;

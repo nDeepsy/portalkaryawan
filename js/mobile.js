@@ -50,11 +50,15 @@ const mobile = {
         const adminBottomNav = document.getElementById('admin-bottom-nav');
         const accountMenu = document.getElementById('mobile-account-toggle');
         const isAdmin = typeof auth !== 'undefined' && typeof auth.isAdmin === 'function' && auth.isAdmin();
+        const isPemilik = typeof auth !== 'undefined' && typeof auth.isPemilik === 'function' && auth.isPemilik();
         if (bottomNav) {
-            bottomNav.style.display = this.isMobile && !isAdmin ? 'flex' : 'none';
+            bottomNav.style.display = this.isMobile && !isAdmin && !isPemilik ? 'flex' : 'none';
         }
         if (adminBottomNav) {
-            adminBottomNav.style.display = this.isMobile && isAdmin ? 'flex' : 'none';
+            adminBottomNav.style.display = this.isMobile && (isAdmin || isPemilik) ? 'flex' : 'none';
+        }
+        if (typeof auth !== 'undefined' && typeof auth.applyRoleVisibility === 'function') {
+            auth.applyRoleVisibility();
         }
         if (accountMenu) {
             accountMenu.style.display = this.isMobile ? 'flex' : 'none';

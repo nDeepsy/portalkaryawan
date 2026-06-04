@@ -234,11 +234,13 @@ const auth = {
             loginContainer.style.display = 'none';
             appContainer.classList.remove('hidden');
             appContainer.classList.toggle('role-admin', this.isAdmin());
-            appContainer.classList.toggle('role-employee', !this.isAdmin());
+            appContainer.classList.toggle('role-owner', this.isPemilik());
+            appContainer.classList.toggle('role-employee', this.isKaryawan());
 
             // Update user UI first
             this.updateUserUI();
             this.startKeepAlive();
+            this.applyRoleVisibility();
 
             // Show appropriate menu based on role
             const employeeMenu = document.getElementById('employee-menu');
@@ -249,16 +251,18 @@ const auth = {
             const hashPage = window.location.hash ? window.location.hash.substring(1) : '';
             const storedPage = storage.get('currentPage');
             const adminPages = ['admin-dashboard', 'employees', 'attendance-reports', 'jurnal-reports', 'leave-reports', 'shift-schedule', 'settings'];
+            const pemilikPages = ['admin-dashboard', 'employees', 'attendance-reports', 'jurnal-reports', 'leave-reports'];
             const employeePages = ['dashboard', 'absensi', 'face-recognition', 'izin', 'jurnal', 'cuti'];
 
-            if (this.isAdmin()) {
-                // Show admin menu, hide employee menu
+            if (this.isAdmin() || this.isPemilik()) {
+                // Show admin-style menu, hide employee menu
                 if (employeeMenu) employeeMenu.classList.add('hidden');
                 if (adminMenu) adminMenu.classList.remove('hidden');
                 if (bottomNav) bottomNav.style.display = 'none';
                 if (adminBottomNav) adminBottomNav.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
 
-                const restoredPage = adminPages.includes(hashPage) ? hashPage : (adminPages.includes(storedPage) ? storedPage : '');
+                const allowedPages = this.isPemilik() ? pemilikPages : adminPages;
+                const restoredPage = allowedPages.includes(hashPage) ? hashPage : (allowedPages.includes(storedPage) ? storedPage : '');
                 targetPage = restorePage && restoredPage ? restoredPage : 'admin-dashboard';
             } else {
                 // Show employee menu, hide admin menu
@@ -292,7 +296,7 @@ const auth = {
 
         if (loginContainer && appContainer) {
             appContainer.classList.add('hidden');
-            appContainer.classList.remove('role-admin', 'role-employee');
+            appContainer.classList.remove('role-admin', 'role-owner', 'role-employee');
             loginContainer.style.display = 'flex';
 
             // Reset form
@@ -313,7 +317,7 @@ const auth = {
         const welcomeNameEl = document.getElementById('welcome-name');
 
         if (userNameEl) userNameEl.textContent = this.currentUser.name;
-        if (userRoleEl) userRoleEl.textContent = this.isAdmin() ? 'Administrator' : 'Karyawan';
+        if (userRoleEl) userRoleEl.textContent = this.getRoleLabel();
         if (userAvatarEl) userAvatarEl.src = getAvatarUrl(this.currentUser);
         if (mobileUserAvatarEl) mobileUserAvatarEl.src = getAvatarUrl(this.currentUser);
         if (welcomeNameEl) welcomeNameEl.textContent = this.currentUser.name.split(' ')[0];
@@ -330,12 +334,13 @@ const auth = {
         document.getElementById('profile-avatar').src = getAvatarUrl(user);
         document.getElementById('profile-name').textContent = user.name || '-';
         document.getElementById('profile-email').textContent = user.email || '-';
-        const isAdmin = this.normalizeUserRole(user.role, user.id) === 'admin';
-        document.getElementById('profile-role').textContent = isAdmin ? 'Administrator' : 'Karyawan';
+        const role = this.normalizeUserRole(user.role, user.id);
+        const isKaryawan = role === 'karyawan';
+        document.getElementById('profile-role').textContent = this.getRoleLabel(role);
 
         // Employee-specific fields
         const empFields = document.getElementById('profile-employee-fields');
-        if (!isAdmin) {
+        if (isKaryawan) {
             document.getElementById('profile-division').textContent = getEmployeeDivision(user) || '-';
             document.getElementById('profile-position').textContent = user.position || '-';
             document.getElementById('profile-shift').textContent = user.shift || '-';
@@ -351,7 +356,7 @@ const auth = {
 
         modal.style.display = 'flex';
 
-        if (!isAdmin) {
+        if (isKaryawan) {
             // Refresh profile from backend after the modal is visible.
             try {
                 const result = await api.getEmployeeProfile(user.id);
@@ -422,6 +427,37 @@ const auth = {
         return this.currentUser && this.normalizeUserRole(this.currentUser.role, this.currentUser.id) === 'admin';
     },
 
+    isPemilik() {
+        return this.currentUser && this.normalizeUserRole(this.currentUser.role, this.currentUser.id) === 'pemilik';
+    },
+
+    isKaryawan() {
+        return this.currentUser && this.normalizeUserRole(this.currentUser.role, this.currentUser.id) === 'karyawan';
+    },
+
+    canManageEmployees() {
+        return this.isAdmin();
+    },
+
+    canAccessAdminReports() {
+        return this.isAdmin() || this.isPemilik();
+    },
+
+    applyRoleVisibility() {
+        const hideAdminOnly = this.isPemilik();
+        document.querySelectorAll('[data-admin-only="true"]').forEach(element => {
+            element.hidden = hideAdminOnly;
+            element.style.display = hideAdminOnly ? 'none' : '';
+        });
+    },
+
+    getRoleLabel(role = '') {
+        const normalized = role ? this.normalizeUserRole(role) : (this.currentUser ? this.normalizeUserRole(this.currentUser.role, this.currentUser.id) : '');
+        if (normalized === 'admin') return 'Administrator';
+        if (normalized === 'pemilik') return 'Pemilik';
+        return 'Karyawan';
+    },
+
     getCurrentUser() {
         return this.currentUser;
     },
@@ -429,6 +465,7 @@ const auth = {
     normalizeUserRole(role, userId = '') {
         const normalized = String(role || '').toLowerCase().trim();
         if (normalized === 'admin' || normalized === 'administrator') return 'admin';
+        if (normalized === 'pemilik' || normalized === 'owner') return 'pemilik';
         if (normalized === 'employee' || normalized === 'karyawan') return 'karyawan';
         return String(userId || '').toLowerCase() === 'admin' ? 'admin' : 'karyawan';
     }
