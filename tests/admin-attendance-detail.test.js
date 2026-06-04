@@ -187,22 +187,23 @@ function testAttendanceDetailRecordDateUsesDayMonthYear() {
     assert(!source.includes("<strong>${this.escapeHtml(record.date || '-')}</strong>"), 'attendance detail should not render raw yyyy-mm-dd dates');
 }
 
-function testAttendanceStatusFilterSeparatesSummaryCategories() {
+function testAttendanceStatusFilterIncludesAnyPresentEmployee() {
     const adminReports = loadAdminReports();
     adminReports.attendanceData = [
         { name: 'A', division: 'Siaran', present: 3, late: 0, absent: 0 },
         { name: 'B', division: 'Siaran', present: 3, late: 1, absent: 0 },
-        { name: 'C', division: 'Siaran', present: 1, late: 0, absent: 2 }
+        { name: 'C', division: 'Siaran', present: 1, late: 0, absent: 2 },
+        { name: 'D', division: 'Siaran', present: 0, late: 0, absent: 1 }
     ];
 
     adminReports.filters.attendance.status = 'present';
-    assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.name), ['A']);
+    assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.name), ['A', 'B', 'C']);
 
     adminReports.filters.attendance.status = 'late';
     assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.name), ['B']);
 
     adminReports.filters.attendance.status = 'absent';
-    assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.name), ['C']);
+    assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.name), ['C', 'D']);
 }
 
 testBreak2DedicatedEvidenceAppearsInDetailLogs();
@@ -212,5 +213,5 @@ testRemoteAttendanceUsesCachedPerActionEvidenceWhenServerRowIsMissingIt();
 testAttendanceReportKeepsTotalLabelWithClearTooltip();
 testAttendanceReportsRenderCachedDataBeforeFreshRefresh();
 testAttendanceDetailRecordDateUsesDayMonthYear();
-testAttendanceStatusFilterSeparatesSummaryCategories();
+testAttendanceStatusFilterIncludesAnyPresentEmployee();
 console.log('admin attendance detail tests passed');

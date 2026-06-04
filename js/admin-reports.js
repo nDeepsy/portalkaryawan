@@ -766,7 +766,7 @@ const adminReports = {
         const late = Number(row.late || 0);
         const absent = Number(row.absent || 0);
 
-        if (status === 'present') return present > 0 && late === 0 && absent === 0;
+        if (status === 'present') return present > 0;
         if (status === 'late') return late > 0;
         if (status === 'absent') return absent > 0;
 
