@@ -162,6 +162,9 @@ function testBackendDeletesNotificationsBySameMenu() {
     assert(backendSource.includes('getNotificationMenuKeyData'), 'backend should map notification type and role to a menu key');
     assert(backendSource.includes('const deletedCount = deleteNotificationsByMenuData(notification, role, userId);'), 'mark single should delete all accessible notifications in the same menu');
     assert(backendSource.includes("normalizedRole === 'admin' && (type === 'leave' || type === 'permission')"), 'admin leave and permission notifications should share the leave reports menu');
+    assert(backendSource.includes("normalizedRole === 'pemilik'"), 'backend should route pemilik notifications by role');
+    assert(backendSource.includes("targetRole === 'pemilik'"), 'pemilik should access notifications targeted to pemilik');
+    assert(backendSource.includes('createPemilikNotification'), 'backend should create notifications for pemilik');
     assert(codeSource.includes("case 'markNotificationsForMenu':"), 'backend router should expose markNotificationsForMenu');
     assert(apiSource.includes('async markNotificationsForMenu(page, role, userId)'), 'frontend API should expose markNotificationsForMenu');
 }
@@ -276,6 +279,46 @@ async function testMarkSingleClearsNotificationsInSameMenu() {
     await markPromise;
 }
 
+async function testPemilikNotificationClickClearsSameMenu() {
+    let markedId = '';
+    const markRequest = createDeferred();
+    const api = {
+        getNotifications: async () => ({
+            success: true,
+            data: { unreadCount: 0, items: [] }
+        }),
+        markNotificationRead: async id => {
+            markedId = id;
+            return markRequest.promise;
+        },
+        clearRequestCache() {}
+    };
+    const { notificationCenter, badge } = loadNotificationCenter({ api });
+    const navigatedPages = [];
+    notificationCenter.getSession = () => ({ id: 'owner', role: 'pemilik' });
+    notificationCenter.navigateToNotification = item => {
+        navigatedPages.push(notificationCenter.getNotificationTargetPage(item, { role: 'pemilik' }));
+    };
+
+    notificationCenter.items = [
+        { id: '1', type: 'leave', isRead: false },
+        { id: '2', type: 'permission', isRead: false },
+        { id: '3', type: 'journal', isRead: false }
+    ];
+    notificationCenter.unreadCount = 3;
+    notificationCenter.renderBadge(3);
+
+    const markPromise = notificationCenter.markAsRead('1');
+
+    assert.strictEqual(markedId, '1', 'clicked pemilik notification id should be sent to the backend');
+    assert.deepStrictEqual(notificationCenter.items.map(item => item.id), ['3'], 'pemilik notifications in the same leave menu should be cleared together');
+    assert.strictEqual(badge.textContent, '1', 'pemilik badge should decrement by all unread notifications cleared from the same menu');
+    assert.deepStrictEqual(navigatedPages, ['leave-reports'], 'pemilik click should navigate to the selected notification menu');
+
+    markRequest.resolve({ success: true, data: { deletedCount: 2 } });
+    await markPromise;
+}
+
 async function testEnteringMenuClearsNotificationsForThatMenu() {
     let clearedPage = '';
     const clearRequest = createDeferred();
@@ -326,6 +369,7 @@ Promise.resolve()
     .then(testMarkAllIgnoresStaleRefresh)
     .then(testMarkSingleDecrementsTotalUnreadCount)
     .then(testMarkSingleClearsNotificationsInSameMenu)
+    .then(testPemilikNotificationClickClearsSameMenu)
     .then(testEnteringMenuClearsNotificationsForThatMenu)
     .then(testRouterClearsNotificationsWhenShowingPage)
     .then(() => {

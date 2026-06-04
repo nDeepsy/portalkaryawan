@@ -258,7 +258,7 @@ function testLoginMobileUsesCompactLayout() {
         'mobile login hero should be shorter'
     );
     assert(
-        /\.role-card\s*\{[^}]*min-height:\s*50px;/.test(loginCssSource),
+        /\.role-card\s*\{[^}]*min-height:\s*58px;/.test(loginCssSource),
         'mobile role buttons should be compact'
     );
     assert(

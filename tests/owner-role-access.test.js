@@ -12,6 +12,7 @@ const adminEmployeesSource = fs.readFileSync(path.join(root, 'js', 'admin-employ
 const adminReportsSource = fs.readFileSync(path.join(root, 'js', 'admin-reports.js'), 'utf8');
 const apiSource = fs.readFileSync(path.join(root, 'js', 'api.js'), 'utf8');
 const indexSource = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const loginCssSource = fs.readFileSync(path.join(root, 'css', 'login.css'), 'utf8');
 const backendAuthSource = fs.readFileSync(path.join(repoRoot, 'apps-script-absensi', 'Auth.js'), 'utf8');
 const backendDatabaseSource = fs.readFileSync(path.join(repoRoot, 'apps-script-absensi', 'Database.js'), 'utf8');
 const backendLeaveSource = fs.readFileSync(path.join(repoRoot, 'apps-script-absensi', 'Leave.js'), 'utf8');
@@ -92,12 +93,20 @@ function loadRouterForRole(role) {
 function testLoginHasPemilikRoleOption() {
     assert(indexSource.includes('value="pemilik"'), 'login form should include a pemilik role option');
     assert(indexSource.includes('<span>Pemilik</span>'), 'login role option should show Pemilik label');
+    const pemilikIndex = indexSource.indexOf('value="pemilik"');
+    const adminIndex = indexSource.indexOf('value="admin"');
+    const employeeIndex = indexSource.indexOf('value="employee"');
+    assert(pemilikIndex < adminIndex && adminIndex < employeeIndex, 'login role order should be pemilik, admin, karyawan');
+    assert(!/name="role"\s+value="[^"]+"\s+checked/.test(indexSource), 'login should not select a role before the user chooses one');
+    assert(loginCssSource.includes('.role-option input:checked + .role-card'), 'selected role styling should only apply after a user chooses a role');
 }
 
 function testAuthNormalizesPemilikRole() {
     assert(authSource.includes("normalized === 'pemilik'"), 'auth should normalize pemilik role');
     assert(authSource.includes('isPemilik()'), 'auth should expose isPemilik helper');
     assert(authSource.includes('getRoleLabel'), 'auth should use a role label helper for UI/profile');
+    assert(authSource.includes("document.querySelector('input[name=\"role\"]:checked')"), 'login should read the selected role safely');
+    assert(authSource.includes('Pilih role login terlebih dahulu'), 'login should ask users to choose a role when none is selected');
 }
 
 function testPemilikRouterAllowsOnlyOwnerPages() {
@@ -121,6 +130,8 @@ function testPemilikMenusHideShiftAndSettings() {
     assert(indexSource.includes('data-admin-only="true"'), 'admin-only menu items should be marked for pemilik hiding');
     assert(authSource.includes('applyRoleVisibility'), 'auth should apply role visibility to admin-only controls');
     assert(mobileSource.includes('applyRoleVisibility'), 'mobile resize should re-apply pemilik menu visibility');
+    assert(indexSource.includes('data-owner-label="Dashboard"'), 'owner dashboard label should be available for sidebar/mobile nav');
+    assert(authSource.includes('dataset.adminLabel') && authSource.includes('dataset.ownerLabel'), 'auth should swap admin/owner labels for shared menus');
 }
 
 function testPemilikCannotManageEmployees() {

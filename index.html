@@ -80,10 +80,10 @@
                         <label>Login Sebagai:</label>
                         <div class="role-options">
                             <label class="role-option">
-                                <input type="radio" name="role" value="employee" checked>
+                                <input type="radio" name="role" value="pemilik">
                                 <span class="role-card">
-                                    <i class="fas fa-user"></i>
-                                    <span>Karyawan</span>
+                                    <i class="fas fa-user-tie"></i>
+                                    <span>Pemilik</span>
                                 </span>
                             </label>
                             <label class="role-option">
@@ -94,10 +94,10 @@
                                 </span>
                             </label>
                             <label class="role-option">
-                                <input type="radio" name="role" value="pemilik">
+                                <input type="radio" name="role" value="employee">
                                 <span class="role-card">
-                                    <i class="fas fa-user-tie"></i>
-                                    <span>Pemilik</span>
+                                    <i class="fas fa-user"></i>
+                                    <span>Karyawan</span>
                                 </span>
                             </label>
                         </div>
@@ -176,7 +176,7 @@
                         <li class="nav-item active" data-page="admin-dashboard">
                             <a href="#" class="nav-link">
                                 <i class="fas fa-chart-pie"></i>
-                                <span>Dashboard Admin</span>
+                                <span data-role-label data-admin-label="Dashboard Admin" data-owner-label="Dashboard">Dashboard Admin</span>
                             </a>
                         </li>
                         <li class="nav-item" data-page="employees">
@@ -1503,7 +1503,7 @@
 
         <nav class="bottom-nav admin-bottom-nav" id="admin-bottom-nav">
             <a href="#" class="bottom-nav-item active" data-page="admin-dashboard"><i
-                    class="fas fa-chart-pie"></i><span>Admin</span></a>
+                    class="fas fa-chart-pie"></i><span data-role-label data-admin-label="Admin" data-owner-label="Dashboard">Admin</span></a>
             <a href="#" class="bottom-nav-item" data-page="employees"><i class="fas fa-users"></i><span>Karyawan</span></a>
             <a href="#" class="bottom-nav-item" data-page="attendance-reports"><i
                     class="fas fa-clipboard-list"></i><span>Absensi</span></a>

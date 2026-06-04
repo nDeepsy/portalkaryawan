@@ -965,8 +965,8 @@ const notificationCenter = {
 
         let targetPage = '';
 
-        // Arah untuk ADMIN
-        if (role === 'admin') {
+        // Arah untuk ADMIN dan PEMILIK
+        if (role === 'admin' || role === 'pemilik') {
             if (type === 'attendance') {
                 targetPage = 'attendance-reports';
             } else if (type === 'journal') {

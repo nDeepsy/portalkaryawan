@@ -98,11 +98,16 @@ const auth = {
 
         const email = document.getElementById('login-email').value;
         const password = document.getElementById('login-password').value;
-        const role = document.querySelector('input[name="role"]:checked').value;
+        const selectedRoleInput = document.querySelector('input[name="role"]:checked');
+        const role = selectedRoleInput ? selectedRoleInput.value : '';
 
         // Validate
         if (!email || !password) {
             toast.error('Email dan password harus diisi!');
+            return;
+        }
+        if (!role) {
+            toast.error('Pilih role login terlebih dahulu!');
             return;
         }
 
@@ -448,6 +453,10 @@ const auth = {
         document.querySelectorAll('[data-admin-only="true"]').forEach(element => {
             element.hidden = hideAdminOnly;
             element.style.display = hideAdminOnly ? 'none' : '';
+        });
+        document.querySelectorAll('[data-role-label]').forEach(element => {
+            const label = hideAdminOnly ? element.dataset.ownerLabel : element.dataset.adminLabel;
+            if (label) element.textContent = label;
         });
     },
 
