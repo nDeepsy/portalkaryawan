@@ -432,8 +432,8 @@ const dashboard = {
 
         const activities = [];
         this.attendanceData.forEach(att => {
-            if (att.clockIn) activities.push({ title: 'Clock In', time: this.combineDateTime(att.date, att.clockIn), icon: 'clock-in', className: 'fa-sign-in-alt' });
-            if (att.clockOut) activities.push({ title: 'Clock Out', time: this.combineDateTime(att.date, att.clockOut), icon: 'clock-out', className: 'fa-sign-out-alt' });
+            if (att.clockIn) activities.push({ title: 'Masuk', time: this.combineDateTime(att.date, att.clockIn), icon: 'clock-in', className: 'fa-sign-in-alt' });
+            if (att.clockOut) activities.push({ title: 'Pulang', time: this.combineDateTime(att.date, att.clockOut), icon: 'clock-out', className: 'fa-sign-out-alt' });
         });
         this.journals.forEach(j => activities.push({ title: 'Mengisi Jurnal', time: j.updatedAt || j.date, icon: 'journal', className: 'fa-book' }));
         this.leaves.forEach(l => activities.push({ title: 'Mengajukan Cuti', time: l.appliedAt || l.startDate, icon: 'leave', className: 'fa-umbrella-beach' }));

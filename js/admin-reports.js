@@ -581,11 +581,7 @@ const adminReports = {
 
         if (Number.isNaN(parsed.getTime())) return raw;
 
-        return parsed.toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
+        return dateTime.formatNumericDate ? dateTime.formatNumericDate(parsed) : raw;
     },
 
     populateEmployeeFilter() {
@@ -1340,13 +1336,13 @@ const adminReports = {
 
     getAttendanceVerificationConfig() {
         return [
-            { action: 'clock-in', label: 'Clock In', time: 'clockIn', photo: 'clockInPhoto', location: 'clockInLocation', timestamp: 'clockInTimestamp' },
+            { action: 'clock-in', label: 'Masuk', time: 'clockIn', photo: 'clockInPhoto', location: 'clockInLocation', timestamp: 'clockInTimestamp' },
             { action: 'break', label: 'Istirahat 1', time: 'breakStart', photo: 'breakStartPhoto', location: 'breakStartLocation', timestamp: 'breakStartTimestamp' },
             { action: 'after-break', label: 'Selesai Istirahat 1', time: 'breakEnd', photo: 'breakEndPhoto', location: 'breakEndLocation', timestamp: 'breakEndTimestamp' },
             { action: 'break-2', label: 'Istirahat 2', time: 'break2Start', photo: 'break2StartPhoto', location: 'break2StartLocation', timestamp: 'break2StartTimestamp' },
             { action: 'after-break-2', label: 'Selesai Istirahat 2', time: 'break2End', photo: 'break2EndPhoto', location: 'break2EndLocation', timestamp: 'break2EndTimestamp' },
             { action: 'overtime', label: 'Lembur', time: 'overtimeStart', photo: 'overtimeStartPhoto', location: 'overtimeStartLocation', timestamp: 'overtimeStartTimestamp' },
-            { action: 'clock-out', label: 'Clock Out', time: 'clockOut', photo: 'clockOutPhoto', location: 'clockOutLocation', timestamp: 'clockOutTimestamp' }
+            { action: 'clock-out', label: 'Pulang', time: 'clockOut', photo: 'clockOutPhoto', location: 'clockOutLocation', timestamp: 'clockOutTimestamp' }
         ];
     },
 

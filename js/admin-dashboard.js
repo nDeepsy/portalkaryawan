@@ -327,8 +327,8 @@ const adminDashboard = {
         this.attendance.forEach(att => {
             if (!this.isDateInRange(att.date, range)) return;
             const emp = this.getEmployee(att.userId);
-            if (att.clockIn) activities.push(this.createActivity(emp, 'Clock In', att.date, att.clockIn, 'attendance'));
-            if (att.clockOut) activities.push(this.createActivity(emp, 'Clock Out', att.date, att.clockOut, 'attendance'));
+            if (att.clockIn) activities.push(this.createActivity(emp, 'Masuk', att.date, att.clockIn, 'attendance'));
+            if (att.clockOut) activities.push(this.createActivity(emp, 'Pulang', att.date, att.clockOut, 'attendance'));
         });
         this.journals.forEach(j => {
             const date = j.updatedAt || j.date;

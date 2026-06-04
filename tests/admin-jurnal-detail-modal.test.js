@@ -145,8 +145,8 @@ function testLeaveDetailUsesIndonesianDisplayDate() {
         'admin reports should provide a display date formatter'
     );
     assert(
-        adminReportsJs.includes("toLocaleDateString('id-ID'"),
-        'admin detail dates should use Indonesian day-month-year formatting'
+        adminReportsJs.includes('dateTime.formatNumericDate'),
+        'admin detail dates should use dd/mm/yyyy day-month-year formatting'
     );
     assert(
         adminReportsJs.includes("this.formatReportDisplayDate(item.startDate || '-')"),

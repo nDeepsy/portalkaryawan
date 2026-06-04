@@ -173,6 +173,7 @@ const toast = {
 const dateTime = {
     formatDate(date, format = 'full') {
         const d = new Date(date);
+        if (Number.isNaN(d.getTime())) return '';
         const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
         const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
             'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -182,14 +183,33 @@ const dateTime = {
         const month = months[d.getMonth()];
         const year = d.getFullYear();
 
-        if (format === 'full') {
-            return `${dayName}, ${day} ${month} ${year}`;
-        } else if (format === 'short') {
-            return `${day} ${months[d.getMonth()].substring(0, 3)} ${year}`;
+        if (format === 'full' || format === 'long' || format === 'short') {
+            return this.formatNumericDate(d);
         } else if (format === 'day') {
             return dayName;
         }
-        return `${day}/${d.getMonth() + 1}/${year}`;
+        return this.formatNumericDate(d);
+    },
+
+    formatNumericDate(value) {
+        if (!value) return '';
+
+        let d;
+        if (value instanceof Date) {
+            d = value;
+        } else if (/^\d{4}-\d{2}-\d{2}/.test(String(value))) {
+            const [year, month, day] = String(value).slice(0, 10).split('-').map(Number);
+            d = new Date(year, month - 1, day);
+        } else {
+            d = new Date(value);
+        }
+
+        if (Number.isNaN(d.getTime())) return String(value || '');
+
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}/${month}/${year}`;
     },
 
     formatTime(date) {

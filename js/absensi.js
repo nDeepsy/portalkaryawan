@@ -398,7 +398,8 @@ const absensi = {
     formatLeaveLockDate(value) {
         const date = this.parseLocalDate(value);
         if (!date) return String(value || '-');
-        return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        if (dateTime.formatNumericDate) return dateTime.formatNumericDate(date);
+        return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
     },
 
     addDaysToDateString(value, days) {
@@ -460,10 +461,9 @@ const absensi = {
                 statusBadge = '<span class="badge-status warning">Terlambat</span>';
             }
 
-            // Format date to local standard UI string
-            const [y, m, d] = String(record.date || '').split('-');
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
-            const dateStr = y && m && d ? `${d} ${months[parseInt(m) - 1] || m} ${y}` : '-';
+            const dateStr = dateTime.formatNumericDate
+                ? dateTime.formatNumericDate(record.date || record.tanggal || '')
+                : (record.date || record.tanggal || '-');
 
             return `
                 <tr>
@@ -684,7 +684,7 @@ const absensi = {
                 this.attendanceData.clockIn = timeStr;
                 this.attendanceData.status = 'ontime';
                 this.currentState = 'clocked-in';
-                toast.success(`Clock In berhasil: ${timeStr}`);
+                toast.success(`Masuk berhasil: ${timeStr}`);
                 break;
             case 'break':
                 this.attendanceData.breakStart = timeStr;
@@ -713,7 +713,7 @@ const absensi = {
             case 'clock-out':
                 this.attendanceData.clockOut = timeStr;
                 this.currentState = 'completed';
-                toast.success(`Clock Out berhasil: ${timeStr}`);
+                toast.success(`Pulang berhasil: ${timeStr}`);
                 break;
         }
 
@@ -812,13 +812,13 @@ const absensi = {
 
     buildVerificationLog(action, time, verificationData) {
         const labels = {
-            'clock-in': 'Clock In',
+            'clock-in': 'Masuk',
             'break': 'Istirahat 1',
             'after-break': 'Selesai Istirahat 1',
             'break-2': 'Istirahat 2',
             'after-break-2': 'Selesai Istirahat 2',
             'overtime': 'Lembur',
-            'clock-out': 'Clock Out'
+            'clock-out': 'Pulang'
         };
 
         return {
@@ -961,7 +961,7 @@ const absensi = {
                 }
                 case 'waiting':
                     statusRing.classList.add('waiting');
-                    if (statusText) statusText.textContent = 'Siap Clock In';
+                    if (statusText) statusText.textContent = 'Siap Masuk';
                     if (statusSubtext) statusSubtext.textContent = 'Tekan tombol di bawah untuk memulai';
                     break;
                 case 'clocked-in':
@@ -1290,12 +1290,12 @@ const absensi = {
         timeline.innerHTML = `
             <div class="timeline-item pending" data-type="clock-in">
                 <div class="timeline-dot"></div>
-                <div class="timeline-content"><span class="timeline-title">Clock In</span><span class="timeline-time">--:--</span></div>
+                <div class="timeline-content"><span class="timeline-title">Masuk</span><span class="timeline-time">--:--</span></div>
             </div>
             ${breakItems}
             <div class="timeline-item pending" data-type="clock-out">
                 <div class="timeline-dot"></div>
-                <div class="timeline-content"><span class="timeline-title">Clock Out</span><span class="timeline-time">--:--</span></div>
+                <div class="timeline-content"><span class="timeline-title">Pulang</span><span class="timeline-time">--:--</span></div>
             </div>
         `;
     }

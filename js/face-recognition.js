@@ -109,8 +109,8 @@ const faceRecognition = {
 
     updateActionTitle(action) {
         const titles = {
-            'clock-in': { title: 'Clock In - Verifikasi Wajah', subtitle: 'Verifikasi wajah Anda untuk Clock In' },
-            'clock-out': { title: 'Clock Out - Verifikasi Wajah', subtitle: 'Verifikasi wajah Anda untuk Clock Out' },
+            'clock-in': { title: 'Masuk - Verifikasi Wajah', subtitle: 'Verifikasi wajah Anda untuk Masuk' },
+            'clock-out': { title: 'Pulang - Verifikasi Wajah', subtitle: 'Verifikasi wajah Anda untuk Pulang' },
             'break': { title: 'Istirahat - Verifikasi Wajah', subtitle: 'Verifikasi wajah Anda untuk mulai istirahat' },
             'after-break': { title: 'Selesai Istirahat - Verifikasi Wajah', subtitle: 'Verifikasi wajah Anda untuk kembali bekerja' },
             'break-2': { title: 'Istirahat 2 - Verifikasi Wajah', subtitle: 'Verifikasi wajah Anda untuk mulai istirahat sesi 2' },
