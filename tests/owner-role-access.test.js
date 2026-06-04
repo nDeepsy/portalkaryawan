@@ -14,6 +14,8 @@ const apiSource = fs.readFileSync(path.join(root, 'js', 'api.js'), 'utf8');
 const indexSource = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const backendAuthSource = fs.readFileSync(path.join(repoRoot, 'apps-script-absensi', 'Auth.js'), 'utf8');
 const backendDatabaseSource = fs.readFileSync(path.join(repoRoot, 'apps-script-absensi', 'Database.js'), 'utf8');
+const backendLeaveSource = fs.readFileSync(path.join(repoRoot, 'apps-script-absensi', 'Leave.js'), 'utf8');
+const backendPermissionSource = fs.readFileSync(path.join(repoRoot, 'apps-script-absensi', 'Permission.js'), 'utf8');
 
 function createClassList() {
     const values = new Set();
@@ -130,9 +132,13 @@ function testPemilikCannotManageEmployees() {
 
 function testPemilikCanUseReportsAndConfirmLeave() {
     assert(adminReportsSource.includes('canAccessAdminReports'), 'reports should allow admin and pemilik access');
+    assert(adminReportsSource.includes('canConfirmLeaveRequests'), 'reports should have a pemilik-only leave confirmation helper');
     assert(adminReportsSource.includes('getConfirmationActor'), 'approval should include the current confirmation actor');
     assert(adminReportsSource.includes('confirmedByRole'), 'confirmation actor should include role metadata');
+    assert(adminReportsSource.includes('confirmedByName'), 'leave reports should expose who confirmed the request');
     assert(apiSource.includes("this.request('approveLeave', { id, ...actor })"), 'API approve leave should forward confirmation actor metadata');
+    assert(backendLeaveSource.includes('isOwnerConfirmationActor'), 'backend leave confirmation should require pemilik role metadata');
+    assert(backendPermissionSource.includes('isOwnerIzinConfirmationActor'), 'backend izin confirmation should require pemilik role metadata');
 }
 
 function testBackendLoginAndSeedUseUsersForPemilik() {

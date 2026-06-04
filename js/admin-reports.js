@@ -20,6 +20,10 @@ const adminReports = {
         return Boolean(auth && typeof auth.canAccessAdminReports === 'function' && auth.canAccessAdminReports());
     },
 
+    canConfirmLeaveRequests() {
+        return Boolean(auth && typeof auth.isPemilik === 'function' && auth.isPemilik());
+    },
+
     getConfirmationActor() {
         const user = auth?.getCurrentUser ? auth.getCurrentUser() : null;
         return {
@@ -209,7 +213,11 @@ const adminReports = {
                     duration: l.duration || 1,
                     reason: l.reason || '-',
                     status: l.status || 'pending',
-                    appliedAt: l.appliedAt || l.applied_at || l.createdAt || l.created_at || l.updatedAt || l.updated_at || ''
+                    appliedAt: l.appliedAt || l.applied_at || l.createdAt || l.created_at || l.updatedAt || l.updated_at || '',
+                    confirmedBy: l.confirmedBy || l.approvedBy || '',
+                    confirmedByName: l.confirmedByName || l.approvedByName || '',
+                    confirmedByRole: l.confirmedByRole || l.approvedByRole || '',
+                    confirmedAt: l.confirmedAt || l.approvedAt || ''
                 };
             }),
 
@@ -232,7 +240,11 @@ const adminReports = {
                     hasAttachment: i.hasAttachment || Boolean(i.attachmentData || i.attachmentName),
                     attachmentName: i.attachmentName || i.fileName || i.filename || '',
                     attachmentType: i.attachmentType || i.fileType || '',
-                    attachmentData: i.attachmentData || i.attachment || i.lampiran || i.file || ''
+                    attachmentData: i.attachmentData || i.attachment || i.lampiran || i.file || '',
+                    confirmedBy: i.confirmedBy || i.approvedBy || '',
+                    confirmedByName: i.confirmedByName || i.approvedByName || '',
+                    confirmedByRole: i.confirmedByRole || i.approvedByRole || '',
+                    confirmedAt: i.confirmedAt || i.approvedAt || ''
                 };
             })
         ];
@@ -950,8 +962,9 @@ const adminReports = {
             return;
         }
 
+        const canConfirm = this.canConfirmLeaveRequests();
         tbody.innerHTML = data.map((row, index) => {
-            const actionButtons = row.status === 'pending'
+            const actionButtons = canConfirm && row.status === 'pending'
                 ? `
                 <button class="btn-action edit" title="Konfirmasi"
                     onclick="adminReports.approveLeaveOrPermission(${index})">
@@ -995,7 +1008,7 @@ const adminReports = {
         const mobileContainer = document.getElementById('leave-mobile-cards');
         if (mobileContainer) {
             mobileContainer.innerHTML = data.map((row, index) => {
-                const actionButtons = row.status === 'pending'
+                const actionButtons = canConfirm && row.status === 'pending'
                     ? `
                         <button class="btn-action edit" title="Konfirmasi" onclick="adminReports.approveLeaveOrPermission(${index})">
                             <i class="fas fa-check"></i><span>Setujui</span>
@@ -1765,6 +1778,7 @@ const adminReports = {
         const sourceText = item.source === 'leave' ? 'Cuti' : 'Izin / Sakit';
         this.currentLeaveAttachmentUrl = this.getLeaveAttachmentImage(item);
         const attachmentHtml = this.renderLeaveAttachment(item);
+        const confirmationHtml = this.renderLeaveConfirmationInfo(item);
 
         const content = `
         <div class="leave-detail-content">
@@ -1802,11 +1816,12 @@ const adminReports = {
             </div>
 
             ${attachmentHtml}
+            ${confirmationHtml}
         </div>
     `;
 
         const actions = [];
-        if (item.status === 'pending') {
+        if (this.canConfirmLeaveRequests() && item.status === 'pending') {
             actions.push(
                 { label: 'Tolak', class: 'btn-danger', onClick: async () => this.rejectLeaveOrPermission(index) },
                 { label: 'Konfirmasi', class: 'btn-confirm', onClick: async () => this.approveLeaveOrPermission(index) }
@@ -1818,6 +1833,21 @@ const adminReports = {
         actions.modalClass = 'admin-detail-modal leave-detail-modal';
 
         modal.show('Detail Cuti / Izin', content, actions);
+    },
+
+    renderLeaveConfirmationInfo(item) {
+        if (!item || item.status === 'pending') return '';
+
+        const actorName = item.confirmedByName || item.confirmedBy || 'Pemilik';
+        const actorRole = auth?.getRoleLabel ? auth.getRoleLabel(item.confirmedByRole || 'pemilik') : 'Pemilik';
+        const confirmedAt = item.confirmedAt ? this.formatReportDisplayDate(item.confirmedAt) : '-';
+
+        return `
+            <div class="leave-detail-section">
+                <label>Dikonfirmasi oleh</label>
+                <p>${this.escapeHtml(actorName)} (${this.escapeHtml(actorRole)})${confirmedAt !== '-' ? ` - ${this.escapeHtml(confirmedAt)}` : ''}</p>
+            </div>
+        `;
     },
 
     renderLeaveAttachment(item) {
@@ -1871,6 +1901,11 @@ const adminReports = {
     },
 
     async updateLeaveOrPermissionStatus(index, nextStatus) {
+        if (!this.canConfirmLeaveRequests()) {
+            toast.error('Konfirmasi cuti dan izin hanya dapat dilakukan oleh pemilik.');
+            return;
+        }
+
         const data = this.getFilteredLeave();
         const item = data[index];
 
