@@ -153,6 +153,7 @@ function loadRouterWithNotificationCenter(notificationCenter) {
 
 function testBackendDeletesNotificationsBySameMenu() {
     const backendSource = fs.readFileSync(path.join(__dirname, '..', '..', 'apps-script-absensi', 'Notification.js'), 'utf8');
+    const journalSource = fs.readFileSync(path.join(__dirname, '..', '..', 'apps-script-absensi', 'Journal.js'), 'utf8');
     const codeSource = fs.readFileSync(path.join(__dirname, '..', '..', 'apps-script-absensi', 'Code.js'), 'utf8');
     const apiSource = fs.readFileSync(path.join(__dirname, '..', 'js', 'api.js'), 'utf8');
 
@@ -165,6 +166,9 @@ function testBackendDeletesNotificationsBySameMenu() {
     assert(backendSource.includes("normalizedRole === 'pemilik'"), 'backend should route pemilik notifications by role');
     assert(backendSource.includes("targetRole === 'pemilik'"), 'pemilik should access notifications targeted to pemilik');
     assert(backendSource.includes('createPemilikNotification'), 'backend should create notifications for pemilik');
+    assert(journalSource.includes("createJournalNotificationOnceForRole('admin'"), 'journal save should create an admin notification');
+    assert(journalSource.includes("createJournalNotificationOnceForRole('pemilik'"), 'journal save should create a pemilik notification');
+    assert(!/createJournalAdminNotificationOnce[\s\S]*String\(row\.targetRole \|\| ''\)\.toLowerCase\(\) === 'admin'[\s\S]*return existing;[\s\S]*createAdminNotification/.test(journalSource), 'journal notification dedupe should not let admin notifications block pemilik notifications');
     assert(codeSource.includes("case 'markNotificationsForMenu':"), 'backend router should expose markNotificationsForMenu');
     assert(apiSource.includes('async markNotificationsForMenu(page, role, userId)'), 'frontend API should expose markNotificationsForMenu');
 }
