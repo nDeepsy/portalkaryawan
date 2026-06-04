@@ -189,21 +189,37 @@ function testAttendanceDetailRecordDateUsesDayMonthYear() {
 
 function testAttendanceStatusFilterIncludesAnyPresentEmployee() {
     const adminReports = loadAdminReports();
-    adminReports.attendanceData = [
-        { name: 'A', division: 'Siaran', present: 3, late: 0, absent: 0 },
-        { name: 'B', division: 'Siaran', present: 3, late: 1, absent: 0 },
-        { name: 'C', division: 'Siaran', present: 1, late: 0, absent: 2 },
-        { name: 'D', division: 'Siaran', present: 0, late: 0, absent: 1 }
+    adminReports.rawEmployees = [
+        { id: 'A', name: 'A', division: 'Siaran' },
+        { id: 'B', name: 'B', division: 'Siaran' },
+        { id: 'C', name: 'C', division: 'Siaran' },
+        { id: 'D', name: 'D', division: 'Siaran' }
     ];
+    adminReports.rawAttendance = [
+        { userId: 'A', date: '2026-06-04', clockIn: '08:00', status: 'ontime' },
+        { userId: 'A', date: '2026-05-04', clockIn: '08:00', status: 'ontime' },
+        { userId: 'B', date: '2026-06-04', clockIn: '08:30', status: 'terlambat' },
+        { userId: 'C', date: '2026-06-04', clockIn: '08:00', status: 'ontime' }
+    ];
+    adminReports.rawLeaves = [];
+    adminReports.rawIzin = [
+        { userId: 'C', date: '2026-06-05', duration: 1, status: 'approved' },
+        { userId: 'D', date: '2026-06-05', duration: 1, status: 'approved' }
+    ];
+    adminReports.filters.attendance.month = '2026-06';
 
     adminReports.filters.attendance.status = 'present';
     assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.name), ['A', 'B', 'C']);
+    assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.present), [1, 1, 1]);
 
     adminReports.filters.attendance.status = 'late';
     assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.name), ['B']);
 
     adminReports.filters.attendance.status = 'absent';
     assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.name), ['C', 'D']);
+
+    adminReports.filters.attendance.status = '';
+    assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.name), ['A', 'B', 'C', 'D']);
 }
 
 testBreak2DedicatedEvidenceAppearsInDetailLogs();

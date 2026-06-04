@@ -157,6 +157,8 @@ const adminReports = {
     applyReportRows({ employees = [], jurnals = [], leaves = [], izinList = [], attendances = [] }) {
         this.rawAttendance = attendances;
         this.rawEmployees = employees;
+        this.rawLeaves = leaves;
+        this.rawIzin = izinList;
         this.attendanceData = this.buildAttendanceReportRows(employees, attendances, leaves, izinList);
 
         const currentUser = auth.getCurrentUser();
@@ -370,6 +372,8 @@ const adminReports = {
 
         this.rawAttendance = attendances;
         this.rawEmployees = employees;
+        this.rawLeaves = leaves;
+        this.rawIzin = izinList;
         this.attendanceData = this.buildAttendanceReportRows(employees, attendances, leaves, izinList);
     },
 
@@ -752,11 +756,75 @@ const adminReports = {
     },
 
     getFilteredAttendance() {
+        if (Array.isArray(this.rawEmployees) && this.rawEmployees.length) {
+            const division = this.filters.attendance.division;
+            const status = this.filters.attendance.status;
+            const employees = this.rawEmployees.filter(emp => !division || getEmployeeDivision(emp) === division);
+            const attendances = this.getAttendanceRowsForCurrentFilter(status);
+            const leaves = this.getAttendanceLeaveRowsForCurrentFilter(status);
+            const izinList = this.getAttendanceIzinRowsForCurrentFilter(status);
+
+            return this.buildAttendanceReportRows(employees, attendances, leaves, izinList)
+                .filter(row => this.matchesAttendanceStatusFilter(row, status));
+        }
+
         return this.attendanceData.filter(row => {
             const matchesDivision = !this.filters.attendance.division || row.division === this.filters.attendance.division;
             const matchesStatus = this.matchesAttendanceStatusFilter(row, this.filters.attendance.status);
             return matchesDivision && matchesStatus;
         });
+    },
+
+    getAttendanceRowsForCurrentFilter(status = '') {
+        const rows = Array.isArray(this.rawAttendance) ? this.rawAttendance : [];
+        return rows.filter(row => {
+            if (!this.isAttendanceRowInSelectedMonth(row)) return false;
+            if (!status || status === 'present') return Boolean(row.clockIn);
+            if (status === 'late') return Boolean(row.clockIn) && this.isLateAttendanceRow(row);
+            return false;
+        });
+    },
+
+    getAttendanceLeaveRowsForCurrentFilter(status = '') {
+        if (status && status !== 'absent') return [];
+        const rows = Array.isArray(this.rawLeaves) ? this.rawLeaves : [];
+        return rows.filter(row =>
+            String(row.status || '').toLowerCase() === 'approved' &&
+            this.isLeaveOrPermissionRowInSelectedMonth(row)
+        );
+    },
+
+    getAttendanceIzinRowsForCurrentFilter(status = '') {
+        if (status && status !== 'absent') return [];
+        const rows = Array.isArray(this.rawIzin) ? this.rawIzin : [];
+        return rows.filter(row =>
+            String(row.status || '').toLowerCase() === 'approved' &&
+            this.isLeaveOrPermissionRowInSelectedMonth(row)
+        );
+    },
+
+    isAttendanceRowInSelectedMonth(row = {}) {
+        const month = this.filters.attendance.month;
+        if (!month) return true;
+        return String(row.date || row.tanggal || '').startsWith(month);
+    },
+
+    isLeaveOrPermissionRowInSelectedMonth(row = {}) {
+        const month = this.filters.attendance.month;
+        if (!month) return true;
+
+        const dates = [
+            row.date,
+            row.startDate,
+            row.endDate
+        ].filter(Boolean);
+
+        return dates.some(value => String(value).startsWith(month));
+    },
+
+    isLateAttendanceRow(row = {}) {
+        const status = String(row.status || '').toLowerCase();
+        return status === 'late' || status === 'terlambat';
     },
 
     matchesAttendanceStatusFilter(row = {}, status = '') {
