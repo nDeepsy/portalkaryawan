@@ -319,6 +319,30 @@ async function testPemilikNotificationClickClearsSameMenu() {
     await markPromise;
 }
 
+async function testMarkAllClosesDropdownAfterClick() {
+    const markAllRequest = createDeferred();
+    const api = {
+        getNotifications: async () => ({ success: true, data: { unreadCount: 0, items: [] } }),
+        markAllNotificationsRead: () => markAllRequest.promise,
+        clearRequestCache() {}
+    };
+    const { notificationCenter } = loadNotificationCenter({ api });
+
+    let closeCount = 0;
+    notificationCenter.closeDropdown = () => {
+        closeCount += 1;
+    };
+    notificationCenter.items = [{ id: '1', isRead: false }];
+    notificationCenter.unreadCount = 1;
+
+    const markPromise = notificationCenter.markAllAsRead();
+
+    assert.strictEqual(closeCount, 1, 'mark all should close the notification dropdown immediately');
+
+    markAllRequest.resolve({ success: true, data: { updatedCount: 1 } });
+    await markPromise;
+}
+
 async function testEnteringMenuClearsNotificationsForThatMenu() {
     let clearedPage = '';
     const clearRequest = createDeferred();
@@ -367,6 +391,7 @@ Promise.resolve()
     .then(testBackendDeletesNotificationsBySameMenu)
     .then(testNotificationPollingIsFastEnoughForCrossDeviceActivity)
     .then(testMarkAllIgnoresStaleRefresh)
+    .then(testMarkAllClosesDropdownAfterClick)
     .then(testMarkSingleDecrementsTotalUnreadCount)
     .then(testMarkSingleClearsNotificationsInSameMenu)
     .then(testPemilikNotificationClickClearsSameMenu)

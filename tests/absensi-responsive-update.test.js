@@ -7,6 +7,7 @@ const root = path.join(__dirname, '..');
 const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const absensiJs = fs.readFileSync(path.join(root, 'js', 'absensi.js'), 'utf8');
 const faceRecognitionJs = fs.readFileSync(path.join(root, 'js', 'face-recognition.js'), 'utf8');
+const mobileCss = fs.readFileSync(path.join(root, 'css', 'mobile.css'), 'utf8');
 
 function createAbsensiHarness(overrides = {}) {
     const store = overrides.store || {};
@@ -718,6 +719,21 @@ function testAttendanceLeaveLockIconMatchesPermissionType() {
     assert.strictEqual(absensi.getAttendanceLeaveIcon({ source: 'cuti', label: 'Cuti Tahunan' }), 'fas fa-umbrella-beach');
 }
 
+function testMobileAttendanceStatusDoesNotClipPulseAnimation() {
+    assert(
+        /\.attendance-status\s*\{[^}]*overflow:\s*visible;/s.test(mobileCss),
+        'mobile attendance status should allow the pulsing status ring to render without clipping'
+    );
+    assert(
+        /\.attendance-status\s+\.status-ring\s*\{[^}]*width:\s*82px;[^}]*height:\s*82px;/s.test(mobileCss),
+        'mobile status ring should use compact stable dimensions'
+    );
+    assert(
+        /\.attendance-status\s+\.status-icon\s*\{[^}]*width:\s*50px;[^}]*height:\s*50px;/s.test(mobileCss),
+        'mobile status icon should be compact inside the ring'
+    );
+}
+
 (async () => {
     await testAttendanceUiUpdatesBeforeBackendSaveResolves();
     await testAttendanceTimeUsesVerificationTimestamp();
@@ -741,6 +757,7 @@ function testAttendanceLeaveLockIconMatchesPermissionType() {
     await testConfiguredHolidayLocksEmployeeAttendanceButtons();
     await testShiftScheduleOverridesConfiguredHoliday();
     testAttendanceLeaveLockIconMatchesPermissionType();
+    testMobileAttendanceStatusDoesNotClipPulseAnimation();
     console.log('absensi responsive update tests passed');
 })().catch(error => {
     console.error(error);

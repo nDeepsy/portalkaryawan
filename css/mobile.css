@@ -169,23 +169,24 @@
         justify-content: center;
         text-align: center;
         margin-bottom: 24px;
+        padding-top: 8px;
         width: 100%;
         max-width: 100%;
         box-sizing: border-box;
-        overflow: hidden;
+        overflow: visible;
     }
     
     .attendance-status .status-ring {
-        width: 90px;
-        height: 90px;
+        width: 82px;
+        height: 82px;
         margin-bottom: 16px;
         flex-shrink: 0;
     }
     
     .attendance-status .status-icon {
-        width: 54px;
-        height: 54px;
-        font-size: 1.5rem;
+        width: 50px;
+        height: 50px;
+        font-size: 1.35rem;
     }
     
     .attendance-status .status-text {
@@ -1308,10 +1309,11 @@
         height: 78px;
     }
 
+    .attendance-status .status-icon,
     .status-icon {
-        width: 52px;
-        height: 52px;
-        font-size: 1.35rem;
+        width: 48px;
+        height: 48px;
+        font-size: 1.25rem;
     }
 
     .attendance-actions {

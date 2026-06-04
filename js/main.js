@@ -881,6 +881,7 @@ const notificationCenter = {
         this.unreadCount = 0;
         this.renderBadge(0);
         this.renderItems([]);
+        this.closeDropdown();
 
         try {
             const result = await api.markAllNotificationsRead(user.role, user.id);
