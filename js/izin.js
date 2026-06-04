@@ -27,8 +27,41 @@ const izin = {
 
         const dateInput = document.getElementById('izin-date');
         if (dateInput) {
-            dateInput.valueAsDate = new Date();
+            dateInput.value = this.formatDateInputForDisplay(dateTime.getLocalDate ? dateTime.getLocalDate() : new Date());
         }
+    },
+
+    formatDateInputForDisplay(value) {
+        if (!value) return '';
+
+        const raw = String(value).trim();
+        const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (isoMatch) return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
+
+        const date = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(date.getTime())) return raw;
+
+        return dateTime.formatNumericDate ? dateTime.formatNumericDate(date) : dateTime.formatDate(date, 'short');
+    },
+
+    parseDisplayDateToYMD(value) {
+        if (!value) return '';
+
+        const raw = String(value).trim();
+        const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+
+        const slashMatch = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
+        if (slashMatch) {
+            const day = slashMatch[1].padStart(2, '0');
+            const month = slashMatch[2].padStart(2, '0');
+            const year = slashMatch[3].length === 2 ? `20${slashMatch[3]}` : slashMatch[3];
+            return `${year}-${month}-${day}`;
+        }
+
+        const parsed = new Date(raw);
+        if (Number.isNaN(parsed.getTime())) return '';
+        return new Date(parsed.getTime() - (parsed.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     },
 
     loadCachedIzin() {
@@ -214,7 +247,7 @@ const izin = {
 
         // Validate form first
         const type = document.getElementById('izin-type')?.value;
-        const date = document.getElementById('izin-date')?.value;
+        const date = this.parseDisplayDateToYMD(document.getElementById('izin-date')?.value);
         const duration = document.getElementById('izin-duration')?.value;
         const reason = document.getElementById('izin-reason')?.value;
 

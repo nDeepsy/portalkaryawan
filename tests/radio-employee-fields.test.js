@@ -85,6 +85,7 @@ assert(!adminEmployeesJs.includes('department'), 'admin employee script should u
 assert(adminEmployeesJs.includes('getSmallestAvailableEmployeeId'), 'employee preview should reuse deleted employee ID gaps');
 assert(adminEmployeesJs.includes('sortEmployeesById'), 'employee list should expose ID sorting');
 assert(adminEmployeesJs.includes('.sort((a, b) => this.compareEmployeeIds(a.id, b.id))'), 'employee filters should sort rows by employee ID');
+assert(adminEmployeesJs.includes('formatDisplayDate(emp.joinDate ||'), 'employee detail should display join date as dd/mm/yyyy');
 assert(apiJs.includes('getSmallestAvailableEmployeeId'), 'local employee creation should reuse deleted employee ID gaps');
 assert(apiJs.includes('data.id = this.getNextLocalEmployeeId(all);'), 'local add employee should use the reusable employee ID generator');
 assert(employeeGs.includes('getSmallestAvailableEmployeeIdData'), 'backend employee creation should reuse deleted employee ID gaps');

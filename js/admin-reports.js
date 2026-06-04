@@ -1326,11 +1326,12 @@ const adminReports = {
         const statusText = this.getAttendanceStatusLabel(record.status, record.clockIn);
         const verificationLogs = this.getAttendanceVerificationLogs(record);
         const formatClock = (value) => dateTime.formatClockTime(value) || '-';
+        const displayDate = this.formatAttendanceDetailDate(record.date || '-');
 
         return `
             <div class="attendance-detail-record">
                 <div class="attendance-record-header">
-                    <strong>${this.escapeHtml(record.date || '-')}</strong>
+                    <strong>${this.escapeHtml(displayDate)}</strong>
                     <span class="status-badge ${this.escapeAttr(String(record.status || 'waiting').toLowerCase())}">
                         ${this.escapeHtml(statusText)}
                     </span>
@@ -1348,6 +1349,10 @@ const adminReports = {
                 ${this.renderAttendanceVerificationLogs(verificationLogs)}
             </div>
         `;
+    },
+
+    formatAttendanceDetailDate(value) {
+        return this.formatReportDisplayDate(value);
     },
 
     getAttendanceVerificationLogs(record) {

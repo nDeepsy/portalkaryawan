@@ -180,10 +180,18 @@ function testAttendanceReportsRenderCachedDataBeforeFreshRefresh() {
     assert(source.includes("router?.currentPage === 'attendance-reports'"), 'auto-refresh should only run on the attendance report page');
 }
 
+function testAttendanceDetailRecordDateUsesDayMonthYear() {
+    const source = fs.readFileSync(path.join(__dirname, '..', 'js', 'admin-reports.js'), 'utf8');
+
+    assert(source.includes('formatAttendanceDetailDate(record.date ||'), 'attendance detail records should format dates as dd/mm/yyyy');
+    assert(!source.includes("<strong>${this.escapeHtml(record.date || '-')}</strong>"), 'attendance detail should not render raw yyyy-mm-dd dates');
+}
+
 testBreak2DedicatedEvidenceAppearsInDetailLogs();
 testDedicatedEvidenceFillsMissingParsedLogFields();
 testLegacyLatestVerificationFillsClockOutWhenParsedLogsHaveNoEvidence();
 testRemoteAttendanceUsesCachedPerActionEvidenceWhenServerRowIsMissingIt();
 testAttendanceReportKeepsTotalLabelWithClearTooltip();
 testAttendanceReportsRenderCachedDataBeforeFreshRefresh();
+testAttendanceDetailRecordDateUsesDayMonthYear();
 console.log('admin attendance detail tests passed');

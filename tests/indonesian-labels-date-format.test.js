@@ -72,6 +72,16 @@ function testDateDisplaysUseSharedNumericFormatter() {
     assert(mainSource.includes('dateTime.formatNumericDate(date)'), 'notification timestamps should use dd/mm/yyyy dates');
     assert(!/return date\.toLocaleString\('id-ID'/.test(mainSource), 'notification timestamps should not use locale medium dates');
     assert(jurnalSource.includes('dateTime.formatNumericDate(date)'), 'journal history cards should show dd/mm/yyyy');
+    assert(indexSource.includes('id="izin-date"') && indexSource.includes('placeholder="dd/mm/yyyy"'), 'permission form date input should show dd/mm/yyyy guidance');
+    assert(absensiSource.includes('formatLeaveLockDate'), 'attendance leave lock should keep using a numeric date formatter');
+}
+
+function testPermissionFormDateUsesDayMonthYearDisplay() {
+    const izinSource = fs.readFileSync(path.join(root, 'js', 'izin.js'), 'utf8');
+
+    assert(izinSource.includes('formatDateInputForDisplay'), 'permission form should format its date input as dd/mm/yyyy');
+    assert(izinSource.includes('parseDisplayDateToYMD'), 'permission form should convert dd/mm/yyyy back to yyyy-mm-dd before saving');
+    assert(izinSource.includes('const date = this.parseDisplayDateToYMD'), 'permission submit should use the normalized backend date value');
 }
 
 function testBackendNotificationDatesUseDayMonthYear() {
@@ -90,6 +100,7 @@ function testDesktopRoleSelectorUsesThreeBalancedColumns() {
 testDateTimeUsesDayMonthYear();
 testClockLabelsAreIndonesian();
 testDateDisplaysUseSharedNumericFormatter();
+testPermissionFormDateUsesDayMonthYearDisplay();
 testBackendNotificationDatesUseDayMonthYear();
 testDesktopRoleSelectorUsesThreeBalancedColumns();
 console.log('Indonesian labels and date format tests passed');

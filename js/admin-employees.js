@@ -816,7 +816,7 @@ const adminEmployees = {
                     </div>
                     <div class="employee-detail-field">
                         <label>Bergabung</label>
-                        <p>${this.escapeHtml(emp.joinDate || '-')}</p>
+                        <p>${this.escapeHtml(this.formatDisplayDate(emp.joinDate || '-'))}</p>
                     </div>
                     <div class="employee-detail-field">
                         <label>Status</label>
@@ -845,6 +845,24 @@ const adminEmployees = {
 
     escapeAttr(value) {
         return this.escapeHtml(value);
+    },
+
+    formatDisplayDate(value) {
+        if (!value || value === '-') return '-';
+
+        const raw = String(value).trim();
+        const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        const parsed = isoMatch
+            ? new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]))
+            : new Date(raw);
+
+        if (Number.isNaN(parsed.getTime())) return raw;
+
+        if (typeof dateTime !== 'undefined' && dateTime.formatNumericDate) {
+            return dateTime.formatNumericDate(parsed);
+        }
+
+        return `${String(parsed.getDate()).padStart(2, '0')}/${String(parsed.getMonth() + 1).padStart(2, '0')}/${parsed.getFullYear()}`;
     },
 
     async editEmployee(id) {
