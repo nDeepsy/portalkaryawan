@@ -473,12 +473,8 @@ const adminReports = {
         if (!Array.isArray(rows)) return [];
         return rows.filter(row =>
             this.hasValue(row, 'userId') &&
-            this.hasValue(row, 'type') &&
             this.hasValue(row, 'startDate') &&
-            this.hasValue(row, 'endDate') &&
-            this.hasValue(row, 'duration') &&
-            this.hasValue(row, 'reason') &&
-            this.hasValue(row, 'appliedAt')
+            this.hasValue(row, 'endDate')
         );
     },
 
@@ -582,6 +578,35 @@ const adminReports = {
         if (Number.isNaN(parsed.getTime())) return raw;
 
         return dateTime.formatNumericDate ? dateTime.formatNumericDate(parsed) : raw;
+    },
+
+    formatJurnalReportDate(value) {
+        return this.formatReportDisplayDate(value);
+    },
+
+    formatLeaveReportDate(value) {
+        if (!value || value === '-') return '-';
+        return this.formatReportDisplayDate(value);
+    },
+
+    formatLeaveReportDateRange(row = {}) {
+        if (row.source !== 'leave') {
+            return this.formatLeaveReportDate(row.dates || row.date || '-');
+        }
+
+        const start = this.formatLeaveReportDate(row.startDate || row.dates || '-');
+        const end = this.formatLeaveReportDate(row.endDate || row.startDate || row.dates || '-');
+
+        return start === end ? start : `${start} - ${end}`;
+    },
+
+    formatExportDateTime(value) {
+        const date = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value || '-');
+
+        const datePart = dateTime.formatNumericDate ? dateTime.formatNumericDate(date) : this.formatReportDisplayDate(date);
+        const timePart = dateTime.formatTime ? dateTime.formatTime(date) : '';
+        return `${datePart}${timePart ? ` ${timePart}` : ''}`;
     },
 
     populateEmployeeFilter() {
@@ -860,13 +885,14 @@ const adminReports = {
         tbody.innerHTML = data.map((row, index) => {
             const rawTasks = String(row.tasks || '-');
             const tasksPreview = rawTasks.length > 46 ? `${rawTasks.substring(0, 46)}...` : rawTasks;
+            const displayDate = this.formatJurnalReportDate(row.date || '-');
             const photoCell = row.photo ?
                 `<span class="jurnal-photo-wrap"><img src="${this.escapeAttr(row.photo)}" class="jurnal-thumbnail" onclick="adminReports.viewJurnalPhoto(${index})" onerror="adminReports.handlePhotoError(this)" title="Klik untuk memperbesar"></span>` :
                 '<span class="jurnal-photo-wrap"><span class="no-photo-cell">-</span></span>';
 
             return `
             <tr>
-                <td class="jurnal-date-cell">${this.escapeHtml(row.date || '-')}</td>
+                <td class="jurnal-date-cell">${this.escapeHtml(displayDate)}</td>
                 <td class="jurnal-name-cell">${this.escapeHtml(row.name || '-')}</td>
                 <td class="jurnal-dept-cell">${this.escapeHtml(row.division || '-')}</td>
                 <td class="jurnal-task-cell" title="${this.escapeAttr(rawTasks)}">${this.escapeHtml(tasksPreview)}</td>
@@ -897,6 +923,7 @@ const adminReports = {
             mobileContainer.innerHTML = data.map((row, index) => {
                 const rawTasks = String(row.tasks || '-');
                 const tasksPreview = rawTasks.length > 90 ? `${rawTasks.substring(0, 90)}...` : rawTasks;
+                const displayDate = this.formatJurnalReportDate(row.date || '-');
                 return `
                     <div class="mobile-card">
                         <div class="mobile-card-header">
@@ -907,7 +934,7 @@ const adminReports = {
                         </div>
                         <div class="mobile-card-row">
                             <span class="mobile-card-label">Tanggal</span>
-                            <span class="mobile-card-value">${this.escapeHtml(row.date || '-')}</span>
+                            <span class="mobile-card-value">${this.escapeHtml(displayDate)}</span>
                         </div>
                         <div class="mobile-card-row">
                             <span class="mobile-card-label">Divisi</span>
@@ -960,6 +987,7 @@ const adminReports = {
 
         const canConfirm = this.canConfirmLeaveRequests();
         tbody.innerHTML = data.map((row, index) => {
+            const displayDate = this.formatLeaveReportDateRange(row);
             const actionButtons = canConfirm && row.status === 'pending'
                 ? `
                 <button class="btn-action edit" title="Konfirmasi"
@@ -979,7 +1007,7 @@ const adminReports = {
                 <td class="leave-name-cell">${this.escapeHtml(row.name || '-')}</td>
                 <td class="leave-dept-cell">${this.escapeHtml(row.division || '-')}</td>
                 <td class="leave-type-cell">${this.escapeHtml(row.type || '-')}</td>
-                <td class="leave-date-cell">${this.escapeHtml(row.dates || row.date || '-')}</td>
+                <td class="leave-date-cell">${this.escapeHtml(displayDate)}</td>
                 <td class="leave-duration-cell">${this.escapeHtml(row.duration || 0)} hari</td>
                 <td class="leave-reason-cell" title="${this.escapeAttr(row.reason || '-')}">${this.escapeHtml(row.reason || '-')}</td>
                 <td class="leave-status-cell">
@@ -1004,6 +1032,7 @@ const adminReports = {
         const mobileContainer = document.getElementById('leave-mobile-cards');
         if (mobileContainer) {
             mobileContainer.innerHTML = data.map((row, index) => {
+                const displayDate = this.formatLeaveReportDateRange(row);
                 const actionButtons = canConfirm && row.status === 'pending'
                     ? `
                         <button class="btn-action edit" title="Konfirmasi" onclick="adminReports.approveLeaveOrPermission(${index})">
@@ -1033,7 +1062,7 @@ const adminReports = {
                         </div>
                         <div class="mobile-card-row">
                             <span class="mobile-card-label">Tanggal</span>
-                            <span class="mobile-card-value">${this.escapeHtml(row.dates || row.date || '-')}</span>
+                            <span class="mobile-card-value">${this.escapeHtml(displayDate)}</span>
                         </div>
                         <div class="mobile-card-row">
                             <span class="mobile-card-label">Durasi</span>
@@ -1088,7 +1117,7 @@ const adminReports = {
                 rows: this.getFilteredJurnal(),
                 columns: [
                     { header: 'No', value: (_, index) => index + 1, align: 'center', width: 48 },
-                    { header: 'Tanggal', value: row => row.date || '-', align: 'center', width: 110 },
+                    { header: 'Tanggal', value: row => this.formatJurnalReportDate(row.date || '-'), align: 'center', width: 110 },
                     { header: 'Nama Karyawan', value: row => row.name || '-', align: 'left', width: 200 },
                     { header: 'Divisi', value: row => row.division || '-', align: 'left', width: 150 },
                     { header: 'Aktivitas Kerja', value: row => row.tasks || '-', align: 'left', width: 280 },
@@ -1110,7 +1139,7 @@ const adminReports = {
                     { header: 'Nama Karyawan', value: row => row.name || '-', align: 'left', width: 200 },
                     { header: 'Divisi', value: row => row.division || '-', align: 'left', width: 150 },
                     { header: 'Jenis', value: row => row.type || '-', align: 'left', width: 140 },
-                    { header: 'Tanggal', value: row => row.dates || row.date || '-', align: 'center', width: 180 },
+                    { header: 'Tanggal', value: row => this.formatLeaveReportDateRange(row), align: 'center', width: 180 },
                     { header: 'Durasi', value: row => `${row.duration || 0} hari`, align: 'center', width: 90 },
                     { header: 'Alasan', value: row => row.reason || '-', align: 'left', width: 300 },
                     { header: 'Status', value: row => this.getLeaveStatusLabel(row.status), align: 'center', width: 110 }
@@ -1193,7 +1222,7 @@ const adminReports = {
                 <table>
                     <colgroup>${colgroup}</colgroup>
                     <tr><td colspan="${colCount}" class="title">${this.escapeHtml(config.title)}</td></tr>
-                    <tr><td colspan="${colCount}" class="meta">Tanggal Export: ${this.escapeHtml(new Date().toLocaleString('id-ID'))}</td></tr>
+                    <tr><td colspan="${colCount}" class="meta">Tanggal Export: ${this.escapeHtml(this.formatExportDateTime(new Date()))}</td></tr>
                     <tr class="spacer">${Array.from({ length: colCount }, () => '<td></td>').join('')}</tr>
                     <tr>${headerCells}</tr>
                     ${bodyRows}

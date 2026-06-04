@@ -1010,10 +1010,9 @@ const notificationCenter = {
             return this.escapeHtml(String(value));
         }
 
-        return date.toLocaleString('id-ID', {
-            dateStyle: 'medium',
-            timeStyle: 'short'
-        });
+        const datePart = dateTime.formatNumericDate(date);
+        const timePart = dateTime.formatTime(date);
+        return `${datePart} ${timePart}`;
     },
 
     escapeHtml(value) {

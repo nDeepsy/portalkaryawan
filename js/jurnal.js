@@ -862,8 +862,7 @@ const jurnal = {
         list.innerHTML = filteredItems.map(item => {
             const date = this.parseLocalDate(item.date);
             const dayName = dateTime.formatDate(date, 'day');
-            const day = date.getDate();
-            const month = date.toLocaleDateString('id-ID', { month: 'short' });
+            const formattedDate = dateTime.formatNumericDate ? dateTime.formatNumericDate(date) : dateTime.formatDate(date, 'short');
             const journal = item.journal;
             const preview = journal?.tasks ? journal.tasks.substring(0, 60) + '...' : 'Tanggal ini belum diisi.';
             const hasPhoto = (journal?.photo || journal?.attachment || journal?.lampiran) ? '<span class="photo-badge"><i class="fas fa-image"></i></span>' : '';
@@ -890,8 +889,7 @@ const jurnal = {
                 <div class="jurnal-item ${item.status === 'missing' ? 'missing' : ''}">
                     <div class="jurnal-item-header">
                         <div class="jurnal-date">
-                            <span class="date-day">${day}</span>
-                            <span class="date-month">${month}</span>
+                            <span class="date-full">${formattedDate}</span>
                         </div>
                         <div class="jurnal-meta">
                             <span class="jurnal-day">${dayName}</span>

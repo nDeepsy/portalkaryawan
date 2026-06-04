@@ -8,6 +8,7 @@ const adminEmployeesJs = fs.readFileSync(path.join(root, 'js', 'admin-employees.
 const apiJs = fs.readFileSync(path.join(root, 'js', 'api.js'), 'utf8');
 const adminCss = fs.readFileSync(path.join(root, 'css', 'admin.css'), 'utf8');
 const mobileCss = fs.readFileSync(path.join(root, 'css', 'mobile.css'), 'utf8');
+const backendLeaveJs = fs.readFileSync(path.join(root, '..', 'apps-script-absensi', 'Leave.js'), 'utf8');
 
 function testAdminReportMobileCardsRenderAllBackendDataSections() {
     assert(
@@ -118,6 +119,29 @@ function testAdminReportsShowNewestSubmittedRowsFirst() {
     );
 }
 
+function testLeaveReportsKeepConfirmedRowsWithSparseSheetData() {
+    assert(
+        /filterValidLeaves\(rows\)\s*\{[\s\S]*this\.hasValue\(row,\s*'userId'\)[\s\S]*this\.hasValue\(row,\s*'startDate'\)[\s\S]*this\.hasValue\(row,\s*'endDate'\)/.test(adminReportsJs),
+        'leave reports should keep confirmed sheet rows as long as employee and date fields exist'
+    );
+    assert(
+        !/filterValidLeaves\(rows\)\s*\{[\s\S]*this\.hasValue\(row,\s*'reason'\)[\s\S]*this\.hasValue\(row,\s*'appliedAt'\)/s.test(adminReportsJs),
+        'leave report filtering should not drop older confirmed rows just because reason/appliedAt is blank'
+    );
+    assert(
+        adminReportsJs.includes('formatLeaveReportDateRange'),
+        'leave report table should format leave dates as dd/mm/yyyy'
+    );
+    assert(
+        adminReportsJs.includes('formatLeaveReportDate(row.dates || row.date ||') || adminReportsJs.includes('formatLeaveReportDate(row.dates || row.date'),
+        'permission report table should format permission dates as dd/mm/yyyy'
+    );
+    assert(
+        !/isValidLeaveRow\(row\)\s*\{[\s\S]*String\(row\.reason/s.test(backendLeaveJs),
+        'backend leave filtering should not drop older confirmed rows just because reason is blank'
+    );
+}
+
 function testAdminReportsRenderCachedDataBeforeBackendRefresh() {
     assert(
         adminReportsJs.includes('loadCachedReportData()'),
@@ -160,6 +184,7 @@ testAdminEmployeeMobileFiltersKeepSearchIconInsideField();
 testAdminEmployeeMobileActionButtonsUseSharedActionLayout();
 testAdminEmployeeDetailUsesCardModalInsteadOfAlert();
 testAdminReportsShowNewestSubmittedRowsFirst();
+testLeaveReportsKeepConfirmedRowsWithSparseSheetData();
 testAdminReportsRenderCachedDataBeforeBackendRefresh();
 testPermissionAndLeaveApiReadsAreCacheable();
 testAdminEmployeesRenderCachedRowsBeforeBackendRefresh();
