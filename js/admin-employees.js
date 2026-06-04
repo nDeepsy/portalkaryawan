@@ -195,6 +195,7 @@ const adminEmployees = {
 
     bindEvents() {
         this.syncSearchInputValue();
+        this.protectSearchInputFromAutofill();
 
         if (this.eventsBound) {
             return;
@@ -204,6 +205,15 @@ const adminEmployees = {
         // Search filter
         const searchInput = document.getElementById('employee-search');
         if (searchInput) {
+            searchInput.addEventListener('focus', () => {
+                searchInput.readOnly = false;
+                if (!this.filters.search && this.looksLikeBrowserAutofill(searchInput.value)) {
+                    searchInput.value = '';
+                }
+            });
+            searchInput.addEventListener('pointerdown', () => {
+                searchInput.readOnly = false;
+            });
             searchInput.addEventListener('input', (e) => {
                 this.filters.search = e.target.value.toLowerCase();
                 this.currentPage = 1;
@@ -276,6 +286,29 @@ const adminEmployees = {
         if (searchInput) {
             searchInput.value = this.filters.search || '';
         }
+    },
+
+    protectSearchInputFromAutofill() {
+        const searchInput = document.getElementById('employee-search');
+        if (!searchInput) return;
+
+        const clearUnexpectedAutofill = () => {
+            if (this.filters.search) return;
+            if (document.activeElement === searchInput && !searchInput.readOnly) return;
+            if (!searchInput.value) return;
+
+            searchInput.value = '';
+        };
+
+        searchInput.readOnly = true;
+        clearUnexpectedAutofill();
+        setTimeout(clearUnexpectedAutofill, 50);
+        setTimeout(clearUnexpectedAutofill, 250);
+        setTimeout(clearUnexpectedAutofill, 800);
+    },
+
+    looksLikeBrowserAutofill(value) {
+        return /@/.test(String(value || ''));
     },
 
     getFilteredEmployees() {

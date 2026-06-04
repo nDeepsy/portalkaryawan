@@ -65,12 +65,20 @@ function testAdminEmployeeMobileFiltersKeepSearchIconInsideField() {
 
 function testEmployeeSearchInputDoesNotAutofillItself() {
     assert(
-        /id="employee-search"[^>]*autocomplete="off"[^>]*autocorrect="off"[^>]*spellcheck="false"/s.test(indexHtml),
+        /id="employee-search"[^>]*autocomplete="off"[^>]*autocorrect="off"[^>]*spellcheck="false"[^>]*readonly/s.test(indexHtml),
         'employee search input should opt out of mobile/browser autofill and correction'
     );
     assert(
         adminEmployeesJs.includes("searchInput.value = this.filters.search || '';"),
         'employee search input should be reset to the module filter state during init'
+    );
+    assert(
+        adminEmployeesJs.includes('protectSearchInputFromAutofill()'),
+        'employee search should actively clear delayed browser autofill'
+    );
+    assert(
+        adminEmployeesJs.includes("searchInput.readOnly = false"),
+        'employee search should only become editable after the user focuses it'
     );
 }
 
