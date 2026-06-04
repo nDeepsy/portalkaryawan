@@ -215,6 +215,8 @@ const shiftSchedule = {
     },
 
     bindEvents() {
+        this.syncSearchInputValue();
+
         if (this.eventsBound) return;
         this.eventsBound = true;
 
@@ -295,6 +297,13 @@ const shiftSchedule = {
         document.addEventListener('click', () => {
             this.closeShiftPickers();
         });
+    },
+
+    syncSearchInputValue() {
+        const searchInput = document.getElementById('schedule-employee-search');
+        if (searchInput) {
+            searchInput.value = this.filters.search || '';
+        }
     },
 
     scrollCalendar(direction) {

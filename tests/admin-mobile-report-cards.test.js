@@ -6,6 +6,7 @@ const root = path.join(__dirname, '..');
 const adminReportsJs = fs.readFileSync(path.join(root, 'js', 'admin-reports.js'), 'utf8');
 const adminEmployeesJs = fs.readFileSync(path.join(root, 'js', 'admin-employees.js'), 'utf8');
 const apiJs = fs.readFileSync(path.join(root, 'js', 'api.js'), 'utf8');
+const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const adminCss = fs.readFileSync(path.join(root, 'css', 'admin.css'), 'utf8');
 const mobileCss = fs.readFileSync(path.join(root, 'css', 'mobile.css'), 'utf8');
 const backendLeaveJs = fs.readFileSync(path.join(root, '..', 'apps-script-absensi', 'Leave.js'), 'utf8');
@@ -59,6 +60,30 @@ function testAdminEmployeeMobileFiltersKeepSearchIconInsideField() {
     assert(
         /\.filter-group\.has-icon\s+i\s*\{[^}]*left:\s*auto;[^}]*right:\s*var\(--spacing\);/s.test(adminCss),
         'employee search icon should sit on the right inside the search field'
+    );
+}
+
+function testEmployeeSearchInputDoesNotAutofillItself() {
+    assert(
+        /id="employee-search"[^>]*autocomplete="off"[^>]*autocorrect="off"[^>]*spellcheck="false"/s.test(indexHtml),
+        'employee search input should opt out of mobile/browser autofill and correction'
+    );
+    assert(
+        adminEmployeesJs.includes("searchInput.value = this.filters.search || '';"),
+        'employee search input should be reset to the module filter state during init'
+    );
+}
+
+function testShiftScheduleSearchInputDoesNotAutofillItself() {
+    const shiftScheduleJs = fs.readFileSync(path.join(root, 'js', 'shift-schedule.js'), 'utf8');
+
+    assert(
+        /id="schedule-employee-search"[^>]*autocomplete="off"[^>]*autocorrect="off"[^>]*spellcheck="false"/s.test(indexHtml),
+        'shift schedule search input should opt out of mobile/browser autofill and correction'
+    );
+    assert(
+        shiftScheduleJs.includes("searchInput.value = this.filters.search || '';"),
+        'shift schedule search input should be reset to the module filter state during init'
     );
 }
 
@@ -201,6 +226,8 @@ testAdminReportMobileCardsRenderAllBackendDataSections();
 testAdminReportMobileCardsIncludeActionButtons();
 testMobileCardActionsHaveCompactLayout();
 testAdminEmployeeMobileFiltersKeepSearchIconInsideField();
+testEmployeeSearchInputDoesNotAutofillItself();
+testShiftScheduleSearchInputDoesNotAutofillItself();
 testAdminEmployeeMobileActionButtonsUseSharedActionLayout();
 testAdminEmployeeDetailUsesCardModalInsteadOfAlert();
 testAdminReportsShowNewestSubmittedRowsFirst();

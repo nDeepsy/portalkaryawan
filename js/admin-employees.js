@@ -194,6 +194,8 @@ const adminEmployees = {
     },
 
     bindEvents() {
+        this.syncSearchInputValue();
+
         if (this.eventsBound) {
             return;
         }
@@ -266,6 +268,13 @@ const adminEmployees = {
         const joinDateInput = document.getElementById('emp-join-date');
         if (joinDateInput) {
             joinDateInput.valueAsDate = new Date();
+        }
+    },
+
+    syncSearchInputValue() {
+        const searchInput = document.getElementById('employee-search');
+        if (searchInput) {
+            searchInput.value = this.filters.search || '';
         }
     },
 
