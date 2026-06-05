@@ -234,6 +234,33 @@ async function testSuccessfulSubmitClearsJournalForm() {
     assert.strictEqual(jurnal.currentPhoto, null, 'photo state should clear after successful submit');
 }
 
+async function testJournalFormUsesFreshLocalClockOutBeforeStaleAttendanceApi() {
+    const { jurnal, elements } = loadJurnal({
+        currentUser: { id: 'KRY001', email: 'a@example.test', role: 'karyawan' },
+        storageSeed: {
+            attendance: [
+                { userId: 'KRY001', date: '2026-05-27', clockIn: '08:00', clockOut: '17:00' }
+            ]
+        },
+        api: {
+            getAttendance: async () => ({ success: true, data: [] }),
+            getJournals: async () => ({ success: true, data: [] })
+        }
+    });
+
+    elements.set('jurnal-form', createFormMock(elements));
+    jurnal.currentDate = jurnal.parseLocalDate('2026-05-27');
+
+    await jurnal.init();
+
+    assert(
+        elements.get('jurnal-form-title').textContent.startsWith('Isi Jurnal'),
+        'journal form title should switch to fill mode immediately from local clock-out cache'
+    );
+    assert.strictEqual(elements.get('jurnal-submit').disabled, false, 'journal submit should be available immediately from local clock-out cache');
+    assert.strictEqual(elements.get('jurnal-tasks').disabled, false, 'journal fields should be editable immediately from local clock-out cache');
+}
+
 function testJournalHistoryUsesSummaryMonthFilterInsteadOfDuplicateControls() {
     const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
     const source = fs.readFileSync(path.join(__dirname, '..', 'js', 'jurnal.js'), 'utf8');
@@ -471,6 +498,7 @@ Promise.resolve()
     .then(testTodayJournalIsHiddenUntilClockOut)
     .then(testSwitchingUsersClearsPreviousJournalFormImmediately)
     .then(testSuccessfulSubmitClearsJournalForm)
+    .then(testJournalFormUsesFreshLocalClockOutBeforeStaleAttendanceApi)
     .then(testJournalHistoryUsesSummaryMonthFilterInsteadOfDuplicateControls)
     .then(testJournalSummaryUsesMonthFilter)
     .then(testExistingJournalIsReadonlyUntilEditButtonIsUsed)

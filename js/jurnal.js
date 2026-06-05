@@ -26,6 +26,7 @@ const jurnal = {
 
         if (!this.initialized) {
             this.loadCachedJurnals();
+            this.loadCachedAttendanceRecords(currentUserId);
             this.initForm();
             this.initFilters();
             this.initSummaryMonthFilter();
@@ -119,23 +120,64 @@ const jurnal = {
 
     async loadAttendanceRecords(userId = this.getCurrentUserId()) {
         const normalizedUserId = String(userId || '');
+        const cachedRows = this.getCachedAttendanceRecords(normalizedUserId);
+        if (cachedRows.length) {
+            this.attendanceRecords = this.mergeAttendanceRecords(cachedRows, this.attendanceRecords);
+            this.renderJurnalList();
+            this.updateUI();
+            this.updateSummary();
+        }
+
         try {
             const result = await api.getAttendance(normalizedUserId);
             if (this.activeUserId && this.activeUserId !== normalizedUserId) return;
 
             const rows = result?.data || [];
-            this.attendanceRecords = rows.filter(row =>
+            const remoteRows = rows.filter(row =>
                 String(row.userId || row.user_id || '') === normalizedUserId
             );
+            this.attendanceRecords = this.mergeAttendanceRecords(this.attendanceRecords, remoteRows);
         } catch (error) {
             console.warn('Tidak bisa memuat data absensi untuk jurnal:', error);
             if (this.activeUserId && this.activeUserId !== normalizedUserId) return;
 
-            const cached = storage.get('attendance', []);
-            this.attendanceRecords = cached.filter(row =>
-                String(row.userId || row.user_id || '') === normalizedUserId
-            );
+            this.attendanceRecords = this.mergeAttendanceRecords(this.attendanceRecords, cachedRows);
         }
+    },
+
+    loadCachedAttendanceRecords(userId = this.getCurrentUserId()) {
+        this.attendanceRecords = this.getCachedAttendanceRecords(userId);
+    },
+
+    getCachedAttendanceRecords(userId = this.getCurrentUserId()) {
+        const normalizedUserId = String(userId || '');
+        const cached = storage.get('attendance', []);
+        return (Array.isArray(cached) ? cached : []).filter(row =>
+            String(row.userId || row.user_id || '') === normalizedUserId
+        );
+    },
+
+    mergeAttendanceRecords(existingRows = [], incomingRows = []) {
+        const mergedByKey = new Map();
+        [...existingRows, ...incomingRows].forEach(row => {
+            if (!row) return;
+            const userId = String(row.userId || row.user_id || '');
+            const date = this.getAttendanceDate(row);
+            if (!userId || !date) return;
+
+            const key = `${userId}||${date}`;
+            const existing = mergedByKey.get(key);
+            if (!existing) {
+                mergedByKey.set(key, row);
+                return;
+            }
+
+            const existingClockOut = String(existing.clockOut || existing.clock_out || '').trim();
+            const incomingClockOut = String(row.clockOut || row.clock_out || '').trim();
+            mergedByKey.set(key, existingClockOut && !incomingClockOut ? existing : { ...existing, ...row });
+        });
+
+        return Array.from(mergedByKey.values());
     },
 
     persistCurrentUserJournals() {
