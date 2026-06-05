@@ -35,15 +35,6 @@ const absensi = {
 
         this.loadTodayAttendance();
         this.loadAttendanceHistory();
-
-        // Debug button state
-        setTimeout(() => {
-            const btnClockIn = document.getElementById('btn-clock-in');
-            if (btnClockIn) {
-                console.log('Clock In button - disabled:', btnClockIn.disabled);
-                console.log('Clock In button - visible:', btnClockIn.offsetParent !== null);
-            }
-        }, 100);
     },
 
     hydrateCachedAttendance() {
@@ -583,7 +574,6 @@ const absensi = {
         const btnClockIn = document.getElementById('btn-clock-in');
         if (btnClockIn) {
             this.bindAttendanceButton(btnClockIn, () => this.handleClockIn());
-            console.log('Clock In button initialized, disabled:', btnClockIn.disabled);
         }
 
         // Break
