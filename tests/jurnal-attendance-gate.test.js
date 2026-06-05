@@ -99,7 +99,7 @@ function loadJurnal({ currentUser, api = {}, storageSeed = {} } = {}) {
         },
         auth: {
             getCurrentUser: () => user,
-            saveKeepAliveSession() {}
+            saveSession() {}
         },
         api: {
             getSettings: async () => ({ success: true, data: {} }),

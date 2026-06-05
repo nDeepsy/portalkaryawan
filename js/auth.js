@@ -5,19 +5,9 @@
 
 const auth = {
     currentUser: null,
-    keepAliveInterval: null,
-    keepAliveTtl: 1000 * 60 * 30, // 30 menit
 
     init() {
-        // Coba ambil session dari sessionStorage dulu
-        let session = sessionStorage_manager.get('session');
-        if (!session) {
-            // Jika tidak ada, coba pulihkan dari backup lokal sementara
-            session = this.loadKeepAliveSession();
-            if (session) {
-                sessionStorage_manager.set('session', session);
-            }
-        }
+        const session = sessionStorage_manager.get('session');
         if (session) {
             session.role = this.normalizeUserRole(session.role, session.id);
             this.currentUser = session;
@@ -154,8 +144,6 @@ const auth = {
 
             this.currentUser = user;
             sessionStorage_manager.set('session', user);
-            this.saveKeepAliveSession(user);
-            this.startKeepAlive();
 
             // Update UI
             this.updateUserUI();
@@ -188,48 +176,10 @@ const auth = {
         }
     },
 
-    saveKeepAliveSession(user) {
-        storage.set('keepAliveSession', {
-            user,
-            expires: Date.now() + this.keepAliveTtl
-        });
-    },
-
-    loadKeepAliveSession() {
-        const backup = storage.get('keepAliveSession');
-        if (backup && backup.expires && backup.expires > Date.now()) {
-            return backup.user;
-        }
-        storage.remove('keepAliveSession');
-        return null;
-    },
-
-    clearKeepAliveSession() {
-        storage.remove('keepAliveSession');
-    },
-
-    startKeepAlive() {
-        if (this.keepAliveInterval) return;
-        this.keepAliveInterval = setInterval(() => {
-            if (this.currentUser) {
-                this.saveKeepAliveSession(this.currentUser);
-            }
-        }, 1000 * 60 * 5); // update setiap 5 menit
-    },
-
-    stopKeepAlive() {
-        if (this.keepAliveInterval) {
-            clearInterval(this.keepAliveInterval);
-            this.keepAliveInterval = null;
-        }
-    },
-
     clearSession() {
         this.currentUser = null;
         sessionStorage_manager.clear();
-        this.clearKeepAliveSession();
         storage.remove('currentPage');
-        this.stopKeepAlive();
         this.showLogin();
     },
 
@@ -247,7 +197,6 @@ const auth = {
 
             // Update user UI first
             this.updateUserUI();
-            this.startKeepAlive();
             this.applyRoleVisibility();
 
             // Show appropriate menu based on role
@@ -311,7 +260,6 @@ const auth = {
             const loginForm = document.getElementById('login-form');
             if (loginForm) loginForm.reset();
         }
-        this.stopKeepAlive();
     },
 
     updateUserUI() {

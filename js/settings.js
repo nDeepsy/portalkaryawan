@@ -534,7 +534,6 @@ const settings = {
         if (currentUser && String(currentUser.shift) === String(oldName)) {
             currentUser.shift = newName;
             sessionStorage_manager.set('session', currentUser);
-            if (auth.saveKeepAliveSession) auth.saveKeepAliveSession(currentUser);
         }
 
         const schedules = storage.get('shift_schedule', {});

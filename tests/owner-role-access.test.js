@@ -109,6 +109,13 @@ function testAuthNormalizesPemilikRole() {
     assert(authSource.includes('Pilih role login terlebih dahulu'), 'login should ask users to choose a role when none is selected');
 }
 
+function testAuthSessionEndsWhenBrowserSessionCloses() {
+    assert(authSource.includes("sessionStorage_manager.get('session')"), 'auth should restore only the browser session storage session');
+    assert(!authSource.includes('loadKeepAliveSession'), 'auth should not restore login from localStorage after browser close');
+    assert(!authSource.includes('saveKeepAliveSession'), 'auth should not persist login backup in localStorage');
+    assert(!authSource.includes('keepAliveSession'), 'auth should not store keep-alive login data in localStorage');
+}
+
 function testPemilikRouterAllowsOnlyOwnerPages() {
     const { router, storageData } = loadRouterForRole('pemilik');
     router.navigate('employees');
@@ -173,6 +180,7 @@ function testBackendLoginAndSeedUseUsersForPemilik() {
 
 testLoginHasPemilikRoleOption();
 testAuthNormalizesPemilikRole();
+testAuthSessionEndsWhenBrowserSessionCloses();
 testPemilikRouterAllowsOnlyOwnerPages();
 testDashboardBrowserTitleMatchesRole();
 testPemilikMenusHideShiftAndSettings();

@@ -417,7 +417,6 @@ const jurnal = {
             if (result?.success && joinDate) {
                 currentUser.joinDate = joinDate;
                 sessionStorage_manager.set('session', currentUser);
-                if (auth.saveKeepAliveSession) auth.saveKeepAliveSession(currentUser);
             }
         } catch (error) {
             console.warn('Tidak bisa memuat tanggal bergabung karyawan:', error);
