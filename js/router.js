@@ -67,8 +67,9 @@ const router = {
             settings: 'Settings'
         };
         
+        const pageTitleText = this.getPageTitle(page, titles);
         const appName = typeof APP_COMPANY_NAME !== 'undefined' ? APP_COMPANY_NAME : 'PT Magtas Radio 107.3 FM';
-        document.title = `${titles[page]} - ${appName}`;
+        document.title = `${pageTitleText} - ${appName}`;
         
         // Update sidebar active state
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -91,12 +92,12 @@ const router = {
         // Update page title in header
         const pageTitle = document.getElementById('page-title');
         if (pageTitle) {
-            pageTitle.textContent = titles[page];
+            pageTitle.textContent = pageTitleText;
         }
         
         // Push state for browser history
         if (pushState) {
-            history.pushState({ page }, titles[page], `#${page}`);
+            history.pushState({ page }, pageTitleText, `#${page}`);
         }
         
         // Trigger page-specific init functions
@@ -111,6 +112,14 @@ const router = {
         if (window.api && typeof api.prefetchForUser === 'function' && typeof auth !== 'undefined' && auth.getCurrentUser) {
             api.prefetchForUser(auth.getCurrentUser());
         }
+    },
+
+    getPageTitle(page, titles = {}) {
+        if (page === 'admin-dashboard' && typeof auth !== 'undefined' && typeof auth.isPemilik === 'function' && auth.isPemilik()) {
+            return 'Dashboard Pemilik';
+        }
+
+        return titles[page] || 'Portal Karyawan';
     },
 
     resolvePageForRole(page) {

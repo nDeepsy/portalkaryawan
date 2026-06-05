@@ -87,7 +87,7 @@ function loadRouterForRole(role) {
     context.window.history = context.history;
 
     vm.runInNewContext(routerSource, context, { filename: 'router.js' });
-    return { router: context.window.router, storageData };
+    return { router: context.window.router, storageData, document: context.document };
 }
 
 function testLoginHasPemilikRoleOption() {
@@ -124,6 +124,16 @@ function testPemilikRouterAllowsOnlyOwnerPages() {
 
     router.navigate('dashboard');
     assert.strictEqual(router.currentPage, 'admin-dashboard');
+}
+
+function testDashboardBrowserTitleMatchesRole() {
+    const adminContext = loadRouterForRole('admin');
+    adminContext.router.navigate('admin-dashboard');
+    assert.strictEqual(adminContext.document.title, 'Dashboard Admin - PT Magtas Radio 107.3 FM');
+
+    const ownerContext = loadRouterForRole('pemilik');
+    ownerContext.router.navigate('admin-dashboard');
+    assert.strictEqual(ownerContext.document.title, 'Dashboard Pemilik - PT Magtas Radio 107.3 FM');
 }
 
 function testPemilikMenusHideShiftAndSettings() {
@@ -164,6 +174,7 @@ function testBackendLoginAndSeedUseUsersForPemilik() {
 testLoginHasPemilikRoleOption();
 testAuthNormalizesPemilikRole();
 testPemilikRouterAllowsOnlyOwnerPages();
+testDashboardBrowserTitleMatchesRole();
 testPemilikMenusHideShiftAndSettings();
 testPemilikCannotManageEmployees();
 testPemilikCanUseReportsAndConfirmLeave();
