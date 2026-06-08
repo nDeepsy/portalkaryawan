@@ -187,7 +187,18 @@
 
 .verification-status.show {
     display: flex;
-    animation: fadeInUp 0.3s ease;
+    animation: verificationStatusIn 0.24s ease-out;
+}
+
+@keyframes verificationStatusIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
 }
 
 .verification-status .status-icon {

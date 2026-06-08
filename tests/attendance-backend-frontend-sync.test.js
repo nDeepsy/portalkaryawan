@@ -75,6 +75,15 @@ function testAttendanceCameraIsNotMirrored() {
 
 function testCapturedPhotoSuccessOverlayIsCentered() {
     assert(
+        !/\.verification-status\.show\s*\{[^}]*animation:\s*fadeInUp/s.test(faceRecCss),
+        'captured photo success overlay should not use global fadeInUp because it overrides center transform'
+    );
+    assertContains(faceRecCss, '@keyframes verificationStatusIn', 'captured photo success overlay should use its own centered animation');
+    assert(
+        /@keyframes verificationStatusIn\s*\{[^}]*translate\(-50%,\s*-50%\)/s.test(faceRecCss),
+        'success overlay animation should preserve centered translate throughout'
+    );
+    assert(
         /\.verification-status\.show\s*\{[^}]*display:\s*flex;/s.test(faceRecCss),
         'captured photo success overlay should use flex centering'
     );
