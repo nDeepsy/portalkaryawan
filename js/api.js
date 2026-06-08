@@ -271,11 +271,11 @@ const api = {
         return result;
     },
 
-    async changePassword(userId, oldPassword, newPassword) {
+    async changePassword(userId, oldPassword, newPassword, userEmail, userRole) {
         if (!API_BASE_URL) {
-            return { success: true, data: { message: 'Password changed (local)' } };
+            return this._localChangePassword(userId, oldPassword, newPassword);
         }
-        return this.request('changePassword', { userId, oldPassword, newPassword });
+        return this.request('changePassword', { userId, oldPassword, newPassword, userEmail, userRole });
     },
 
     async getEmployeeProfile(userId) {
@@ -802,7 +802,7 @@ const api = {
             // Validasi bahwa selectedRole cocok dengan role user
             const userRole = user.role || (user.id === 'admin' ? 'admin' : 'karyawan');
             if (normalizedSelectedRole === userRole) {
-                return { success: true, data: user };
+                return { success: true, data: { ...user, mustChangePassword: Boolean(user.mustChangePassword) } };
             } else {
                 return { success: false, error: `Anda tidak bisa login sebagai ${selectedRole}. Akun ini adalah ${userRole === 'admin' ? 'admin' : 'karyawan'}.` };
             }
@@ -844,6 +844,21 @@ const api = {
         }
 
         return { success: false, error: 'Email atau password salah!' };
+    },
+
+    _localChangePassword(userId, oldPassword, newPassword) {
+        const employees = storage.get('admin_employees', []);
+        const idx = employees.findIndex(emp => String(emp.id) === String(userId));
+        if (idx >= 0) {
+            if (String(employees[idx].password || '12345') !== String(oldPassword)) {
+                return { success: false, error: 'Password lama salah' };
+            }
+            employees[idx].password = newPassword;
+            employees[idx].mustChangePassword = false;
+            storage.set('admin_employees', employees);
+            return { success: true, data: { message: 'Password berhasil diubah' } };
+        }
+        return { success: true, data: { message: 'Password changed (local)' } };
     },
 
     _localFallback(action, data) {

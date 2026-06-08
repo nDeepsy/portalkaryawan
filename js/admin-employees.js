@@ -555,12 +555,19 @@ const adminEmployees = {
             document.getElementById('emp-shift').value = employee.shift || '';
             document.getElementById('emp-status').value = employee.status || 'active';
             document.getElementById('emp-join-date').value = employee.joinDate || '';
-            document.getElementById('emp-password').value = employee.password || '12345';
+            document.getElementById('emp-password').value = '';
+            document.getElementById('emp-password').placeholder = 'Kosongkan jika tidak reset password';
+            const passwordLabel = document.querySelector('label[for="emp-password"]');
+            if (passwordLabel) passwordLabel.textContent = 'Reset password';
         } else {
             modalTitle.textContent = 'Tambah Karyawan Baru';
             saveButton.textContent = 'Simpan Karyawan';
             idInput.value = '';
             form.reset();
+            document.getElementById('emp-password').value = '12345';
+            document.getElementById('emp-password').placeholder = '12345';
+            const passwordLabel = document.querySelector('label[for="emp-password"]');
+            if (passwordLabel) passwordLabel.textContent = 'Password awal';
             this.populatePositionOptionsForDivision('', '');
             const joinDateInput = document.getElementById('emp-join-date');
             if (joinDateInput) joinDateInput.valueAsDate = new Date();
@@ -615,7 +622,7 @@ const adminEmployees = {
         const shift = document.getElementById('emp-shift').value;
         const status = document.getElementById('emp-status').value;
         const joinDate = document.getElementById('emp-join-date').value;
-        const password = document.getElementById('emp-password').value.trim() || '12345';
+        const password = document.getElementById('emp-password').value.trim();
 
         const employeeData = {
             name,
@@ -625,8 +632,13 @@ const adminEmployees = {
             shift,
             status,
             joinDate,
-            password
         };
+        if (idValue) {
+            if (password) employeeData.password = password;
+        } else {
+            employeeData.password = password || '12345';
+            employeeData.mustChangePassword = true;
+        }
 
         const isEdit = Boolean(idValue);
         const tempId = idValue || this.getNextEmployeeIdPreview();
@@ -641,16 +653,18 @@ const adminEmployees = {
         }
 
         let previousEmployee = null;
+        const safeEmployeeData = { ...employeeData };
+        delete safeEmployeeData.password;
         if (isEdit) {
             const idx = this.employees.findIndex(emp => String(emp.id) === String(idValue));
             if (idx >= 0) {
                 previousEmployee = { ...this.employees[idx] };
-                this.employees[idx] = { ...this.employees[idx], ...employeeData };
+                this.employees[idx] = { ...this.employees[idx], ...safeEmployeeData };
                 this.renderTable();
                 this.renderMobileCards();
             }
         } else {
-            const tempEmployee = { id: tempId, ...employeeData };
+            const tempEmployee = { id: tempId, ...safeEmployeeData };
             this.employees.unshift(tempEmployee);
             this.renderTable();
             this.renderMobileCards();

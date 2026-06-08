@@ -122,6 +122,7 @@ const auth = {
                     shift: result.data.shift || '',
                     joinDate: result.data.joinDate || result.data.join_date || result.data.startDate || '',
                     avatar: result.data.avatar || '',
+                    mustChangePassword: Boolean(result.data.mustChangePassword),
                     loginTime: new Date().toISOString()
                 };
             } else if (result.success && !result.data && !API_BASE_URL) {
@@ -133,6 +134,7 @@ const auth = {
                     name: role === 'admin' ? 'Admin (Local)' : displayName,
                     role: role,
                     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=F59E0B&color=fff`,
+                    mustChangePassword: false,
                     loginTime: new Date().toISOString()
                 };
             } else {
@@ -244,6 +246,8 @@ const auth = {
             if (window.mobile) {
                 window.mobile.handleResize();
             }
+
+            this.enforcePasswordChange();
         }
     },
 
@@ -279,12 +283,14 @@ const auth = {
         if (welcomeNameEl) welcomeNameEl.textContent = this.currentUser.name.split(' ')[0];
     },
 
-    async openProfileModal() {
+    async openProfileModal(options = {}) {
         const modal = document.getElementById('modal-profile');
         if (!modal) return;
 
         const user = this.currentUser;
         if (!user) return;
+        const forcePasswordChange = Boolean(options.force || this.mustChangePassword());
+        modal.dataset.forcePasswordChange = forcePasswordChange ? 'true' : 'false';
 
         // Set basic info
         document.getElementById('profile-avatar').src = getAvatarUrl(user);
@@ -309,6 +315,9 @@ const auth = {
         document.getElementById('old-password').value = '';
         document.getElementById('new-password').value = '';
         document.getElementById('confirm-password').value = '';
+
+        const closeBtn = modal.querySelector('.btn-close-modal');
+        if (closeBtn) closeBtn.style.display = forcePasswordChange ? 'none' : '';
 
         modal.style.display = 'flex';
 
@@ -341,18 +350,29 @@ const auth = {
             toast.error('Password baru dan konfirmasi tidak cocok!');
             return;
         }
-        if (newPwd.length < 4) {
-            toast.error('Password minimal 4 karakter!');
+
+        const validation = this.validateNewPassword(newPwd);
+        if (!validation.success) {
+            toast.error(validation.error);
             return;
         }
 
         try {
-            const result = await api.changePassword(this.currentUser.id, oldPwd, newPwd);
+            const result = await api.changePassword(this.currentUser.id, oldPwd, newPwd, this.currentUser.email, this.currentUser.role);
             if (result.success) {
                 toast.success('Password berhasil diubah!');
+                this.currentUser.mustChangePassword = false;
+                sessionStorage_manager.set('session', this.currentUser);
                 document.getElementById('old-password').value = '';
                 document.getElementById('new-password').value = '';
                 document.getElementById('confirm-password').value = '';
+                const modal = document.getElementById('modal-profile');
+                if (modal) {
+                    modal.dataset.forcePasswordChange = 'false';
+                    modal.style.display = 'none';
+                    const closeBtn = modal.querySelector('.btn-close-modal');
+                    if (closeBtn) closeBtn.style.display = '';
+                }
             } else {
                 toast.error(result.error || 'Gagal mengubah password');
             }
@@ -360,6 +380,46 @@ const auth = {
             console.error('Error changing password:', error);
             toast.error('Terjadi kesalahan');
         }
+    },
+
+    closeProfileModal() {
+        const modal = document.getElementById('modal-profile');
+        if (!modal) return;
+        if (modal.dataset.forcePasswordChange === 'true' || this.mustChangePassword()) {
+            toast.warning('Karyawan wajib mengganti password sebelum menggunakan aplikasi');
+            return;
+        }
+        modal.style.display = 'none';
+    },
+
+    validateNewPassword(password) {
+        const value = String(password || '');
+        const normalized = value.toLowerCase();
+        const commonPasswords = ['12345678', 'password', 'admin123', 'user123', 'qwerty123'];
+        const email = String(this.currentUser?.email || '').toLowerCase().trim();
+        const name = String(this.currentUser?.name || '').toLowerCase().trim();
+
+        if (!value) return { success: false, error: 'Password baru tidak boleh kosong' };
+        if (value.length < 8) return { success: false, error: 'Password baru minimal 8 karakter' };
+        if (!/[a-zA-Z]/.test(value) || !/[0-9]/.test(value)) {
+            return { success: false, error: 'Password baru harus mengandung huruf dan angka' };
+        }
+        if (value === '12345') return { success: false, error: 'Password baru tidak boleh sama dengan password default' };
+        if (commonPasswords.includes(normalized)) return { success: false, error: 'Password baru terlalu umum dan mudah ditebak' };
+        if (email && normalized === email) return { success: false, error: 'Password baru tidak boleh sama dengan email' };
+        if (name && normalized === name) return { success: false, error: 'Password baru tidak boleh sama dengan nama pengguna' };
+
+        return { success: true };
+    },
+
+    mustChangePassword() {
+        return Boolean(this.currentUser && this.normalizeUserRole(this.currentUser.role, this.currentUser.id) === 'karyawan' && this.currentUser.mustChangePassword);
+    },
+
+    enforcePasswordChange() {
+        if (!this.mustChangePassword()) return;
+        toast.warning('Karyawan wajib mengganti password sebelum menggunakan aplikasi');
+        setTimeout(() => this.openProfileModal({ force: true }), 0);
     },
 
     togglePasswordVisibility() {
