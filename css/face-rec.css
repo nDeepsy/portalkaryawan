@@ -169,28 +169,54 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    width: min(86%, 420px);
+    min-height: 220px;
     background: rgba(16, 185, 129, 0.9);
     border-radius: var(--border-radius-lg);
-    padding: var(--spacing-xl);
+    padding: clamp(24px, 5vw, 42px);
     text-align: center;
     color: var(--color-white);
     z-index: 30;
     display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    box-sizing: border-box;
 }
 
 .verification-status.show {
-    display: block;
+    display: flex;
     animation: fadeInUp 0.3s ease;
 }
 
 .verification-status .status-icon {
-    font-size: 4rem;
-    margin-bottom: var(--spacing);
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: var(--color-white);
+    color: var(--color-success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.2rem;
+    line-height: 1;
+    margin: 0;
+    flex: 0 0 auto;
+}
+
+.verification-status .status-icon i {
+    display: block;
+    line-height: 1;
+    transform: none;
 }
 
 .verification-status p {
     font-size: var(--font-size-lg);
     font-weight: 600;
+    line-height: 1.3;
+    margin: 0;
+    max-width: 12em;
 }
 
 /* Camera Controls */
@@ -557,11 +583,28 @@
         width: 200px;
         height: 250px;
     }
-    
+
+    .verification-status {
+        width: calc(100% - 32px);
+        min-height: 190px;
+        padding: 24px 20px;
+        gap: var(--spacing-md);
+    }
+
+    .verification-status .status-icon {
+        width: 76px;
+        height: 76px;
+        font-size: 2.5rem;
+    }
+
+    .verification-status p {
+        font-size: 18px;
+    }
+
     .camera-controls {
         flex-direction: column;
     }
-    
+
     .btn-camera {
         width: 100%;
         justify-content: center;

@@ -73,9 +73,26 @@ function testAttendanceCameraIsNotMirrored() {
     );
 }
 
+function testCapturedPhotoSuccessOverlayIsCentered() {
+    assert(
+        /\.verification-status\.show\s*\{[^}]*display:\s*flex;/s.test(faceRecCss),
+        'captured photo success overlay should use flex centering'
+    );
+    assert(
+        /\.verification-status\s+\.status-icon\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*center;/s.test(faceRecCss),
+        'success status icon should be centered in its circle'
+    );
+    assert(
+        /\.verification-status\s+\.status-icon\s+i\s*\{[^}]*line-height:\s*1;[^}]*transform:\s*none;/s.test(faceRecCss),
+        'success check icon should render upright without inherited offset'
+    );
+    assertContains(faceRecognitionJs, '<i class="fas fa-check"></i>', 'captured photo success overlay should use a clean check icon');
+}
+
 testFrontendAdminAndBackendUseSameAttendanceEvidenceFields();
 testBackendPreservesAllAttendanceEvidenceFieldsDuringMerge();
 testBackendEmptyTodayAttendanceTemplateIncludesEvidenceFields();
 testMobileAttendancePhotoPayloadFitsBackendLimit();
 testAttendanceCameraIsNotMirrored();
+testCapturedPhotoSuccessOverlayIsCentered();
 console.log('attendance backend/frontend sync tests passed');

@@ -101,7 +101,7 @@ const faceRecognition = {
             </div>
             <div class="scanning-line" id="scanning-line" style="display: none;"></div>
             <div class="verification-status" id="verification-status">
-                <div class="status-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="status-icon"><i class="fas fa-check"></i></div>
                 <p>Foto Berhasil Diambil</p>
             </div>
         `;
@@ -459,7 +459,7 @@ const faceRecognition = {
                 preview.innerHTML = `
                     <img src="${this.capturedPhotoData}" class="captured-photo" alt="Foto verifikasi" style="object-fit: ${this.capturePreviewObjectFit};">
                     <div class="verification-status show" id="verification-status">
-                        <div class="status-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="status-icon"><i class="fas fa-check"></i></div>
                         <p>Foto Berhasil Diambil</p>
                     </div>
                 `;
