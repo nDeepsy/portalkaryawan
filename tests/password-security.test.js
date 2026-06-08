@@ -25,6 +25,9 @@ assert(backendAuthJs.includes("mustChangePassword: false"), 'successful password
 assert(backendAuthJs.includes('normalizeChangePasswordRoleData'), 'backend password change should use role to avoid Users/Employees id collisions');
 assert(backendAuthJs.includes("normalizedRole === 'karyawan'"), 'employee password changes should target Employees directly');
 assert(backendAuthJs.includes("normalizedRole === 'admin' || normalizedRole === 'pemilik'"), 'admin and owner password changes should target Users directly');
+assert(backendAuthJs.includes('findEmployeeForLoginData'), 'employee login should support lookup by email or employee ID');
+assert(backendAuthJs.includes("String(employee.id || '').toLowerCase().trim() === normalizedIdentifier"), 'employee login should compare employee ID case-insensitively');
+assert(backendAuthJs.includes('Email atau ID karyawan tidak ditemukan'), 'employee login error should match email-or-ID behavior');
 assert(backendEmployeeJs.includes("data.mustChangePassword = true"), 'new employees should be forced to change the default password');
 assert(backendEmployeeJs.includes('sanitizeEmployeeForClientData'), 'employee list should strip password before returning to frontend');
 assert(backendEmployeeJs.includes('delete clean.password'), 'employee API should not expose password');
