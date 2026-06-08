@@ -502,10 +502,19 @@
     margin-bottom: var(--spacing);
 }
 
+.profile-field-row:last-child {
+    margin-bottom: 0;
+}
+
+#profile-employee-fields .profile-field-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .profile-field {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    min-width: 0;
 }
 
 .profile-field .field-label {
@@ -524,6 +533,7 @@
     font-size: var(--font-size);
     font-weight: 600;
     color: var(--text-primary);
+    overflow-wrap: anywhere;
 }
 
 .profile-password-section h4 {
@@ -659,6 +669,20 @@
         grid-template-columns: 1fr;
         gap: 10px;
         margin-bottom: 10px;
+    }
+
+    #profile-employee-fields .profile-field-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    #profile-employee-fields .profile-field .field-label {
+        font-size: 12px;
+    }
+
+    #profile-employee-fields .profile-field .field-value {
+        font-size: 15px;
+        line-height: 1.25;
     }
 
     .profile-fields {

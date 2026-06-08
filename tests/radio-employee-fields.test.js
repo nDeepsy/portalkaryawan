@@ -28,6 +28,10 @@ assert(indexHtml.includes('id="emp-division"'), 'employee form should use divisi
 assert(/<input[^>]+id="emp-id"[^>]+readonly/.test(indexHtml), 'employee form should show a readonly employee ID field');
 assert(indexHtml.includes('ID Karyawan'), 'employee form/profile should label the employee ID clearly');
 assert(indexHtml.includes('id="profile-employee-id"'), 'employee profile should display the employee ID');
+assert(
+    /id="profile-employee-id"[\s\S]*id="profile-division"[\s\S]*id="profile-position"[\s\S]*id="profile-shift"/.test(indexHtml),
+    'employee profile should arrange ID/division then position/shift in two compact rows'
+);
 assert(indexHtml.includes('id="division-filter"'), 'employee filter should use division id naming');
 assert(!indexHtml.includes('emp-department'), 'employee form should no longer use emp-department id');
 assert(!indexHtml.includes('dept-filter'), 'employee filter should no longer use dept-filter id');
@@ -98,6 +102,8 @@ assert(apiJs.includes('data.id = this.getNextLocalEmployeeId(all);'), 'local add
 assert(employeeGs.includes('getSmallestAvailableEmployeeIdData'), 'backend employee creation should reuse deleted employee ID gaps');
 assert(!/return 'KRY' \+ String\(maxNumber \+ 1\)/.test(employeeGs), 'backend employee ID generator should not use max plus one');
 assert(modalCss.includes('.form-group select,'), 'form dropdowns should share the same select styling');
+assert(/#profile-employee-fields\s+\.profile-field-row\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/s.test(modalCss), 'employee profile fields should keep a two-column grid');
+assert(/@media \(max-width:\s*576px\)\s*\{[\s\S]*#profile-employee-fields\s+\.profile-field-row\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/s.test(modalCss), 'employee profile fields should stay two columns on phones');
 assert(modalCss.includes('.filter-group select,'), 'admin filter dropdowns should share the same select styling');
 assert(modalCss.includes('.cuti-form select,'), 'employee leave form dropdowns should share the same select styling');
 assert(modalCss.includes('.izin-form select,'), 'employee permission form dropdowns should share the same select styling');
