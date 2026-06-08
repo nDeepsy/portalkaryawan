@@ -33,6 +33,7 @@ assert(backendEmployeeJs.includes('sanitizeEmployeeForClientData'), 'employee li
 assert(backendEmployeeJs.includes('delete clean.password'), 'employee API should not expose password');
 
 assert(authJs.includes('mustChangePassword'), 'frontend auth should carry mustChangePassword from login response');
+assert(authJs.includes("document.getElementById('profile-employee-id').textContent"), 'employee profile should render the employee ID');
 assert(authJs.includes('enforcePasswordChange'), 'frontend should enforce first-login password change');
 assert(authJs.includes('validateNewPassword'), 'frontend should validate password before sending to backend');
 assert(authJs.includes('Password baru minimal 8 karakter'), 'frontend should explain password length requirement');

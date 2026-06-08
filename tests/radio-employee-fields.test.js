@@ -25,6 +25,9 @@ assert(!adminEmployeesJs.includes('Bagian/Divisi'), 'admin employee scripts shou
 assert(indexHtml.includes('Pilih Jabatan'), 'employee form should use a position select prompt');
 assert(indexHtml.includes('class="org-select"'), 'organization selects should keep the enhanced dropdown hook');
 assert(indexHtml.includes('id="emp-division"'), 'employee form should use division id naming');
+assert(/<input[^>]+id="emp-id"[^>]+readonly/.test(indexHtml), 'employee form should show a readonly employee ID field');
+assert(indexHtml.includes('ID Karyawan'), 'employee form/profile should label the employee ID clearly');
+assert(indexHtml.includes('id="profile-employee-id"'), 'employee profile should display the employee ID');
 assert(indexHtml.includes('id="division-filter"'), 'employee filter should use division id naming');
 assert(!indexHtml.includes('emp-department'), 'employee form should no longer use emp-department id');
 assert(!indexHtml.includes('dept-filter'), 'employee filter should no longer use dept-filter id');
@@ -83,6 +86,10 @@ assert(authGs.includes('division:'), 'backend auth responses should expose divis
 assert(adminEmployeesJs.includes('divisionPositionMap'), 'position choices should be guided by the selected division');
 assert(!adminEmployeesJs.includes('department'), 'admin employee script should use division field naming');
 assert(adminEmployeesJs.includes('getSmallestAvailableEmployeeId'), 'employee preview should reuse deleted employee ID gaps');
+assert(adminEmployeesJs.includes('updateEmployeeIdPreview'), 'employee modal should keep the visible employee ID in sync');
+assert(adminEmployeesJs.includes("document.getElementById('emp-id').value = this.getNextEmployeeIdPreview()"), 'add employee modal should show the next generated employee ID');
+assert(adminEmployeesJs.includes('employeeModalMode'), 'visible employee ID should not make add mode behave like edit mode');
+assert(adminEmployeesJs.includes("this.employeeModalMode === 'edit'"), 'save handler should determine edit mode from modal state');
 assert(adminEmployeesJs.includes('sortEmployeesById'), 'employee list should expose ID sorting');
 assert(adminEmployeesJs.includes('.sort((a, b) => this.compareEmployeeIds(a.id, b.id))'), 'employee filters should sort rows by employee ID');
 assert(adminEmployeesJs.includes('formatDisplayDate(emp.joinDate ||'), 'employee detail should display join date as dd/mm/yyyy');

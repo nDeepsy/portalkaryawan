@@ -304,6 +304,7 @@ const auth = {
         // Employee-specific fields
         const empFields = document.getElementById('profile-employee-fields');
         if (isKaryawan) {
+            document.getElementById('profile-employee-id').textContent = user.id || '-';
             document.getElementById('profile-division').textContent = getEmployeeDivision(user) || '-';
             document.getElementById('profile-position').textContent = user.position || '-';
             document.getElementById('profile-shift').textContent = user.shift || '-';
@@ -328,6 +329,7 @@ const auth = {
                 const result = await api.getEmployeeProfile(user.id);
                 if (result.success && result.data) {
                     const profile = result.data;
+                    document.getElementById('profile-employee-id').textContent = profile.id || user.id || '-';
                     document.getElementById('profile-division').textContent = getEmployeeDivision(profile) || '-';
                     document.getElementById('profile-position').textContent = profile.position || '-';
                     document.getElementById('profile-shift').textContent = profile.shift || '-';

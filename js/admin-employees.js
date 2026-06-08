@@ -19,6 +19,7 @@ const adminEmployees = {
     currentPage: 1,
     perPage: 10,
     eventsBound: false,
+    employeeModalMode: 'add',
     filters: {
         search: '',
         division: '',
@@ -540,6 +541,7 @@ const adminEmployees = {
 
         if (!modal || !modalTitle || !saveButton || !idInput || !form) return;
 
+        this.employeeModalMode = mode === 'edit' ? 'edit' : 'add';
         this.populateShiftOptions();
         this.populateOrganizationOptions();
 
@@ -562,8 +564,8 @@ const adminEmployees = {
         } else {
             modalTitle.textContent = 'Tambah Karyawan Baru';
             saveButton.textContent = 'Simpan Karyawan';
-            idInput.value = '';
             form.reset();
+            this.updateEmployeeIdPreview();
             document.getElementById('emp-password').value = '12345';
             document.getElementById('emp-password').placeholder = '12345';
             const passwordLabel = document.querySelector('label[for="emp-password"]');
@@ -575,6 +577,13 @@ const adminEmployees = {
 
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+    },
+
+    updateEmployeeIdPreview() {
+        const idInput = document.getElementById('emp-id');
+        if (idInput) {
+            document.getElementById('emp-id').value = this.getNextEmployeeIdPreview();
+        }
     },
 
     ensureSelectValue(id, value) {
@@ -608,6 +617,7 @@ const adminEmployees = {
         if (idInput) {
             idInput.value = '';
         }
+        this.employeeModalMode = 'add';
     },
 
     async handleSaveEmployee(e) {
@@ -633,15 +643,15 @@ const adminEmployees = {
             status,
             joinDate,
         };
-        if (idValue) {
+        const isEdit = this.employeeModalMode === 'edit';
+        if (isEdit) {
             if (password) employeeData.password = password;
         } else {
             employeeData.password = password || '12345';
             employeeData.mustChangePassword = true;
         }
 
-        const isEdit = Boolean(idValue);
-        const tempId = idValue || this.getNextEmployeeIdPreview();
+        const tempId = isEdit ? idValue : (idValue || this.getNextEmployeeIdPreview());
         if (!isEdit) {
             employeeData.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${this.getRandomColor()}&color=fff`;
         }
