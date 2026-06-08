@@ -102,21 +102,21 @@ const faceRecognition = {
             <div class="scanning-line" id="scanning-line" style="display: none;"></div>
             <div class="verification-status" id="verification-status">
                 <div class="status-icon"><i class="fas fa-check-circle"></i></div>
-                <p>Wajah Terverifikasi</p>
+                <p>Foto Berhasil Diambil</p>
             </div>
         `;
     },
 
     updateActionTitle(action) {
         const titles = {
-            'clock-in': { title: 'Masuk - Verifikasi Wajah', subtitle: 'Verifikasi wajah Anda untuk Masuk' },
-            'clock-out': { title: 'Pulang - Verifikasi Wajah', subtitle: 'Verifikasi wajah Anda untuk Pulang' },
-            'break': { title: 'Istirahat - Verifikasi Wajah', subtitle: 'Verifikasi wajah Anda untuk mulai istirahat' },
-            'after-break': { title: 'Selesai Istirahat - Verifikasi Wajah', subtitle: 'Verifikasi wajah Anda untuk kembali bekerja' },
-            'break-2': { title: 'Istirahat 2 - Verifikasi Wajah', subtitle: 'Verifikasi wajah Anda untuk mulai istirahat sesi 2' },
-            'after-break-2': { title: 'Selesai Istirahat 2 - Verifikasi Wajah', subtitle: 'Verifikasi wajah Anda untuk kembali bekerja dari istirahat sesi 2' },
-            'overtime': { title: 'Lembur - Verifikasi Wajah', subtitle: 'Verifikasi wajah Anda untuk mulai lembur' },
-            'izin': { title: 'Pengajuan Izin - Verifikasi Wajah', subtitle: 'Verifikasi wajah untuk pengajuan izin' }
+            'clock-in': { title: 'Masuk - Ambil Foto Absensi', subtitle: 'Ambil foto absensi Anda untuk Masuk' },
+            'clock-out': { title: 'Pulang - Ambil Foto Absensi', subtitle: 'Ambil foto absensi Anda untuk Pulang' },
+            'break': { title: 'Istirahat - Ambil Foto Absensi', subtitle: 'Ambil foto absensi Anda untuk mulai istirahat' },
+            'after-break': { title: 'Selesai Istirahat - Ambil Foto Absensi', subtitle: 'Ambil foto absensi Anda untuk kembali bekerja' },
+            'break-2': { title: 'Istirahat 2 - Ambil Foto Absensi', subtitle: 'Ambil foto absensi Anda untuk mulai istirahat sesi 2' },
+            'after-break-2': { title: 'Selesai Istirahat 2 - Ambil Foto Absensi', subtitle: 'Ambil foto absensi Anda untuk kembali bekerja dari istirahat sesi 2' },
+            'overtime': { title: 'Lembur - Ambil Foto Absensi', subtitle: 'Ambil foto absensi Anda untuk mulai lembur' },
+            'izin': { title: 'Pengajuan Izin - Ambil Foto Absensi', subtitle: 'Ambil foto untuk pengajuan izin' }
         };
 
         const titleEl = document.getElementById('face-rec-title');
@@ -460,7 +460,7 @@ const faceRecognition = {
                     <img src="${this.capturedPhotoData}" class="captured-photo" alt="Foto verifikasi" style="object-fit: ${this.capturePreviewObjectFit};">
                     <div class="verification-status show" id="verification-status">
                         <div class="status-icon"><i class="fas fa-check-circle"></i></div>
-                        <p>Wajah Terverifikasi</p>
+                        <p>Foto Berhasil Diambil</p>
                     </div>
                 `;
             }
@@ -558,7 +558,7 @@ const faceRecognition = {
         if (this.isConfirming) return;
 
         if (!this.photoCaptured || !this.locationVerified || !this.position) {
-            toast.error('Harap verifikasi wajah dan lokasi terlebih dahulu!');
+            toast.error('Harap ambil foto absensi dan lokasi terlebih dahulu!');
             return;
         }
 
