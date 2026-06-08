@@ -5,6 +5,7 @@
 
 const auth = {
     currentUser: null,
+    isChangingPassword: false,
 
     init() {
         const session = sessionStorage_manager.get('session');
@@ -338,9 +339,12 @@ const auth = {
     },
 
     async handleChangePassword() {
+        if (this.isChangingPassword) return;
+
         const oldPwd = document.getElementById('old-password').value;
         const newPwd = document.getElementById('new-password').value;
         const confirmPwd = document.getElementById('confirm-password').value;
+        const submitBtn = document.getElementById('btn-change-password');
 
         if (!oldPwd || !newPwd || !confirmPwd) {
             toast.error('Semua field password harus diisi!');
@@ -355,6 +359,12 @@ const auth = {
         if (!validation.success) {
             toast.error(validation.error);
             return;
+        }
+
+        this.isChangingPassword = true;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('is-loading');
         }
 
         try {
@@ -379,6 +389,12 @@ const auth = {
         } catch (error) {
             console.error('Error changing password:', error);
             toast.error('Terjadi kesalahan');
+        } finally {
+            this.isChangingPassword = false;
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('is-loading');
+            }
         }
     },
 

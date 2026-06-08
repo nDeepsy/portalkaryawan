@@ -103,6 +103,8 @@ const sessionStorage_manager = {
 };
 
 // Toast Notification System
+const DEFAULT_TOAST_DURATION = 12000;
+
 const toast = {
     container: null,
 
@@ -110,7 +112,7 @@ const toast = {
         this.container = document.getElementById('toast-container');
     },
 
-    show(message, type = 'info', title = '', duration = 3000) {
+    show(message, type = 'info', title = '', duration = DEFAULT_TOAST_DURATION) {
         if (!this.container) this.init();
 
         const icons = {
@@ -127,8 +129,19 @@ const toast = {
             info: 'Info'
         };
 
+        const toastKey = `${type}:${title || titles[type]}:${message}`;
+        const existingToast = Array.from(this.container.querySelectorAll('.toast'))
+            .find((item) => item.dataset.toastKey === toastKey);
+        if (existingToast) {
+            existingToast.classList.remove('toast-attention');
+            void existingToast.offsetWidth;
+            existingToast.classList.add('toast-attention');
+            return;
+        }
+
         const toastEl = document.createElement('div');
         toastEl.className = `toast ${type}`;
+        toastEl.setAttribute('data-toast-key', toastKey);
         toastEl.innerHTML = `
             <div class="toast-icon">
                 <i class="fas ${icons[type]}"></i>
@@ -137,19 +150,24 @@ const toast = {
                 <div class="toast-title">${title || titles[type]}</div>
                 <div class="toast-message">${message}</div>
             </div>
-            <button class="toast-close" onclick="this.parentElement.remove()">
+            <button type="button" class="toast-close" aria-label="Tutup notifikasi" data-toast-close>
                 <i class="fas fa-times"></i>
             </button>
         `;
 
-        this.container.appendChild(toastEl);
-
-        // Auto remove
-        setTimeout(() => {
+        const dismissToast = () => {
+            if (!toastEl.isConnected) return;
             toastEl.style.opacity = '0';
             toastEl.style.transform = 'translateX(100%)';
             setTimeout(() => toastEl.remove(), 300);
-        }, duration);
+        };
+
+        toastEl.addEventListener('click', dismissToast);
+
+        this.container.appendChild(toastEl);
+
+        // Auto remove
+        setTimeout(dismissToast, duration);
     },
 
     success(message, title) {

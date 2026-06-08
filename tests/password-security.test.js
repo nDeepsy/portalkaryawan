@@ -4,6 +4,7 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const repoRoot = path.join(root, '..');
+const mainJs = fs.readFileSync(path.join(root, 'js', 'main.js'), 'utf8');
 const authJs = fs.readFileSync(path.join(root, 'js', 'auth.js'), 'utf8');
 const apiJs = fs.readFileSync(path.join(root, 'js', 'api.js'), 'utf8');
 const adminEmployeesJs = fs.readFileSync(path.join(root, 'js', 'admin-employees.js'), 'utf8');
@@ -44,6 +45,13 @@ assert(indexHtml.includes('password default 12345'), 'password rules should warn
 assert(modalCss.includes('.password-rules'), 'password rules should be styled in the profile modal');
 assert(/\.toast-container\s*\{[^}]*z-index:\s*5000;/s.test(mainCss), 'toast should appear above profile modal notifications');
 assert(/@media\s*\(max-width:\s*576px\)\s*\{[^}]*\.toast-container\s*\{[^}]*left:\s*12px;[^}]*right:\s*12px;/s.test(mainCss), 'mobile toast should be full-width and visible above forms');
+assert(mainJs.includes('DEFAULT_TOAST_DURATION'), 'toast duration should be centralized and longer than the old default');
+assert(/show\(message,\s*type\s*=\s*'info',\s*title\s*=\s*'',\s*duration\s*=\s*DEFAULT_TOAST_DURATION\)/.test(mainJs), 'toast.show should use the longer default duration');
+assert(mainJs.includes('data-toast-key'), 'toast should deduplicate identical active messages');
+assert(mainJs.includes('toastEl.addEventListener'), 'toast should be dismissible by user touch/click as well as the close button');
+assert(indexHtml.includes('id="btn-change-password"'), 'change password button should have a stable id for responsive and loading state');
+assert(authJs.includes('isChangingPassword'), 'change password flow should guard against double submit notifications');
+assert(modalCss.includes('#btn-change-password'), 'change password button should have responsive modal styling');
 assert(apiJs.includes('async changePassword(userId, oldPassword, newPassword, userEmail, userRole)'), 'API should send user email and role for password validation');
 assert(apiJs.includes('userRole'), 'API should include role when changing password');
 assert(adminEmployeesJs.includes("document.getElementById('emp-password').value = ''"), 'edit employee should not show existing password');

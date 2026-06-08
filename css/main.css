@@ -1302,6 +1302,10 @@ img {
     pointer-events: auto;
 }
 
+.toast.toast-attention {
+    animation: toastAttention 0.28s ease;
+}
+
 .toast.success {
     border-left: 4px solid var(--color-success);
 }
@@ -1355,6 +1359,13 @@ img {
 
 .toast-close:hover {
     color: var(--text-primary);
+}
+
+@keyframes toastAttention {
+    0% { transform: translateX(0); }
+    35% { transform: translateX(-6px); }
+    70% { transform: translateX(4px); }
+    100% { transform: translateX(0); }
 }
 
 @media (max-width: 576px) {
