@@ -52,7 +52,7 @@ function createFormMock(elements) {
     };
 }
 
-function loadJurnal({ currentUser, api = {}, storageSeed = {} } = {}) {
+function loadJurnal({ currentUser, api = {}, storageSeed = {}, toastOverrides = {}, consoleOverrides = {} } = {}) {
     const elements = new Map();
     const summaryValues = [createElementMock('summary-filled'), createElementMock('summary-missing'), createElementMock('summary-streak')];
     const storageData = new Map(Object.entries(storageSeed));
@@ -77,7 +77,10 @@ function loadJurnal({ currentUser, api = {}, storageSeed = {} } = {}) {
     };
 
     const context = {
-        console,
+        console: {
+            ...console,
+            ...consoleOverrides
+        },
         window: {},
         document: documentMock,
         Image: function Image() {},
@@ -112,7 +115,8 @@ function loadJurnal({ currentUser, api = {}, storageSeed = {} } = {}) {
         toast: {
             warning() {},
             error() {},
-            success() {}
+            success() {},
+            ...toastOverrides
         },
         dateTime: {
             getLocalDate: () => '2026-05-27',
@@ -232,6 +236,46 @@ async function testSuccessfulSubmitClearsJournalForm() {
     assert.strictEqual(elements.get('jurnal-obstacles').value, '', 'obstacles field should clear after successful submit');
     assert.strictEqual(elements.get('jurnal-plan').value, '', 'plan field should clear after successful submit');
     assert.strictEqual(jurnal.currentPhoto, null, 'photo state should clear after successful submit');
+}
+
+async function testFailedJournalSaveKeepsFormAndShowsError() {
+    let successCount = 0;
+    let errorCount = 0;
+    const { jurnal, elements } = loadJurnal({
+        api: {
+            saveJournal: async () => ({ success: false, error: 'Server lambat' })
+        },
+        toastOverrides: {
+            success() { successCount++; },
+            error() { errorCount++; }
+        },
+        consoleOverrides: {
+            error() {}
+        }
+    });
+    jurnal.currentDate = jurnal.parseLocalDate('2026-05-27');
+    jurnal.attendanceRecords = [
+        { userId: 'KRY001', date: '2026-05-27', clockIn: '08:00', clockOut: '17:00' }
+    ];
+    jurnal.toast = null;
+
+    ['jurnal-tasks', 'jurnal-achievements', 'jurnal-obstacles', 'jurnal-plan'].forEach(id => {
+        if (!elements.has(id)) elements.set(id, createElementMock(id));
+    });
+
+    elements.get('jurnal-tasks').value = 'Tugas belum tersimpan';
+    elements.get('jurnal-achievements').value = 'Menunggu server';
+    elements.get('jurnal-obstacles').value = 'Apps Script lambat';
+    elements.get('jurnal-plan').value = 'Coba lagi';
+
+    await jurnal.handleSubmit({ preventDefault() {} });
+
+    assert.strictEqual(successCount, 0, 'failed journal save should not show a success toast');
+    assert.strictEqual(errorCount, 1, 'failed journal save should show an error toast');
+    assert.strictEqual(elements.get('jurnal-tasks').value, 'Tugas belum tersimpan', 'tasks field should stay filled after failed submit');
+    assert.strictEqual(elements.get('jurnal-achievements').value, 'Menunggu server', 'achievements field should stay filled after failed submit');
+    assert.strictEqual(elements.get('jurnal-obstacles').value, 'Apps Script lambat', 'obstacles field should stay filled after failed submit');
+    assert.strictEqual(elements.get('jurnal-plan').value, 'Coba lagi', 'plan field should stay filled after failed submit');
 }
 
 async function testJournalFormUsesFreshLocalClockOutBeforeStaleAttendanceApi() {
@@ -498,6 +542,7 @@ Promise.resolve()
     .then(testTodayJournalIsHiddenUntilClockOut)
     .then(testSwitchingUsersClearsPreviousJournalFormImmediately)
     .then(testSuccessfulSubmitClearsJournalForm)
+    .then(testFailedJournalSaveKeepsFormAndShowsError)
     .then(testJournalFormUsesFreshLocalClockOutBeforeStaleAttendanceApi)
     .then(testJournalHistoryUsesSummaryMonthFilterInsteadOfDuplicateControls)
     .then(testJournalSummaryUsesMonthFilter)

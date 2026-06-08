@@ -715,6 +715,9 @@ const jurnal = {
 
         try {
             const result = await api.saveJournal(jurnalData);
+            if (!result?.success) {
+                throw new Error(result?.error || 'Gagal menyimpan jurnal');
+            }
             if (result.success && result.data) {
                 const normalizedUserId = String(jurnalData.userId);
                 const idx = this.jurnals.findIndex(j => j.date === dateStr && String(j.userId || j.user_id || '') === normalizedUserId);
@@ -727,7 +730,7 @@ const jurnal = {
             this.resetFormAfterSuccessfulSubmit();
         } catch (error) {
             console.error('Error saving journal:', error);
-            toast.error('Gagal menyimpan jurnal');
+            toast.error(error.message || 'Gagal menyimpan jurnal');
         } finally {
             this.isSubmitting = false;
             if (submitBtn) {

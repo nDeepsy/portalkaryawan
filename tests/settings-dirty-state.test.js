@@ -4,6 +4,7 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const settingsJs = fs.readFileSync(path.join(root, 'js', 'settings.js'), 'utf8');
+const backendSettingsJs = fs.readFileSync(path.join(root, '..', 'apps-script-absensi', 'Settings.js'), 'utf8');
 
 const initBlock = settingsJs.match(/async init\(\)\s*\{[\s\S]*?\n    \},\n\n    async loadSettings/)?.[0] || '';
 assert(
@@ -59,6 +60,21 @@ assert(
 assert(
     settingsJs.includes("this.clearSectionDirty('shifts')"),
     'saving shifts successfully should clear the dirty marker'
+);
+
+assert(
+    backendSettingsJs.includes('const SHIFT_SYNC_DEBUG = false;'),
+    'backend shift sync debug logging should be disabled by default'
+);
+
+assert(
+    backendSettingsJs.includes('function logShiftSyncDebug'),
+    'backend shift sync should use a debug logger helper'
+);
+
+assert(
+    !/console\.log\(\`\[ShiftSync\]/.test(backendSettingsJs) && !/console\.log\('\[ShiftSync\]/.test(backendSettingsJs),
+    'backend shift sync should not directly log employee/schedule details'
 );
 
 console.log('Settings dirty-state tests passed');

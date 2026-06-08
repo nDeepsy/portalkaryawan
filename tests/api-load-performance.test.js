@@ -13,6 +13,31 @@ assert(
 );
 
 assert(
+    /requestTimeoutMs:\s*20000/.test(apiJs),
+    'API requests should have a clear timeout so the UI does not hang when Apps Script is slow'
+);
+
+assert(
+    apiJs.includes('AbortController') && apiJs.includes('controller.abort()'),
+    'API requests should abort slow Apps Script calls when supported'
+);
+
+assert(
+    apiJs.includes('clearTimeout(timeoutId)'),
+    'API request timeout timers should always be cleaned up'
+);
+
+assert(
+    apiJs.includes("error.name === 'AbortError'"),
+    'API should return a clear message when a request times out'
+);
+
+assert(
+    !/catch\s*\(\s*error\s*\)\s*\{[\s\S]*return this\._localFallback\(action,\s*data\);/.test(apiJs),
+    'production API failures should not silently fall back to localStorage'
+);
+
+assert(
     apiJs.includes("'batch'"),
     'batch reads should be cacheable because most menus load data through batch'
 );

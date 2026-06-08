@@ -11,6 +11,7 @@ const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbzrvlMvDrTzpp4OduH
 
 const api = {
     cacheTtl: 60000,
+    requestTimeoutMs: 20000,
     requestCachePrefix: 'api_cache_',
     pendingRequests: new Map(),
     cacheableActions: new Set([
@@ -51,26 +52,37 @@ const api = {
         }
 
         const requestPromise = (async () => {
-            const response = await fetch(API_BASE_URL, {
-                method: 'POST',
-                redirect: 'follow',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ action, ...data })
-            });
+            const supportsAbort = typeof AbortController !== 'undefined';
+            const controller = supportsAbort ? new AbortController() : null;
+            const timeoutId = supportsAbort
+                ? setTimeout(() => controller.abort(), this.requestTimeoutMs)
+                : null;
 
-            const text = await response.text();
             try {
-                const result = JSON.parse(text);
-                if (result?.success && this.cacheableActions.has(action)) {
-                    this._setCachedResponse(cacheKey, result);
+                const response = await fetch(API_BASE_URL, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ action, ...data }),
+                    ...(controller ? { signal: controller.signal } : {})
+                });
+
+                const text = await response.text();
+                try {
+                    const result = JSON.parse(text);
+                    if (result?.success && this.cacheableActions.has(action)) {
+                        this._setCachedResponse(cacheKey, result);
+                    }
+                    if (result?.success && !this.cacheableActions.has(action)) {
+                        this.clearRequestCacheForMutation(action);
+                    }
+                    return result;
+                } catch (e) {
+                    console.error('Failed to parse response:', text.substring(0, 200));
+                    return { success: false, error: 'Respons server tidak valid. Coba ulangi beberapa saat lagi.' };
                 }
-                if (result?.success && !this.cacheableActions.has(action)) {
-                    this.clearRequestCacheForMutation(action);
-                }
-                return result;
-            } catch (e) {
-                console.error('Failed to parse response:', text.substring(0, 200));
-                return { success: false, error: 'Invalid response from server' };
+            } finally {
+                if (timeoutId) clearTimeout(timeoutId);
             }
         })();
 
@@ -80,8 +92,10 @@ const api = {
             return await requestPromise;
         } catch (error) {
             console.error('API Error:', error);
-            // Fallback to localStorage on network error
-            return this._localFallback(action, data);
+            if (error.name === 'AbortError') {
+                return { success: false, error: 'Koneksi ke server terlalu lama. Periksa internet lalu coba lagi.' };
+            }
+            return { success: false, error: 'Tidak dapat terhubung ke server. Periksa koneksi lalu coba lagi.' };
         } finally {
             this.pendingRequests.delete(pendingKey);
         }
