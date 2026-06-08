@@ -1282,10 +1282,11 @@ img {
     position: fixed;
     top: var(--spacing-lg);
     right: var(--spacing-lg);
-    z-index: 1000;
+    z-index: 5000;
     display: flex;
     flex-direction: column;
     gap: var(--spacing);
+    pointer-events: none;
 }
 
 .toast {
@@ -1298,6 +1299,7 @@ img {
     box-shadow: var(--shadow-xl);
     animation: slideIn 0.3s ease;
     min-width: 300px;
+    pointer-events: auto;
 }
 
 .toast.success {
@@ -1353,6 +1355,25 @@ img {
 
 .toast-close:hover {
     color: var(--text-primary);
+}
+
+@media (max-width: 576px) {
+    .toast-container {
+        top: calc(12px + env(safe-area-inset-top));
+        left: 12px;
+        right: 12px;
+        align-items: stretch;
+    }
+
+    .toast {
+        width: 100%;
+        min-width: 0;
+        padding: 12px;
+    }
+
+    .toast-message {
+        line-height: 1.35;
+    }
 }
 
 /* Responsive Design */

@@ -540,6 +540,33 @@
     color: var(--color-primary);
 }
 
+.password-rules {
+    margin-bottom: var(--spacing-md);
+    padding: 12px 14px;
+    border: 1px solid rgba(0, 123, 255, 0.14);
+    border-radius: var(--border-radius);
+    background: rgba(0, 123, 255, 0.06);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.45;
+}
+
+.password-rules strong {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.password-rules ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.password-rules li + li {
+    margin-top: 3px;
+}
+
 .profile-password-section .form-group {
     margin-bottom: var(--spacing);
 }
@@ -622,6 +649,12 @@
 
     .profile-password-section h4 {
         margin-bottom: 10px;
+    }
+
+    .password-rules {
+        margin-bottom: 12px;
+        padding: 10px 12px;
+        font-size: 12px;
     }
 
     .profile-password-section .form-group {
