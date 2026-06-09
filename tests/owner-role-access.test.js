@@ -178,6 +178,16 @@ function testPemilikDashboardShowsConfirmationRequests() {
     assert(adminDashboardSource.includes('adminReports.rejectLeaveOrPermission'), 'owner dashboard confirmation list should reuse reject action');
 }
 
+function testPemilikDashboardUsesOwnerLabels() {
+    assert(adminDashboardSource.includes("setText('admin-dashboard-heading', isOwner ? 'Dashboard Pemilik' : 'Dashboard Admin')"), 'owner dashboard heading should not say admin');
+    assert(adminDashboardSource.includes("setText('admin-dashboard-subtitle', isOwner ? 'Monitoring aktivitas dan pengajuan karyawan' : 'Ringkasan statistik seluruh karyawan')"), 'owner dashboard subtitle should focus on monitoring');
+    assert(adminDashboardSource.includes("setText('pending-requests-label', isOwner ? 'Pengajuan Menunggu' : 'Menunggu Approval')"), 'owner dashboard pending label should use owner wording');
+    assert(adminDashboardSource.includes("setText('on-leave-label', isOwner ? 'Cuti / Izin Aktif' : 'Sedang Cuti')"), 'owner dashboard active leave label should use owner wording');
+    assert(adminDashboardSource.includes("attendanceTitle.textContent = auth.isPemilik() ? 'Ringkasan Kehadiran' : 'Statistik Kehadiran'"), 'owner dashboard attendance chart title should be monitoring-focused');
+    assert(adminDashboardSource.includes("activityTitle.textContent = auth.isPemilik() ? 'Aktivitas Karyawan' : 'Aktivitas Terbaru'"), 'owner dashboard activity title should be owner-specific');
+    assert(adminDashboardSource.includes("onlineTitle.textContent = auth.isPemilik() ? 'Karyawan Sedang Aktif' : 'Karyawan Online'"), 'owner dashboard online title should be owner-specific');
+}
+
 function testBackendLoginAndSeedUseUsersForPemilik() {
     assert(backendAuthSource.includes("selectedRole === 'pemilik'"), 'backend login should branch pemilik through Users');
     assert(backendAuthSource.includes("String(user.role || '').toLowerCase() !== selectedRole"), 'backend login should reject mismatched Users roles');
@@ -196,5 +206,6 @@ testPemilikMenusHideShiftAndSettings();
 testPemilikCannotManageEmployees();
 testPemilikCanUseReportsAndConfirmLeave();
 testPemilikDashboardShowsConfirmationRequests();
+testPemilikDashboardUsesOwnerLabels();
 testBackendLoginAndSeedUseUsersForPemilik();
 console.log('owner role access tests passed');

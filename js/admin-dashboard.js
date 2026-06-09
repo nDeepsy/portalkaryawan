@@ -23,6 +23,7 @@ const adminDashboard = {
         }
 
         this.bindPeriodFilter();
+        this.updateRoleLabels();
         this.loadCachedData();
         this.updateStats();
         this.renderCharts();
@@ -45,6 +46,19 @@ const adminDashboard = {
         this.renderCharts();
         this.renderRecentActivity();
         this.renderOnlineUsers();
+    },
+
+    updateRoleLabels() {
+        const isOwner = auth.isPemilik();
+        const setText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
+
+        setText('admin-dashboard-heading', isOwner ? 'Dashboard Pemilik' : 'Dashboard Admin');
+        setText('admin-dashboard-subtitle', isOwner ? 'Monitoring aktivitas dan pengajuan karyawan' : 'Ringkasan statistik seluruh karyawan');
+        setText('pending-requests-label', isOwner ? 'Pengajuan Menunggu' : 'Menunggu Approval');
+        setText('on-leave-label', isOwner ? 'Cuti / Izin Aktif' : 'Sedang Cuti');
     },
 
     bindPeriodFilter() {
@@ -227,10 +241,10 @@ const adminDashboard = {
         const activityTitle = document.getElementById('recent-activity-title');
         const onlineTitle = document.getElementById('online-users-title');
 
-        if (attendanceTitle) attendanceTitle.textContent = 'Statistik Kehadiran';
+        if (attendanceTitle) attendanceTitle.textContent = auth.isPemilik() ? 'Ringkasan Kehadiran' : 'Statistik Kehadiran';
         if (deptTitle) deptTitle.textContent = auth.isPemilik() ? 'Konfirmasi Pengajuan' : 'Kehadiran Divisi';
-        if (activityTitle) activityTitle.textContent = 'Aktivitas Terbaru';
-        if (onlineTitle) onlineTitle.textContent = 'Karyawan Online';
+        if (activityTitle) activityTitle.textContent = auth.isPemilik() ? 'Aktivitas Karyawan' : 'Aktivitas Terbaru';
+        if (onlineTitle) onlineTitle.textContent = auth.isPemilik() ? 'Karyawan Sedang Aktif' : 'Karyawan Online';
     },
 
     renderCharts() {
