@@ -567,6 +567,7 @@ const adminEmployees = {
             document.getElementById('emp-join-date').value = employee.joinDate || '';
             document.getElementById('emp-password').value = '';
             document.getElementById('emp-password').placeholder = 'Kosongkan jika tidak reset password';
+            document.getElementById('emp-password').readOnly = false;
             const passwordLabel = document.querySelector('label[for="emp-password"]');
             if (passwordLabel) passwordLabel.textContent = 'Reset password';
         } else {
@@ -576,6 +577,7 @@ const adminEmployees = {
             this.updateEmployeeIdPreview();
             document.getElementById('emp-password').value = '12345';
             document.getElementById('emp-password').placeholder = '12345';
+            document.getElementById('emp-password').readOnly = true;
             const passwordLabel = document.querySelector('label[for="emp-password"]');
             if (passwordLabel) passwordLabel.textContent = 'Password awal';
             this.populatePositionOptionsForDivision('', '');

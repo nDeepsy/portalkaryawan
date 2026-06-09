@@ -58,7 +58,12 @@ assert(authJs.includes('isChangingPassword'), 'change password flow should guard
 assert(modalCss.includes('#btn-change-password'), 'change password button should have responsive modal styling');
 assert(apiJs.includes('async changePassword(userId, oldPassword, newPassword, userEmail, userRole)'), 'API should send user email and role for password validation');
 assert(apiJs.includes('userRole'), 'API should include role when changing password');
+assert(/id="emp-password"[^>]*readonly/.test(indexHtml), 'new employee default password should be locked in the form');
+assert(indexHtml.includes('Password awal: 12345. Karyawan wajib mengganti password setelah login pertama.'), 'new employee password note should explain first-login password change');
+assert(!indexHtml.includes('Ubah jika perlu'), 'new employee password note should not suggest changing the default password');
 assert(adminEmployeesJs.includes("document.getElementById('emp-password').value = ''"), 'edit employee should not show existing password');
+assert(adminEmployeesJs.includes("document.getElementById('emp-password').readOnly = false"), 'edit employee password reset field should remain editable');
+assert(adminEmployeesJs.includes("document.getElementById('emp-password').readOnly = true"), 'add employee default password should be locked');
 assert(adminEmployeesJs.includes('Reset password'), 'admin password field should be reset-only in edit mode');
 
 console.log('password security tests passed');
