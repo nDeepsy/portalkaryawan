@@ -7,9 +7,9 @@ const adminEmployees = {
     employees: [],
     shifts: [],
     radioDivisions: ['Pimpinan', 'Manajemen', 'Administrasi', 'Keuangan', 'Siaran', 'Keanggotaan'],
-    radioPositions: ['Pemilik', 'Manager', 'Ketua', 'Pengawas', 'Sekretaris', 'Bendahara', 'Penyiar', 'Anggota'],
+    radioPositions: ['Manager', 'Ketua', 'Pengawas', 'Sekretaris', 'Bendahara', 'Penyiar', 'Anggota'],
     divisionPositionMap: {
-        Pimpinan: ['Pemilik'],
+        Pimpinan: ['Manager', 'Ketua', 'Pengawas'],
         Manajemen: ['Manager', 'Ketua', 'Pengawas'],
         Administrasi: ['Sekretaris'],
         Keuangan: ['Bendahara'],
@@ -119,7 +119,10 @@ const adminEmployees = {
     },
 
     getPositionOptions() {
-        return this.mergeOptions(this.radioPositions, this.employees.map(emp => emp.position));
+        return this.mergeOptions(
+            this.radioPositions,
+            this.employees.map(emp => emp.position).filter(position => !this.isReservedEmployeePosition(position))
+        );
     },
 
     getPositionOptionsForDivision(division) {
@@ -136,6 +139,11 @@ const adminEmployees = {
                 seen.add(value);
                 return true;
             });
+    },
+
+    isReservedEmployeePosition(position) {
+        const value = String(position || '').trim();
+        return value.toLowerCase() === 'pemilik';
     },
 
     populateSelectOptions(id, options, placeholder) {

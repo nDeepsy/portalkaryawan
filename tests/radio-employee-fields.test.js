@@ -80,9 +80,17 @@ assert(!loginCss.includes('.login-logo-img'), 'login hero should not keep compan
     assert(adminEmployeesJs.includes(value), `admin employee options should include ${value}`);
 });
 
-['Pemilik', 'Manager', 'Ketua', 'Pengawas', 'Sekretaris', 'Bendahara', 'Penyiar', 'Anggota'].forEach(value => {
+['Manager', 'Ketua', 'Pengawas', 'Sekretaris', 'Bendahara', 'Penyiar', 'Anggota'].forEach(value => {
     assert(adminEmployeesJs.includes(value), `admin employee positions should include ${value}`);
 });
+assert(
+    !/radioPositions:\s*\[[^\]]*'Pemilik'/s.test(adminEmployeesJs),
+    'employee position dropdown should not include Pemilik because owner accounts live in Users'
+);
+assert(
+    adminEmployeesJs.includes('isReservedEmployeePosition') && adminEmployeesJs.includes("value.toLowerCase() === 'pemilik'"),
+    'employee position dropdown should filter Pemilik even if old employee data contains it'
+);
 
 assert(databaseJs.includes("'division'"), 'backend employee sheet should use division column naming');
 assert(databaseJs.includes("'Siaran', 'Penyiar'"), 'seed employees should use radio organization roles');
