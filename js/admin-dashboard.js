@@ -228,14 +228,18 @@ const adminDashboard = {
         const onlineTitle = document.getElementById('online-users-title');
 
         if (attendanceTitle) attendanceTitle.textContent = 'Statistik Kehadiran';
-        if (deptTitle) deptTitle.textContent = 'Kehadiran Divisi';
+        if (deptTitle) deptTitle.textContent = auth.isPemilik() ? 'Konfirmasi Pengajuan' : 'Kehadiran Divisi';
         if (activityTitle) activityTitle.textContent = 'Aktivitas Terbaru';
         if (onlineTitle) onlineTitle.textContent = 'Karyawan Online';
     },
 
     renderCharts() {
         this.renderMonthlyAttendanceChart();
-        this.renderDivisionChart();
+        if (auth.isPemilik()) {
+            this.renderOwnerConfirmationRequests();
+        } else {
+            this.renderDivisionChart();
+        }
     },
 
     renderMonthlyAttendanceChart() {
@@ -305,6 +309,121 @@ const adminDashboard = {
                 }).join('')}
             </div>
         `;
+    },
+
+    renderOwnerConfirmationRequests() {
+        const container = document.getElementById('admin-dept-chart');
+        if (!container) return;
+
+        const requests = this.getOwnerPendingRequests();
+        if (requests.length === 0) {
+            container.innerHTML = `
+                <div class="owner-confirmation-empty">
+                    <i class="fas fa-check-circle"></i>
+                    <p>Tidak ada pengajuan yang menunggu konfirmasi.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="owner-confirmation-list">
+                ${requests.slice(0, 5).map(request => `
+                    <div class="owner-confirmation-item">
+                        <div class="owner-confirmation-main">
+                            <strong>${this.escapeHtml(request.name || 'Karyawan')}</strong>
+                            <span>${this.escapeHtml(request.type || 'Pengajuan')} - ${this.escapeHtml(this.formatOwnerRequestDate(request))}</span>
+                        </div>
+                        <div class="owner-confirmation-actions">
+                            <button class="btn-action view" title="Lihat" onclick="adminDashboard.viewOwnerRequest('${this.escapeAttr(request.source)}', '${this.escapeAttr(request.id)}')">
+                                <i class="fas fa-eye"></i><span>Lihat</span>
+                            </button>
+                            <button class="btn-action edit" title="Terima" onclick="adminDashboard.approveOwnerRequest('${this.escapeAttr(request.source)}', '${this.escapeAttr(request.id)}')">
+                                <i class="fas fa-check"></i><span>Terima</span>
+                            </button>
+                            <button class="btn-action delete" title="Tolak" onclick="adminDashboard.rejectOwnerRequest('${this.escapeAttr(request.source)}', '${this.escapeAttr(request.id)}')">
+                                <i class="fas fa-times"></i><span>Tolak</span>
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    },
+
+    getOwnerPendingRequests() {
+        this.syncAdminReportsLeaveRows();
+        if (!window.adminReports || !Array.isArray(adminReports.leaveData)) return [];
+
+        const previousFilters = { ...adminReports.filters.leave };
+        adminReports.filters.leave = { month: '', type: '', status: '' };
+        const rows = adminReports.getFilteredLeave()
+            .filter(row => String(row.status || '').toLowerCase() === 'pending');
+        adminReports.filters.leave = previousFilters;
+        return rows;
+    },
+
+    syncAdminReportsLeaveRows() {
+        if (!window.adminReports || typeof adminReports.applyReportRows !== 'function') return;
+        adminReports.applyReportRows({
+            employees: this.employees,
+            leaves: this.leaves,
+            izinList: this.izin,
+            jurnals: this.journals,
+            attendances: this.attendance
+        });
+    },
+
+    getOwnerRequestIndex(source, id) {
+        this.syncAdminReportsLeaveRows();
+        if (!window.adminReports || typeof adminReports.getFilteredLeave !== 'function') return -1;
+
+        adminReports.filters.leave = { month: '', type: '', status: '' };
+        return adminReports.getFilteredLeave().findIndex(row =>
+            String(row.source) === String(source) && String(row.id) === String(id)
+        );
+    },
+
+    viewOwnerRequest(source, id) {
+        const index = this.getOwnerRequestIndex(source, id);
+        if (index < 0 || !window.adminReports || typeof adminReports.viewLeaveDetail !== 'function') {
+            toast.error('Data pengajuan tidak ditemukan');
+            return;
+        }
+        adminReports.viewLeaveDetail(index);
+    },
+
+    async approveOwnerRequest(source, id) {
+        await this.updateOwnerRequestStatus(source, id, 'approved');
+    },
+
+    async rejectOwnerRequest(source, id) {
+        await this.updateOwnerRequestStatus(source, id, 'rejected');
+    },
+
+    async updateOwnerRequestStatus(source, id, status) {
+        const index = this.getOwnerRequestIndex(source, id);
+        if (index < 0 || !window.adminReports) {
+            toast.error('Data pengajuan tidak ditemukan');
+            return;
+        }
+
+        if (status === 'approved') {
+            await adminReports.approveLeaveOrPermission(index);
+        } else {
+            await adminReports.rejectLeaveOrPermission(index);
+        }
+
+        this.loadCachedData();
+        this.updateStats();
+        this.renderCharts();
+    },
+
+    formatOwnerRequestDate(request) {
+        if (window.adminReports && typeof adminReports.formatLeaveReportDateRange === 'function') {
+            return adminReports.formatLeaveReportDateRange(request);
+        }
+        return request.dates || request.date || request.startDate || '-';
     },
 
     renderChartBar(label, value, max, color) {
@@ -433,6 +552,10 @@ const adminDashboard = {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+    },
+
+    escapeAttr(value) {
+        return this.escapeHtml(value).replace(/`/g, '&#96;');
     }
 };
 

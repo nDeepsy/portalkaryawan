@@ -663,6 +663,21 @@
     .admin-charts-grid {
         grid-template-columns: 1fr !important;
     }
+
+    .owner-confirmation-item {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+
+    .owner-confirmation-actions {
+        justify-content: stretch;
+        flex-wrap: wrap;
+    }
+
+    .owner-confirmation-actions .btn-action {
+        flex: 1 1 88px;
+        min-width: 0;
+    }
     
     /* Employees list */
     .employees-header {

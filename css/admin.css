@@ -258,6 +258,76 @@
     transition: width var(--transition-slow);
 }
 
+.owner-confirmation-list {
+    width: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing);
+}
+
+.owner-confirmation-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--spacing);
+    padding: var(--spacing);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-primary);
+}
+
+.owner-confirmation-main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.owner-confirmation-main strong {
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.owner-confirmation-main span {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.owner-confirmation-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--spacing-xs);
+}
+
+.owner-confirmation-actions .btn-action {
+    width: auto;
+    min-width: 74px;
+    padding: 0 10px;
+    gap: 6px;
+}
+
+.owner-confirmation-empty {
+    width: 100%;
+    display: grid;
+    place-items: center;
+    gap: var(--spacing-sm);
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.owner-confirmation-empty i {
+    font-size: 2rem;
+    color: var(--color-success);
+}
+
 /* Admin Info Grid */
 .admin-info-grid {
     display: grid;

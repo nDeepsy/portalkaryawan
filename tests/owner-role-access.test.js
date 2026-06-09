@@ -10,6 +10,7 @@ const routerSource = fs.readFileSync(path.join(root, 'js', 'router.js'), 'utf8')
 const mobileSource = fs.readFileSync(path.join(root, 'js', 'mobile.js'), 'utf8');
 const adminEmployeesSource = fs.readFileSync(path.join(root, 'js', 'admin-employees.js'), 'utf8');
 const adminReportsSource = fs.readFileSync(path.join(root, 'js', 'admin-reports.js'), 'utf8');
+const adminDashboardSource = fs.readFileSync(path.join(root, 'js', 'admin-dashboard.js'), 'utf8');
 const apiSource = fs.readFileSync(path.join(root, 'js', 'api.js'), 'utf8');
 const indexSource = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const loginCssSource = fs.readFileSync(path.join(root, 'css', 'login.css'), 'utf8');
@@ -169,6 +170,14 @@ function testPemilikCanUseReportsAndConfirmLeave() {
     assert(backendPermissionSource.includes('isOwnerIzinConfirmationActor'), 'backend izin confirmation should require pemilik role metadata');
 }
 
+function testPemilikDashboardShowsConfirmationRequests() {
+    assert(adminDashboardSource.includes('renderOwnerConfirmationRequests'), 'owner dashboard should render confirmation requests');
+    assert(adminDashboardSource.includes("deptTitle.textContent = auth.isPemilik() ? 'Konfirmasi Pengajuan' : 'Kehadiran Divisi'"), 'owner dashboard should rename division card to confirmation requests');
+    assert(adminDashboardSource.includes('adminReports.viewLeaveDetail'), 'owner dashboard confirmation list should reuse leave detail action');
+    assert(adminDashboardSource.includes('adminReports.approveLeaveOrPermission'), 'owner dashboard confirmation list should reuse approve action');
+    assert(adminDashboardSource.includes('adminReports.rejectLeaveOrPermission'), 'owner dashboard confirmation list should reuse reject action');
+}
+
 function testBackendLoginAndSeedUseUsersForPemilik() {
     assert(backendAuthSource.includes("selectedRole === 'pemilik'"), 'backend login should branch pemilik through Users');
     assert(backendAuthSource.includes("String(user.role || '').toLowerCase() !== selectedRole"), 'backend login should reject mismatched Users roles');
@@ -186,5 +195,6 @@ testDashboardBrowserTitleMatchesRole();
 testPemilikMenusHideShiftAndSettings();
 testPemilikCannotManageEmployees();
 testPemilikCanUseReportsAndConfirmLeave();
+testPemilikDashboardShowsConfirmationRequests();
 testBackendLoginAndSeedUseUsersForPemilik();
 console.log('owner role access tests passed');
