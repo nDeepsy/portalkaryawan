@@ -173,6 +173,8 @@ function testPemilikCanUseReportsAndConfirmLeave() {
 function testPemilikDashboardShowsConfirmationRequests() {
     assert(adminDashboardSource.includes('renderOwnerConfirmationRequests'), 'owner dashboard should render confirmation requests');
     assert(adminDashboardSource.includes("deptTitle.textContent = auth.isPemilik() ? 'Konfirmasi Pengajuan' : 'Kehadiran Divisi'"), 'owner dashboard should rename division card to confirmation requests');
+    assert(adminDashboardSource.includes('owner-confirmation-menu'), 'owner dashboard mobile cards should have a compact action menu button');
+    assert(adminDashboardSource.includes('toggleOwnerRequestActions'), 'owner dashboard should toggle mobile action buttons');
     assert(adminDashboardSource.includes('adminReports.viewLeaveDetail'), 'owner dashboard confirmation list should reuse leave detail action');
     assert(adminDashboardSource.includes('adminReports.approveLeaveOrPermission'), 'owner dashboard confirmation list should reuse approve action');
     assert(adminDashboardSource.includes('adminReports.rejectLeaveOrPermission'), 'owner dashboard confirmation list should reuse reject action');

@@ -676,8 +676,8 @@
     }
 
     .owner-confirmation-item {
-        grid-template-columns: 1fr;
-        align-items: stretch;
+        grid-template-columns: minmax(0, 1fr) 36px;
+        align-items: start;
         gap: 10px;
         padding: 10px 12px;
         box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
@@ -689,16 +689,37 @@
 
     .owner-confirmation-main strong {
         font-size: var(--font-size-sm);
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        line-height: 1.35;
     }
 
     .owner-confirmation-main span {
         font-size: var(--font-size-xs);
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        line-height: 1.35;
+    }
+
+    .owner-confirmation-menu {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        justify-self: end;
     }
 
     .owner-confirmation-actions {
+        display: none;
+        grid-column: 1 / -1;
         justify-content: stretch;
         flex-wrap: wrap;
         gap: 6px;
+    }
+
+    .owner-confirmation-item.is-actions-open .owner-confirmation-actions {
+        display: flex;
     }
 
     .owner-confirmation-actions .btn-action {

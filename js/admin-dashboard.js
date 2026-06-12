@@ -348,6 +348,9 @@ const adminDashboard = {
                             <strong>${this.escapeHtml(request.name || 'Karyawan')}</strong>
                             <span>${this.escapeHtml(request.type || 'Pengajuan')} - ${this.escapeHtml(this.formatOwnerRequestDate(request))}</span>
                         </div>
+                        <button class="owner-confirmation-menu" type="button" aria-label="Tampilkan aksi pengajuan" onclick="adminDashboard.toggleOwnerRequestActions(event)">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
                         <div class="owner-confirmation-actions">
                             <button class="btn-action view" title="Lihat" onclick="adminDashboard.viewOwnerRequest('${this.escapeAttr(request.source)}', '${this.escapeAttr(request.id)}')">
                                 <i class="fas fa-eye"></i><span>Lihat</span>
@@ -363,6 +366,12 @@ const adminDashboard = {
                 `).join('')}
             </div>
         `;
+    },
+
+    toggleOwnerRequestActions(event) {
+        const item = event?.currentTarget?.closest('.owner-confirmation-item');
+        if (!item) return;
+        item.classList.toggle('is-actions-open');
     },
 
     getOwnerPendingRequests() {
