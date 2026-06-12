@@ -159,7 +159,7 @@ function testLoginRoleIsNormalizedBeforeSessionSave() {
     );
 }
 
-function testEmployeeMobileHeaderUsesCompanyLogoOnlyForEmployeeRole() {
+function testMobileHeaderUsesCompanyLogoForAppRoles() {
     assert(
         indexSource.includes('id="mobile-employee-logo"'),
         'mobile employee logo should exist in the top bar'
@@ -169,14 +169,21 @@ function testEmployeeMobileHeaderUsesCompanyLogoOnlyForEmployeeRole() {
         'auth should mark employee sessions so mobile logo can be scoped by role'
     );
     assert(
-        /\.app-container\.role-employee\s+\.mobile-employee-logo\s*\{[^}]*display:\s*block;/.test(mobileCssSource),
-        'mobile employee logo should only be shown for employee app sessions'
+        authSource.includes("appContainer.classList.toggle('role-owner'"),
+        'auth should mark owner sessions so mobile logo can be scoped by role'
+    );
+    assert(
+        mobileCssSource.includes('.app-container.role-employee .mobile-employee-logo') &&
+        mobileCssSource.includes('.app-container.role-admin .mobile-employee-logo') &&
+        mobileCssSource.includes('.app-container.role-owner .mobile-employee-logo') &&
+        /mobile-employee-logo[\s\S]*display:\s*block;/.test(mobileCssSource),
+        'mobile header should show the company logo for employee, admin, and owner sessions'
     );
 }
 
 function testAdminMobileHeaderAlsoUsesCompanyLogo() {
     assert(
-        /\.app-container\.role-admin\s+\.mobile-employee-logo\s*\{[^}]*display:\s*block;/.test(mobileCssSource),
+        mobileCssSource.includes('.app-container.role-admin .mobile-employee-logo'),
         'mobile admin header should also show the company logo'
     );
 }
@@ -307,7 +314,7 @@ testAdminMobileShowsOnlyAdminBottomNav();
 testEmployeeMobileShowsOnlyEmployeeBottomNav();
 testAdminCannotNavigateToEmployeePages();
 testLoginRoleIsNormalizedBeforeSessionSave();
-testEmployeeMobileHeaderUsesCompanyLogoOnlyForEmployeeRole();
+testMobileHeaderUsesCompanyLogoForAppRoles();
 testAdminMobileHeaderAlsoUsesCompanyLogo();
 testProfileModalBodyIsScrollableOnMobile();
 testEmployeeHistoryHeaderActionsAlignRightOnMobile();
