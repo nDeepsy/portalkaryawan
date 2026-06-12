@@ -664,19 +664,50 @@
         grid-template-columns: 1fr !important;
     }
 
+    .role-owner #admin-dept-chart {
+        height: auto;
+        min-height: 0;
+        padding: 12px;
+        align-items: stretch;
+    }
+
+    .owner-confirmation-list {
+        gap: 8px;
+    }
+
     .owner-confirmation-item {
         grid-template-columns: 1fr;
         align-items: stretch;
+        gap: 10px;
+        padding: 10px 12px;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+    }
+
+    .owner-confirmation-main {
+        gap: 2px;
+    }
+
+    .owner-confirmation-main strong {
+        font-size: var(--font-size-sm);
+    }
+
+    .owner-confirmation-main span {
+        font-size: var(--font-size-xs);
     }
 
     .owner-confirmation-actions {
         justify-content: stretch;
         flex-wrap: wrap;
+        gap: 6px;
     }
 
     .owner-confirmation-actions .btn-action {
-        flex: 1 1 88px;
+        flex: 1 1 72px;
         min-width: 0;
+        height: 32px;
+        padding: 0 8px;
+        font-size: var(--font-size-xs);
+        gap: 4px;
     }
     
     /* Employees list */
