@@ -268,14 +268,31 @@
 }
 
 .owner-confirmation-item {
+    position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: var(--spacing);
     padding: var(--spacing);
-    border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
-    background: var(--bg-primary);
+    border: 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, #F8FAFC 100%);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.owner-confirmation-item::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: var(--color-primary);
+}
+
+.owner-confirmation-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.1);
 }
 
 .owner-confirmation-main {
@@ -310,8 +327,43 @@
 .owner-confirmation-actions .btn-action {
     width: auto;
     min-width: 74px;
+    height: 38px;
     padding: 0 10px;
     gap: 6px;
+    margin: 0;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-sm);
+}
+
+.owner-confirmation-actions .btn-action.view {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--color-primary);
+}
+
+.owner-confirmation-actions .btn-action.view:hover {
+    background: var(--color-primary);
+    color: var(--color-white);
+}
+
+.owner-confirmation-actions .btn-action.edit {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.18);
+    color: var(--color-success);
+}
+
+.owner-confirmation-actions .btn-action.edit:hover {
+    background: var(--color-success);
+    color: var(--color-white);
+}
+
+.owner-confirmation-actions .btn-action.delete {
+    background: rgba(239, 68, 68, 0.08);
+    color: var(--color-danger);
+}
+
+.owner-confirmation-actions .btn-action.delete:hover {
+    background: var(--color-danger);
+    color: var(--color-white);
 }
 
 .owner-confirmation-empty {
