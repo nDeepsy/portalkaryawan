@@ -16,6 +16,7 @@ const jurnal = {
     activeUserId: '',
     editingDate: '',
     selectedSummaryMonth: '',
+    settingsListenerBound: false,
 
     async init() {
         const currentUserId = this.getCurrentUserId();
@@ -25,6 +26,7 @@ const jurnal = {
         }
 
         if (!this.initialized) {
+            this.initSettingsListener();
             this.loadCachedJurnals();
             this.loadCachedAttendanceRecords(currentUserId);
             this.initForm();
@@ -38,6 +40,23 @@ const jurnal = {
         }
 
         return this.loadJournals();
+    },
+
+    initSettingsListener() {
+        if (this.settingsListenerBound) return;
+        if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+        window.addEventListener('settingsUpdated', (event) => this.handleSettingsUpdated(event));
+        this.settingsListenerBound = true;
+    },
+
+    async handleSettingsUpdated(event) {
+        const section = event?.detail?.section || '';
+        if (!['workdays', 'shifts'].includes(section)) return;
+
+        await this.loadScheduleSettings();
+        this.renderJurnalList();
+        this.updateUI();
+        this.updateSummary();
     },
 
     resetForCurrentUser() {

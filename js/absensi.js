@@ -15,11 +15,13 @@ const absensi = {
     activeAttendanceLeave: null,
     attendanceHistoryData: [],
     selectedHistoryMonth: '',
+    settingsListenerBound: false,
 
     async init() {
         this.clearPendingAttendanceAction();
 
         if (!this.initialized) {
+            this.initSettingsListener();
             this.hydrateCachedAttendance();
             this.initLiveClock();
             this.initHistoryMonthFilter();
@@ -35,6 +37,23 @@ const absensi = {
 
         this.loadTodayAttendance();
         this.loadAttendanceHistory();
+    },
+
+    initSettingsListener() {
+        if (this.settingsListenerBound) return;
+        if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+        window.addEventListener('settingsUpdated', (event) => this.handleSettingsUpdated(event));
+        this.settingsListenerBound = true;
+    },
+
+    handleSettingsUpdated(event) {
+        const section = event?.detail?.section || '';
+        if (!['workdays', 'shifts', 'system'].includes(section)) return;
+
+        this.hydrateCachedAttendance();
+        this.updateUI();
+        this.renderTimeline();
+        this.loadTodayAttendance();
     },
 
     hydrateCachedAttendance() {

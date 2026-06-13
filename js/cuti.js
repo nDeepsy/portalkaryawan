@@ -10,9 +10,11 @@ const cuti = {
     annualLeaveDays: 12,
     selectedSummaryMonth: '',
     isSubmitting: false,
+    settingsListenerBound: false,
 
     async init() {
         if (!this.initialized) {
+            this.initSettingsListener();
             this.loadCachedLeaves();
             this.initForm();
             this.initFilters();
@@ -23,6 +25,23 @@ const cuti = {
         }
 
         this.loadLeaves();
+    },
+
+    initSettingsListener() {
+        if (this.settingsListenerBound) return;
+        if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+        window.addEventListener('settingsUpdated', (event) => this.handleSettingsUpdated(event));
+        this.settingsListenerBound = true;
+    },
+
+    handleSettingsUpdated(event) {
+        const section = event?.detail?.section || '';
+        if (section !== 'system') return;
+
+        const value = event?.detail?.values?.annual_leave_days ?? storage.get('app_settings', {})?.annual_leave_days ?? 12;
+        this.applyAnnualLeaveSetting(value);
+        this.updateStats();
+        this.renderLeaveList();
     },
 
     loadCachedLeaves() {

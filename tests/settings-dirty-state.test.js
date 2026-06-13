@@ -4,6 +4,9 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const settingsJs = fs.readFileSync(path.join(root, 'js', 'settings.js'), 'utf8');
+const absensiJs = fs.readFileSync(path.join(root, 'js', 'absensi.js'), 'utf8');
+const jurnalJs = fs.readFileSync(path.join(root, 'js', 'jurnal.js'), 'utf8');
+const cutiJs = fs.readFileSync(path.join(root, 'js', 'cuti.js'), 'utf8');
 const backendSettingsJs = fs.readFileSync(path.join(root, '..', 'apps-script-absensi', 'Settings.js'), 'utf8');
 
 const initBlock = settingsJs.match(/async init\(\)\s*\{[\s\S]*?\n    \},\n\n    async loadSettings/)?.[0] || '';
@@ -85,6 +88,41 @@ assert(
 assert(
     settingsJs.includes('getDefaultWorkdayShift(emp)'),
     'frontend workday sync should choose a real shift instead of reusing Libur as the default shift'
+);
+
+assert(
+    settingsJs.includes('await this.syncCurrentMonthScheduleWithWorkdays(workdays);'),
+    'saving workdays should finish local schedule sync before refreshing open admin/employee views'
+);
+
+assert(
+    settingsJs.includes("this.broadcastSettingsUpdated('workdays'") &&
+    settingsJs.includes("this.broadcastSettingsUpdated('system'") &&
+    settingsJs.includes("this.broadcastSettingsUpdated('shifts'"),
+    'saving any settings section should broadcast an update event'
+);
+
+assert(
+    settingsJs.includes('async refreshShiftConsumers()'),
+    'refreshing setting consumers should be awaitable'
+);
+
+assert(
+    absensiJs.includes("addEventListener('settingsUpdated'") &&
+    absensiJs.includes('handleSettingsUpdated'),
+    'attendance page should react to saved admin settings immediately'
+);
+
+assert(
+    jurnalJs.includes("addEventListener('settingsUpdated'") &&
+    jurnalJs.includes('handleSettingsUpdated'),
+    'journal page should react to saved admin workday/shift settings immediately'
+);
+
+assert(
+    cutiJs.includes("addEventListener('settingsUpdated'") &&
+    cutiJs.includes('handleSettingsUpdated'),
+    'leave page should react to saved annual leave settings immediately'
 );
 
 assert(

@@ -239,8 +239,9 @@ const settings = {
         this.setLocalSettingsOverride({ working_days: JSON.stringify(workdays) });
         this.clearSectionDirty('workdays');
         if (window.api?.clearRequestCacheForMutation) api.clearRequestCacheForMutation('saveSetting');
-        this.syncCurrentMonthScheduleWithWorkdays(workdays);
-        this.refreshShiftConsumers();
+        await this.syncCurrentMonthScheduleWithWorkdays(workdays);
+        await this.refreshShiftConsumers();
+        this.broadcastSettingsUpdated('workdays', { working_days: JSON.stringify(workdays), workdays });
         toast.success('Hari kerja berhasil disimpan!');
 
         api.saveSetting('working_days', JSON.stringify(workdays)).catch(error => {
@@ -275,7 +276,7 @@ const settings = {
             }
         }
 
-        api.getEmployees().then(result => {
+        return api.getEmployees().then(result => {
             const freshEmployees = result?.data || [];
             if (freshEmployees.length) {
                 this.applyWorkdaysToMonthSchedule(freshEmployees, schedules, key, year, month, workdays);
@@ -347,6 +348,7 @@ const settings = {
         if (window.cuti && typeof cuti.applyAnnualLeaveSetting === 'function') {
             cuti.applyAnnualLeaveSetting(annualLeaveDays);
         }
+        this.broadcastSettingsUpdated('system', { late_tolerance: tolerance, annual_leave_days: annualLeaveDays });
         toast.success('Pengaturan sistem berhasil disimpan!');
 
         Promise.all([
@@ -496,7 +498,8 @@ const settings = {
             this.resetShiftDrafts();
             this.clearSectionDirty('shifts');
             this.renderShifts();
-            this.refreshShiftConsumers();
+            await this.refreshShiftConsumers();
+            this.broadcastSettingsUpdated('shifts', { shifts: this.shifts });
             toast.success('Pengaturan shift berhasil disimpan!');
         } catch (error) {
             this.shifts = previousShifts;
@@ -562,7 +565,7 @@ const settings = {
         }
     },
 
-    refreshShiftConsumers() {
+    async refreshShiftConsumers() {
         window.dispatchEvent(new CustomEvent('shiftsUpdated', {
             detail: { shifts: this.shifts }
         }));
@@ -571,7 +574,7 @@ const settings = {
             dashboard.updateWelcomeCard();
         }
         if (window.absensi && absensi.loadTodayAttendance) {
-            absensi.loadTodayAttendance();
+            await absensi.loadTodayAttendance();
         }
         if (window.adminEmployees && adminEmployees.loadEmployees) {
             const refreshEmployees = adminEmployees.loadEmployees().then(() => {
@@ -582,13 +585,20 @@ const settings = {
             if (adminEmployees.populateShiftOptions) {
                 refreshEmployees.then(() => adminEmployees.populateShiftOptions()).catch(() => { });
             }
+            await refreshEmployees;
         }
         if (window.shiftSchedule && shiftSchedule.loadData) {
-            shiftSchedule.loadData().then(() => {
+            await shiftSchedule.loadData().then(() => {
                 shiftSchedule.renderTable();
                 shiftSchedule.updateSummary();
             }).catch(() => { });
         }
+    },
+
+    broadcastSettingsUpdated(section, values = {}) {
+        window.dispatchEvent(new CustomEvent('settingsUpdated', {
+            detail: { section, values }
+        }));
     },
 
     deleteShift(index) {
