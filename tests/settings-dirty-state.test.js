@@ -86,6 +86,26 @@ assert(
 );
 
 assert(
+    backendSettingsJs.includes('function normalizeSettingsSheetHeaders'),
+    'backend should normalize Settings headers so saved values are readable on every device'
+);
+
+assert(
+    backendSettingsJs.includes('function getSettingRowValue'),
+    'backend should read Settings values through a helper that supports legacy headers'
+);
+
+assert(
+    backendSettingsJs.includes("value(key-valuepairs)"),
+    'backend should tolerate the existing legacy Settings value header'
+);
+
+assert(
+    backendSettingsJs.includes('settings[row.key] = getSettingRowValue(row)'),
+    'backend getSettingsData should read the normalized/legacy setting value'
+);
+
+assert(
     settingsJs.includes('getDefaultWorkdayShift(emp)'),
     'frontend workday sync should choose a real shift instead of reusing Libur as the default shift'
 );
