@@ -304,7 +304,7 @@ const settings = {
         employees.forEach(emp => {
             if (!emp?.id) return;
             const empId = String(emp.id);
-            const defaultShift = emp.shift || 'Pagi';
+            const defaultShift = this.getDefaultWorkdayShift(emp);
             if (!monthData[empId]) monthData[empId] = {};
 
             for (let day = 1; day <= daysInMonth; day++) {
@@ -322,6 +322,15 @@ const settings = {
         });
 
         schedules[key] = monthData;
+    },
+
+    getDefaultWorkdayShift(emp) {
+        const employeeShift = String(emp?.shift || '').trim();
+        if (employeeShift && employeeShift.toLowerCase() !== 'libur') return employeeShift;
+
+        const firstShift = (this.shifts || storage.get('shifts', []) || [])
+            .find(shift => String(shift?.name || '').trim());
+        return firstShift?.name || 'Pagi';
     },
 
     async saveSystemSettings() {

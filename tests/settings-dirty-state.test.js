@@ -73,6 +73,21 @@ assert(
 );
 
 assert(
+    backendSettingsJs.includes("if (String(key) === 'working_days')"),
+    'backend should react when working day settings are saved'
+);
+
+assert(
+    backendSettingsJs.includes('syncCurrentMonthScheduleWithWorkdaysData(value)'),
+    'backend should rebuild the current month schedule after working days change'
+);
+
+assert(
+    settingsJs.includes('getDefaultWorkdayShift(emp)'),
+    'frontend workday sync should choose a real shift instead of reusing Libur as the default shift'
+);
+
+assert(
     !/console\.log\(\`\[ShiftSync\]/.test(backendSettingsJs) && !/console\.log\('\[ShiftSync\]/.test(backendSettingsJs),
     'backend shift sync should not directly log employee/schedule details'
 );
