@@ -173,11 +173,21 @@ const absensi = {
                 currentShift = assignedShift;
             } else if (!this.isConfiguredWorkday(todayObj)) {
                 currentShift = 'Libur';
+            } else if (String(currentShift || '').toLowerCase() === 'libur') {
+                currentShift = this.getDefaultWorkdayShiftName();
             }
         } catch (e) {
             console.error('Error reading cached shift schedule:', e);
         }
         return currentShift;
+    },
+
+    getDefaultWorkdayShiftName() {
+        const shifts = storage.get('shifts', []) || [];
+        const firstShift = Array.isArray(shifts)
+            ? shifts.find(shift => String(shift?.name || '').trim())
+            : null;
+        return firstShift?.name || 'Pagi';
     },
 
     isConfiguredWorkday(date = new Date()) {

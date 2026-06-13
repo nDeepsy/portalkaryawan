@@ -49,7 +49,7 @@ function createAbsensiHarness(overrides = {}) {
                 return map[selector] ? getElement(map[selector]) : null;
             }
         },
-        auth: {
+        auth: overrides.auth || {
             getCurrentUser: () => ({ id: 'KRY001', shift: 'Pagi' })
         },
         dateTime: {
@@ -790,6 +790,60 @@ async function testShiftScheduleOverridesConfiguredHoliday() {
     assert.strictEqual(elements.get('btn-clock-in').disabled, false, 'clock in should stay available when admin assigns a shift on a holiday');
 }
 
+async function testConfiguredWorkdayOverridesStaleEmployeeHolidayShift() {
+    const { absensi, elements } = createAbsensiHarness({
+        auth: {
+            getCurrentUser: () => ({ id: 'KRY001', shift: 'Libur' })
+        },
+        dateTime: {
+            getLocalDate: () => '2026-05-25'
+        },
+        api: {
+            batch: async () => ({
+                success: true,
+                data: {
+                    todayAttendance: {
+                        success: true,
+                        data: {}
+                    },
+                    leaves: { success: true, data: [] },
+                    izin: { success: true, data: [] },
+                    settings: {
+                        success: true,
+                        data: {
+                            working_days: JSON.stringify({
+                                senin: true,
+                                selasa: true,
+                                rabu: true,
+                                kamis: true,
+                                jumat: true,
+                                sabtu: false,
+                                minggu: false
+                            })
+                        }
+                    },
+                    shifts: { success: true, data: [{ name: 'Pagi', startTime: '09:00', endTime: '17:00' }] }
+                }
+            }),
+            getAllAttendance: async () => ({ success: true, data: [] })
+        }
+    });
+
+    ['btn-clock-in', 'btn-break', 'btn-after-break', 'btn-break-2', 'btn-after-break-2', 'btn-overtime', 'btn-clock-out'].forEach(id => {
+        elements.get(id);
+    });
+
+    absensi.attendanceData = absensi.getDefaultAttendance('KRY001');
+    absensi.renderTimeline = () => {};
+    absensi.loadAttendanceHistory = async () => {};
+
+    await absensi.fetchTodayAttendance();
+
+    assert.strictEqual(absensi.currentState, 'waiting', 'configured workday should override a stale Libur shift from employee profile');
+    assert.strictEqual(absensi.attendanceData.shift, 'Pagi', 'attendance should use a real work shift on configured workdays');
+    assert.strictEqual(elements.get('btn-clock-in').disabled, false, 'clock in should be available after admin enables the workday');
+}
+
 function testAttendanceLeaveLockIconMatchesPermissionType() {
     const { absensi } = createAbsensiHarness();
 
@@ -838,6 +892,7 @@ function testMobileAttendanceStatusDoesNotClipPulseAnimation() {
     await testApprovedLeaveLocksEmployeeAttendanceButtons();
     await testConfiguredHolidayLocksEmployeeAttendanceButtons();
     await testShiftScheduleOverridesConfiguredHoliday();
+    await testConfiguredWorkdayOverridesStaleEmployeeHolidayShift();
     testAttendanceLeaveLockIconMatchesPermissionType();
     testMobileAttendanceStatusDoesNotClipPulseAnimation();
     console.log('absensi responsive update tests passed');
