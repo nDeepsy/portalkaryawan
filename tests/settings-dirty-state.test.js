@@ -116,10 +116,11 @@ assert(
 );
 
 assert(
-    settingsJs.includes("this.broadcastSettingsUpdated('workdays'") &&
-    settingsJs.includes("this.broadcastSettingsUpdated('system'") &&
-    settingsJs.includes("this.broadcastSettingsUpdated('shifts'"),
-    'saving any settings section should broadcast an update event'
+    settingsJs.includes("await this.refreshAfterSettingsChange('workdays'") &&
+    settingsJs.includes("await this.refreshAfterSettingsChange('system'") &&
+    settingsJs.includes("await this.refreshAfterSettingsChange('shifts'") &&
+    settingsJs.includes('this.broadcastSettingsUpdated(section, values)'),
+    'saving any settings section should broadcast an update event through the shared refresh helper'
 );
 
 assert(

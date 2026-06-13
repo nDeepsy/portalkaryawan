@@ -14,6 +14,7 @@ const api = {
     requestTimeoutMs: 20000,
     requestCachePrefix: 'api_cache_',
     pendingRequests: new Map(),
+    pendingDataUpdateTimers: new Map(),
     cacheableActions: new Set([
         'batch',
         'getEmployeeProfile',
@@ -75,6 +76,7 @@ const api = {
                     }
                     if (result?.success && !this.cacheableActions.has(action)) {
                         this.clearRequestCacheForMutation(action);
+                        this.queueDataUpdatedForMutation(action);
                     }
                     return result;
                 } catch (e) {
@@ -131,6 +133,11 @@ const api = {
 
     clearRequestCacheForMutation(action) {
         const affectedActions = this.getAffectedCacheActions(action);
+        this.clearRequestCacheForActions(affectedActions);
+    },
+
+    clearRequestCacheForActions(actions = []) {
+        const affectedActions = Array.isArray(actions) ? actions : [actions];
         if (!affectedActions.length) return;
 
         for (let i = localStorage.length - 1; i >= 0; i--) {
@@ -168,6 +175,59 @@ const api = {
         };
 
         return groups[action] || ['batch'];
+    },
+
+    broadcastDataUpdated(type, detail = {}) {
+        if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
+        window.dispatchEvent(new CustomEvent('dataUpdated', {
+            detail: {
+                type,
+                ...detail,
+                timestamp: Date.now()
+            }
+        }));
+    },
+
+    queueDataUpdatedForMutation(action) {
+        const type = this.getDataUpdateTypeForAction(action);
+        if (!type) return;
+
+        const timerKey = `${type}:${action}`;
+        if (this.pendingDataUpdateTimers.has(timerKey)) {
+            clearTimeout(this.pendingDataUpdateTimers.get(timerKey));
+        }
+
+        const timer = setTimeout(() => {
+            this.pendingDataUpdateTimers.delete(timerKey);
+            this.broadcastDataUpdated(type, {
+                action,
+                affectedActions: this.getAffectedCacheActions(action)
+            });
+        }, 150);
+        this.pendingDataUpdateTimers.set(timerKey, timer);
+    },
+
+    getDataUpdateTypeForAction(action) {
+        const groups = {
+            saveAttendance: 'attendance',
+            saveJournal: 'journals',
+            deleteJournal: 'journals',
+            submitLeave: 'leaves',
+            approveLeave: 'leaves',
+            rejectLeave: 'leaves',
+            submitIzin: 'izin',
+            approveIzin: 'izin',
+            rejectIzin: 'izin',
+            addEmployee: 'employees',
+            updateEmployee: 'employees',
+            deleteEmployee: 'employees',
+            addShift: 'shifts',
+            updateShift: 'shifts',
+            deleteShift: 'shifts',
+            saveSchedule: 'schedule',
+            syncDailyShifts: 'employees'
+        };
+        return groups[action] || '';
     },
 
     _stableStringify(value) {

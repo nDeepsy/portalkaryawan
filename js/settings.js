@@ -229,6 +229,7 @@ const settings = {
     },
 
     async saveWorkdays() {
+        const saveWorkdaysBtn = document.getElementById('btn-save-workdays');
         const days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
         const workdays = {};
         days.forEach(day => {
@@ -236,18 +237,26 @@ const settings = {
             workdays[day] = el ? el.checked : false;
         });
 
-        this.setLocalSettingsOverride({ working_days: JSON.stringify(workdays) });
-        this.clearSectionDirty('workdays');
-        if (window.api?.clearRequestCacheForMutation) api.clearRequestCacheForMutation('saveSetting');
-        await this.syncCurrentMonthScheduleWithWorkdays(workdays);
-        await this.refreshShiftConsumers();
-        this.broadcastSettingsUpdated('workdays', { working_days: JSON.stringify(workdays), workdays });
-        toast.success('Hari kerja berhasil disimpan!');
+        try {
+            await this.setSaveButtonLoading(saveWorkdaysBtn, '<i class="fas fa-spinner fa-spin"></i><span>Menyimpan...</span>', async () => {
+                const value = JSON.stringify(workdays);
+                this.setLocalSettingsOverride({ working_days: value });
+                this.clearSectionDirty('workdays');
+                if (window.api?.clearRequestCacheForMutation) api.clearRequestCacheForMutation('saveSetting');
 
-        api.saveSetting('working_days', JSON.stringify(workdays)).catch(error => {
+                const result = await api.saveSetting('working_days', value);
+                if (!result?.success) {
+                    throw new Error(result?.error || 'Gagal menyimpan hari kerja');
+                }
+
+                await this.syncCurrentMonthScheduleWithWorkdays(workdays);
+                await this.refreshAfterSettingsChange('workdays', { working_days: value, workdays });
+                toast.success('Hari kerja berhasil disimpan!');
+            });
+        } catch (error) {
             console.error('Error saving workdays:', error);
-            toast.warning('Hari kerja tampil lokal, tetapi server belum tersinkron');
-        });
+            toast.error(error.message || 'Gagal menyimpan hari kerja');
+        }
     },
 
     async syncCurrentMonthScheduleWithWorkdays(workdays) {
@@ -335,6 +344,7 @@ const settings = {
     },
 
     async saveSystemSettings() {
+        const saveSystemBtn = document.getElementById('btn-save-system');
         const lateTolerance = document.getElementById('setting-late-tolerance');
         const tolerance = String(Math.min(60, Math.max(0, Number(lateTolerance ? lateTolerance.value : 15) || 0)));
         if (lateTolerance) lateTolerance.value = tolerance;
@@ -342,22 +352,31 @@ const settings = {
         const annualLeaveDays = String(Math.min(365, Math.max(0, Number(annualLeaveInput ? annualLeaveInput.value : 12) || 0)));
         if (annualLeaveInput) annualLeaveInput.value = annualLeaveDays;
 
-        this.setLocalSettingsOverride({ late_tolerance: tolerance, annual_leave_days: annualLeaveDays });
-        this.clearSectionDirty('system');
-        if (window.api?.clearRequestCacheForMutation) api.clearRequestCacheForMutation('saveSetting');
-        if (window.cuti && typeof cuti.applyAnnualLeaveSetting === 'function') {
-            cuti.applyAnnualLeaveSetting(annualLeaveDays);
-        }
-        this.broadcastSettingsUpdated('system', { late_tolerance: tolerance, annual_leave_days: annualLeaveDays });
-        toast.success('Pengaturan sistem berhasil disimpan!');
+        try {
+            await this.setSaveButtonLoading(saveSystemBtn, '<i class="fas fa-spinner fa-spin"></i><span>Menyimpan...</span>', async () => {
+                this.setLocalSettingsOverride({ late_tolerance: tolerance, annual_leave_days: annualLeaveDays });
+                this.clearSectionDirty('system');
+                if (window.api?.clearRequestCacheForMutation) api.clearRequestCacheForMutation('saveSetting');
 
-        Promise.all([
-            api.saveSetting('late_tolerance', tolerance),
-            api.saveSetting('annual_leave_days', annualLeaveDays)
-        ]).catch(error => {
+                const results = await Promise.all([
+                    api.saveSetting('late_tolerance', tolerance),
+                    api.saveSetting('annual_leave_days', annualLeaveDays)
+                ]);
+                const failed = results.find(result => !result?.success);
+                if (failed) {
+                    throw new Error(failed.error || 'Gagal menyimpan pengaturan sistem');
+                }
+
+                if (window.cuti && typeof cuti.applyAnnualLeaveSetting === 'function') {
+                    cuti.applyAnnualLeaveSetting(annualLeaveDays);
+                }
+                await this.refreshAfterSettingsChange('system', { late_tolerance: tolerance, annual_leave_days: annualLeaveDays });
+                toast.success('Pengaturan sistem berhasil disimpan!');
+            });
+        } catch (error) {
             console.error('Error saving system settings:', error);
-            toast.warning('Pengaturan tampil lokal, tetapi server belum tersinkron');
-        });
+            toast.error(error.message || 'Gagal menyimpan pengaturan sistem');
+        }
     },
 
     renderShifts() {
@@ -498,8 +517,7 @@ const settings = {
             this.resetShiftDrafts();
             this.clearSectionDirty('shifts');
             this.renderShifts();
-            await this.refreshShiftConsumers();
-            this.broadcastSettingsUpdated('shifts', { shifts: this.shifts });
+            await this.refreshAfterSettingsChange('shifts', { shifts: this.shifts });
             toast.success('Pengaturan shift berhasil disimpan!');
         } catch (error) {
             this.shifts = previousShifts;
@@ -512,6 +530,52 @@ const settings = {
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = originalHtml || '<i class="fas fa-save"></i><span>Simpan Pengaturan Shift</span>';
             }
+        }
+    },
+
+    async setSaveButtonLoading(button, loadingHtml, callback) {
+        const originalHtml = button?.innerHTML;
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = loadingHtml;
+        }
+
+        try {
+            return await callback();
+        } finally {
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = originalHtml;
+            }
+        }
+    },
+
+    async refreshAfterSettingsChange(section, values = {}) {
+        if (window.api?.clearRequestCacheForActions) {
+            api.clearRequestCacheForActions([
+                'batch',
+                'getSettings',
+                'getShifts',
+                'getSchedule',
+                'getEmployees',
+                'getEmployeeProfile',
+                'getTodayAttendance',
+                'getAttendance',
+                'getAllAttendance',
+                'getJournals',
+                'getAllJournals',
+                'getLeaves',
+                'getAllLeaves',
+                'getIzin',
+                'getAllIzin'
+            ]);
+        }
+
+        await this.refreshShiftConsumers();
+        this.broadcastSettingsUpdated(section, values);
+
+        if (window.api?.broadcastDataUpdated) {
+            api.broadcastDataUpdated('settings', { section, values });
         }
     },
 

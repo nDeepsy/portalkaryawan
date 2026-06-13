@@ -14,6 +14,7 @@ const adminDashboard = {
     refreshTtl: 30000,
     selectedPeriod: 'today',
     periodFilterBound: false,
+    dataUpdateBound: false,
 
     async init() {
         if (!auth.canAccessAdminReports()) {
@@ -23,6 +24,7 @@ const adminDashboard = {
         }
 
         this.bindPeriodFilter();
+        this.bindDataUpdateEvents();
         this.updateRoleLabels();
         this.loadCachedData();
         this.updateStats();
@@ -79,6 +81,38 @@ const adminDashboard = {
         });
 
         this.periodFilterBound = true;
+    },
+
+    bindDataUpdateEvents() {
+        if (this.dataUpdateBound) return;
+        window.addEventListener('dataUpdated', (event) => this.handleDataUpdated(event));
+        this.dataUpdateBound = true;
+    },
+
+    async handleDataUpdated(event) {
+        const detail = event?.detail || {};
+        const relevantTypes = ['settings', 'employees', 'attendance', 'journals', 'leaves', 'izin'];
+        if (!relevantTypes.includes(detail.type)) return;
+        if (router?.currentPage !== 'admin-dashboard') return;
+        if (!auth.canAccessAdminReports()) return;
+
+        this.lastLoadedAt = 0;
+        this.loadCachedData();
+        this.updateStats();
+        this.renderCharts();
+        this.renderRecentActivity();
+        this.renderOnlineUsers();
+
+        if (this.loadingPromise) await this.loadingPromise;
+        this.loadingPromise = this.loadData().finally(() => {
+            this.loadingPromise = null;
+            this.lastLoadedAt = Date.now();
+        });
+        await this.loadingPromise;
+        this.updateStats();
+        this.renderCharts();
+        this.renderRecentActivity();
+        this.renderOnlineUsers();
     },
 
     loadCachedData() {

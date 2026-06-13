@@ -10,6 +10,7 @@ const adminReports = {
     currentPhotoUrl: '',
     currentLeaveAttachmentUrl: '',
     attendanceRefreshTimer: null,
+    dataUpdateBound: false,
     filters: {
         attendance: { month: '', division: '', status: '' },
         jurnal: { month: '', employee: '', status: '' },
@@ -41,6 +42,7 @@ const adminReports = {
         }
 
         this.bindAttendanceEvents();
+        this.bindDataUpdateEvents();
         this.loadCachedAttendanceReports();
         this.populateDivisionFilters();
         this.populateEmployeeFilter();
@@ -57,6 +59,7 @@ const adminReports = {
         }
 
         this.bindJurnalEvents();
+        this.bindDataUpdateEvents();
         this.loadCachedReportData();
         this.populateEmployeeFilter();
         this.renderJurnalReports();
@@ -71,9 +74,38 @@ const adminReports = {
         }
 
         this.bindLeaveEvents();
+        this.bindDataUpdateEvents();
         this.loadCachedReportData();
         this.renderLeaveReports();
         this.refreshLeaveReports();
+    },
+
+    bindDataUpdateEvents() {
+        if (this.dataUpdateBound) return;
+        window.addEventListener('dataUpdated', (event) => this.handleDataUpdated(event));
+        this.dataUpdateBound = true;
+    },
+
+    async handleDataUpdated(event) {
+        const detail = event?.detail || {};
+        const relevantTypes = ['settings', 'employees', 'attendance', 'journals', 'leaves', 'izin'];
+        if (!relevantTypes.includes(detail.type)) return;
+        if (!this.canAccessAdminReports()) return;
+
+        const page = router?.currentPage || '';
+        if (page === 'attendance-reports') {
+            this.loadCachedAttendanceReports();
+            this.renderAttendanceReports();
+            await this.refreshAttendanceReports();
+        } else if (page === 'jurnal-reports') {
+            this.loadCachedReportData();
+            this.renderJurnalReports();
+            await this.refreshJurnalReports();
+        } else if (page === 'leave-reports') {
+            this.loadCachedReportData();
+            this.renderLeaveReports();
+            await this.refreshLeaveReports();
+        }
     },
 
     async loadData() {

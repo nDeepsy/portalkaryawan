@@ -14,6 +14,7 @@ const shiftSchedule = {
         search: ''
     },
     eventsBound: false,
+    dataUpdateBound: false,
 
     async init() {
         // Check if admin
@@ -25,6 +26,7 @@ const shiftSchedule = {
 
         this.setCurrentMonthYearControls();
         this.bindEvents();
+        this.bindDataUpdateEvents();
         this.loadCachedData();
         this.populateDivisionFilter();
         this.renderLegend();
@@ -40,6 +42,32 @@ const shiftSchedule = {
         }).catch(error => {
             console.error('Error refreshing schedule data:', error);
         });
+    },
+
+    bindDataUpdateEvents() {
+        if (this.dataUpdateBound) return;
+        window.addEventListener('dataUpdated', (event) => this.handleDataUpdated(event));
+        this.dataUpdateBound = true;
+    },
+
+    async handleDataUpdated(event) {
+        const detail = event?.detail || {};
+        const relevantTypes = ['settings', 'employees', 'shifts', 'schedule'];
+        if (!relevantTypes.includes(detail.type) && detail.section !== 'workdays' && detail.section !== 'shifts') return;
+        if (router?.currentPage !== 'shift-schedule') return;
+        if (!auth.isAdmin()) return;
+
+        this.loadCachedData();
+        this.populateDivisionFilter();
+        this.renderLegend();
+        this.renderTable();
+        this.updateSummary();
+
+        await this.loadData();
+        this.populateDivisionFilter();
+        this.renderLegend();
+        this.renderTable();
+        this.updateSummary();
     },
 
     loadCachedData() {
