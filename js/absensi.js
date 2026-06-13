@@ -68,6 +68,7 @@ const absensi = {
         } else if (!this.attendanceData?.date || this.attendanceData.date !== today || String(this.attendanceData.userId || '') !== String(userId)) {
             this.attendanceData = this.getDefaultAttendance(userId);
         }
+        this.reconcileAttendanceShiftWithCurrentSchedule(userId, today);
         this.activeAttendanceLeave = this.getActiveApprovedLeaveOrPermission(
             storage.get('leaves', []),
             storage.get('izin', []),
@@ -75,6 +76,16 @@ const absensi = {
             today
         );
         this.setCurrentState();
+    },
+
+    reconcileAttendanceShiftWithCurrentSchedule(userId, dateValue) {
+        if (!this.attendanceData || this.attendanceData.clockIn) return;
+
+        const scheduledShift = this.getScheduledShiftName(userId, dateValue);
+        if (scheduledShift && String(this.attendanceData.shift || '').toLowerCase() === 'libur' && String(scheduledShift).toLowerCase() !== 'libur') {
+            this.attendanceData.shift = scheduledShift;
+            this.attendanceData.status = this.attendanceData.status || 'waiting';
+        }
     },
 
     initHistoryMonthFilter() {

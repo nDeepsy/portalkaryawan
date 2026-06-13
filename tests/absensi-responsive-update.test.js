@@ -844,6 +844,45 @@ async function testConfiguredWorkdayOverridesStaleEmployeeHolidayShift() {
     assert.strictEqual(elements.get('btn-clock-in').disabled, false, 'clock in should be available after admin enables the workday');
 }
 
+function testCachedHolidayAttendanceIsReconciledWhenAdminEnablesWorkday() {
+    const store = {
+        app_settings: {
+            working_days: JSON.stringify({
+                senin: true,
+                selasa: true,
+                rabu: true,
+                kamis: true,
+                jumat: true,
+                sabtu: false,
+                minggu: false
+            })
+        },
+        shifts: [{ name: 'Pagi', startTime: '09:00', endTime: '17:00' }],
+        attendance: [{
+            userId: 'KRY001',
+            date: '2026-05-25',
+            shift: 'Libur',
+            status: 'waiting',
+            clockIn: null,
+            clockOut: null
+        }]
+    };
+    const { absensi } = createAbsensiHarness({
+        store,
+        auth: {
+            getCurrentUser: () => ({ id: 'KRY001', shift: 'Libur' })
+        },
+        dateTime: {
+            getLocalDate: () => '2026-05-25'
+        }
+    });
+
+    absensi.hydrateCachedAttendance();
+
+    assert.strictEqual(absensi.attendanceData.shift, 'Pagi', 'cached mobile holiday attendance should be corrected when admin enables the workday');
+    assert.strictEqual(absensi.currentState, 'waiting', 'corrected cached attendance should unlock the attendance page immediately');
+}
+
 function testAttendanceLeaveLockIconMatchesPermissionType() {
     const { absensi } = createAbsensiHarness();
 
@@ -893,6 +932,7 @@ function testMobileAttendanceStatusDoesNotClipPulseAnimation() {
     await testConfiguredHolidayLocksEmployeeAttendanceButtons();
     await testShiftScheduleOverridesConfiguredHoliday();
     await testConfiguredWorkdayOverridesStaleEmployeeHolidayShift();
+    testCachedHolidayAttendanceIsReconciledWhenAdminEnablesWorkday();
     testAttendanceLeaveLockIconMatchesPermissionType();
     testMobileAttendanceStatusDoesNotClipPulseAnimation();
     console.log('absensi responsive update tests passed');
