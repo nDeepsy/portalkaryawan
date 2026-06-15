@@ -1542,6 +1542,10 @@
 
 /* Print styles */
 @media print {
+    .print-only {
+        display: block !important;
+    }
+
     .sidebar,
     .top-bar,
     .bottom-nav,

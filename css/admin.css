@@ -1820,3 +1820,211 @@
     padding: var(--spacing);
     text-align: center;
 }
+
+.print-only {
+    display: none !important;
+}
+
+@media print {
+    @page {
+        size: A4;
+        margin: 16mm 14mm;
+    }
+
+    body.printing-formal-report {
+        background: #ffffff !important;
+        color: #000000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body.printing-formal-report .sidebar,
+    body.printing-formal-report .top-bar,
+    body.printing-formal-report .bottom-nav,
+    body.printing-formal-report .reports-actions,
+    body.printing-formal-report .reports-filters-card,
+    body.printing-formal-report .mobile-cards,
+    body.printing-formal-report .btn-primary,
+    body.printing-formal-report .btn-secondary,
+    body.printing-formal-report .modal-overlay {
+        display: none !important;
+    }
+
+    body.printing-formal-report .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    body.printing-formal-report .page-content {
+        padding: 0 !important;
+        background: #ffffff !important;
+    }
+
+    body.printing-formal-report .page {
+        display: none !important;
+    }
+
+    body.printing-formal-report .page.active {
+        display: block !important;
+    }
+
+    body.printing-formal-report .reports-container,
+    body.printing-formal-report .reports-table-card,
+    body.printing-formal-report .table-responsive {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
+
+    body.printing-formal-report .reports-header {
+        display: none !important;
+    }
+
+    body.printing-formal-report .print-only {
+        display: block !important;
+    }
+
+    body.printing-formal-report .print-letterhead {
+        display: grid !important;
+        grid-template-columns: 84px minmax(0, 1fr);
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    body.printing-formal-report .print-logo {
+        width: 78px;
+        height: 78px;
+        object-fit: contain;
+    }
+
+    body.printing-formal-report .print-company h1 {
+        margin: 0 0 5px;
+        color: #000000;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 18pt;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-align: center;
+        text-transform: uppercase;
+    }
+
+    body.printing-formal-report .print-company p {
+        margin: 2px 0;
+        color: #000000;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 10.5pt;
+        text-align: center;
+    }
+
+    body.printing-formal-report .print-letterhead-line {
+        border-bottom: 3px double #000000;
+        margin: 0 0 18px;
+    }
+
+    body.printing-formal-report .print-report-title h2 {
+        margin: 0 0 12px;
+        color: #000000;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 13pt;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-align: center;
+        text-transform: uppercase;
+    }
+
+    body.printing-formal-report .print-report-info {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px 24px;
+        margin: 0 0 14px;
+        color: #000000;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 10pt;
+    }
+
+    body.printing-formal-report .print-info-row {
+        display: grid;
+        grid-template-columns: 98px 1fr;
+        gap: 6px;
+    }
+
+    body.printing-formal-report .print-info-row span::after {
+        content: ":";
+        float: right;
+    }
+
+    body.printing-formal-report .print-info-row strong {
+        font-weight: 400;
+    }
+
+    body.printing-formal-report .reports-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        color: #000000 !important;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 9.5pt;
+        page-break-inside: auto;
+    }
+
+    body.printing-formal-report .reports-table tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    body.printing-formal-report .reports-table thead {
+        display: table-header-group;
+    }
+
+    body.printing-formal-report .reports-table th,
+    body.printing-formal-report .reports-table td {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #000000 !important;
+        padding: 5px 6px !important;
+        vertical-align: top;
+        box-shadow: none !important;
+    }
+
+    body.printing-formal-report .reports-table thead tr:first-child th:last-child,
+    body.printing-formal-report .reports-table tbody td:last-child,
+    body.printing-formal-report .reports-table colgroup col:last-child {
+        display: none !important;
+    }
+
+    body.printing-formal-report .print-formal-footer {
+        margin-top: 28px;
+        page-break-inside: avoid;
+    }
+
+    body.printing-formal-report .print-signature-date {
+        margin-bottom: 12px;
+        color: #000000;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 10.5pt;
+        text-align: right;
+    }
+
+    body.printing-formal-report .print-signatures {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 80px;
+        color: #000000;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 10.5pt;
+        text-align: center;
+    }
+
+    body.printing-formal-report .print-signature-block p {
+        margin: 0 0 4px;
+    }
+
+    body.printing-formal-report .print-signature-space {
+        height: 62px;
+    }
+}

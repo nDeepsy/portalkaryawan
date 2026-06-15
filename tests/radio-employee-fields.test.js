@@ -57,9 +57,9 @@ assert(mainJs.includes("const APP_COMPANY_NAME = 'PT Magtas Radio 107.3 FM';"), 
 assert(!mainJs.includes("storage.get('company'"), 'frontend should not read removed company settings');
 assert(routerJs.includes('APP_COMPANY_NAME'), 'router title should use the fixed app name');
 assert(indexHtml.includes('class="sidebar-logo-img"'), 'sidebar should render the company PNG logo');
-assert(indexHtml.includes('assets/images/Logo Magtas Rado 107.3 FM.png'), 'sidebar should use the provided company logo asset');
+assert(indexHtml.includes('assets/images/logo-magtas.png'), 'sidebar should use the current company logo asset');
 assert(!indexHtml.includes('<i class="fas fa-infinity"></i>'), 'sidebar should not keep the old infinity icon');
-assert(/<div class="logo-core">\s*<i class="fas fa-building"><\/i>\s*<\/div>/s.test(indexHtml), 'login hero should use the original office icon');
+assert(/<div class="logo-core">\s*<img src="assets\/images\/logo-magtas\.png"/s.test(indexHtml), 'login hero should use the current company logo image');
 assert(/\.sidebar-header\s*\{[^}]*min-height:\s*100px;/s.test(mainCss), 'sidebar header should align with the top bar border');
 assert(/\.sidebar-header\s*\{[^}]*padding:\s*var\(--spacing-sm\)\s+var\(--spacing-md\);/s.test(mainCss), 'sidebar header should keep the logo visually centered with the top bar');
 assert(/\.sidebar-header\s*\{[^}]*box-sizing:\s*border-box;/s.test(mainCss), 'sidebar header height should include its border');
@@ -72,9 +72,9 @@ assert(!/\.sidebar-logo-img\s*\{[^}]*margin-left:/s.test(mainCss), 'sidebar logo
 assert(/\.sidebar\.collapsed\s+\.sidebar-logo-img\s*\{[^}]*width:\s*52px;/s.test(mainCss), 'collapsed sidebar should keep the logo compact');
 const loginCss = fs.readFileSync(path.join(root, 'css', 'login.css'), 'utf8');
 assert(/\.logo-core\s*\{[^}]*animation:\s*pulse-core\s+2s\s+ease-in-out\s+infinite;/s.test(loginCss), 'login logo core should keep the existing animation');
-assert(/\.logo-core\s*\{[^}]*width:\s*80px;/s.test(loginCss), 'login office icon core should use the original size');
-assert(/\.logo-core\s*\{[^}]*background:\s*var\(--color-primary-gradient\);/s.test(loginCss), 'login office icon core should use the original blue gradient');
-assert(!loginCss.includes('.login-logo-img'), 'login hero should not keep company logo image styling');
+assert(/\.logo-core\s*\{[^}]*width:\s*112px;/s.test(loginCss), 'login company logo core should be large enough to read clearly');
+assert(/\.logo-core\s*\{[^}]*background:\s*transparent;/s.test(loginCss), 'login company logo core should not add a white circle behind the transparent logo');
+assert(loginCss.includes('.logo-core img'), 'login hero should style the company logo image');
 
 ['Pimpinan', 'Manajemen', 'Administrasi', 'Keuangan', 'Siaran', 'Keanggotaan'].forEach(value => {
     assert(adminEmployeesJs.includes(value), `admin employee options should include ${value}`);

@@ -1362,7 +1362,154 @@ const adminReports = {
     },
 
     printReport(type) {
+        this.prepareFormalPrintReport(type);
         window.print();
+    },
+
+    prepareFormalPrintReport(type) {
+        const config = this.getPrintReportConfig(type);
+        if (!config || typeof document === 'undefined') return;
+
+        const page = document.getElementById(config.pageId);
+        const container = page?.querySelector('.reports-container');
+        if (!container) return;
+
+        container.querySelectorAll('.formal-print-block').forEach(node => node.remove());
+
+        const header = document.createElement('div');
+        header.className = 'formal-print-block print-only print-formal-header';
+        header.innerHTML = this.buildPrintHeader(config);
+
+        const footer = document.createElement('div');
+        footer.className = 'formal-print-block print-only print-formal-footer';
+        footer.innerHTML = this.buildPrintFooter();
+
+        container.insertBefore(header, container.firstChild);
+        container.appendChild(footer);
+
+        document.body.classList.remove('printing-attendance', 'printing-jurnal', 'printing-leave');
+        document.body.classList.add('printing-formal-report', `printing-${type}`);
+    },
+
+    getPrintReportConfig(type) {
+        const configs = {
+            attendance: {
+                pageId: 'page-attendance-reports',
+                title: 'LAPORAN REKAP ABSENSI KARYAWAN',
+                filters: [
+                    { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('attendance-month')?.value) },
+                    { label: 'Divisi', value: this.getSelectedOptionText('report-division-filter') || 'Semua Divisi' },
+                    { label: 'Status', value: this.getSelectedOptionText('report-status-filter') || 'Semua' }
+                ]
+            },
+            jurnal: {
+                pageId: 'page-jurnal-reports',
+                title: 'LAPORAN REKAP JURNAL KERJA KARYAWAN',
+                filters: [
+                    { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('jurnal-month')?.value) },
+                    { label: 'Karyawan', value: this.getSelectedOptionText('jurnal-employee-filter') || 'Semua Karyawan' }
+                ]
+            },
+            leave: {
+                pageId: 'page-leave-reports',
+                title: 'LAPORAN REKAP CUTI DAN IZIN KARYAWAN',
+                filters: [
+                    { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('leave-month')?.value) },
+                    { label: 'Jenis', value: this.getSelectedOptionText('leave-type-filter') || 'Semua' },
+                    { label: 'Status', value: this.getSelectedOptionText('leave-status-filter') || 'Semua' }
+                ]
+            }
+        };
+
+        return configs[type] || null;
+    },
+
+    buildPrintHeader(config) {
+        return `
+            <div class="print-letterhead">
+                <img src="assets/images/logo-magtas.png" alt="Logo PT Magtas Radio 107.3 FM" class="print-logo">
+                <div class="print-company">
+                    <h1>PT MAGTAS RADIO 107.3 FM</h1>
+                    <p>Alamat: ............................................................</p>
+                    <p>Telp/Email: ........................................................</p>
+                </div>
+            </div>
+            <div class="print-letterhead-line"></div>
+            <div class="print-report-title">
+                <h2>${this.escapeHtml(config.title)}</h2>
+            </div>
+            <div class="print-report-info">
+                ${this.buildPrintInfoRows(config)}
+            </div>
+        `;
+    },
+
+    buildPrintInfoRows(config) {
+        const currentUser = auth?.getCurrentUser ? auth.getCurrentUser() : null;
+        const baseRows = [
+            ...(config.filters || []),
+            { label: 'Tanggal Cetak', value: this.formatPrintLongDate(new Date()) },
+            { label: 'Dicetak Oleh', value: currentUser?.name || currentUser?.email || '-' }
+        ];
+
+        return baseRows.map(row => `
+            <div class="print-info-row">
+                <span>${this.escapeHtml(row.label)}</span>
+                <strong>${this.escapeHtml(row.value || '-')}</strong>
+            </div>
+        `).join('');
+    },
+
+    buildPrintFooter() {
+        return `
+            <div class="print-signature-date">Tasikmalaya, ${this.escapeHtml(this.formatPrintLongDate(new Date()))}</div>
+            <div class="print-signatures">
+                <div class="print-signature-block">
+                    <p>Dibuat oleh,</p>
+                    <p>Admin</p>
+                    <div class="print-signature-space"></div>
+                    <p>(............................)</p>
+                </div>
+                <div class="print-signature-block">
+                    <p>Mengetahui,</p>
+                    <p>Pemilik</p>
+                    <div class="print-signature-space"></div>
+                    <p>(............................)</p>
+                </div>
+            </div>
+        `;
+    },
+
+    getSelectedOptionText(id) {
+        const select = document.getElementById(id);
+        if (!select) return '';
+        const option = select.options[select.selectedIndex];
+        return option ? String(option.textContent || '').trim() : '';
+    },
+
+    formatPrintMonthValue(value) {
+        if (!value) return 'Semua Periode';
+        const raw = String(value).trim();
+        const match = raw.match(/^(\d{4})-(\d{2})$/);
+        if (!match) return raw;
+
+        const monthNames = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+        const monthIndex = Number(match[2]) - 1;
+        return `${monthNames[monthIndex] || match[2]} ${match[1]}`;
+    },
+
+    formatPrintLongDate(value) {
+        const date = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(date.getTime())) return '-';
+
+        const monthNames = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+        return `${String(date.getDate()).padStart(2, '0')} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
     },
 
     viewDetail(name) {
