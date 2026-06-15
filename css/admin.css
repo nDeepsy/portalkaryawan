@@ -1998,12 +1998,12 @@
     }
 
     body.printing-formal-report .print-formal-footer {
-        margin-top: 28px;
+        margin-top: 44px;
         page-break-inside: avoid;
     }
 
     body.printing-formal-report .print-signature-date {
-        margin-bottom: 12px;
+        margin: 0 34px 22px 0;
         color: #000000;
         font-family: "Times New Roman", Times, serif;
         font-size: 10.5pt;
@@ -2017,6 +2017,8 @@
         color: #000000;
         font-family: "Times New Roman", Times, serif;
         font-size: 10.5pt;
+        line-height: 1.35;
+        margin-top: 4px;
         text-align: center;
     }
 
@@ -2025,6 +2027,6 @@
     }
 
     body.printing-formal-report .print-signature-space {
-        height: 62px;
+        height: 82px;
     }
 }
