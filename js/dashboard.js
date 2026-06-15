@@ -14,8 +14,10 @@ const dashboard = {
     loadingPromise: null,
     lastLoadedAt: 0,
     refreshTtl: 30000,
+    dataUpdateBound: false,
 
     async init() {
+        this.bindDataUpdateEvents();
         this.loadCachedData();
         this.renderDashboard();
 
@@ -30,6 +32,31 @@ const dashboard = {
             this.lastLoadedAt = Date.now();
             this.initialized = true;
         });
+    },
+
+    bindDataUpdateEvents() {
+        if (this.dataUpdateBound) return;
+        window.addEventListener('dataUpdated', (event) => this.handleDataUpdated(event));
+        this.dataUpdateBound = true;
+    },
+
+    async handleDataUpdated(event) {
+        const detail = event?.detail || {};
+        const relevantTypes = ['settings', 'employees', 'attendance', 'journals', 'leaves', 'izin'];
+        if (!relevantTypes.includes(detail.type)) return;
+        if (router?.currentPage !== 'dashboard') return;
+        if (!auth.isKaryawan || !auth.isKaryawan()) return;
+
+        this.lastLoadedAt = 0;
+        this.loadCachedData();
+        this.renderDashboard();
+        if (this.loadingPromise) await this.loadingPromise;
+        this.loadingPromise = this.loadData().finally(() => {
+            this.loadingPromise = null;
+            this.lastLoadedAt = Date.now();
+            this.initialized = true;
+        });
+        await this.loadingPromise;
     },
 
     resetData() {

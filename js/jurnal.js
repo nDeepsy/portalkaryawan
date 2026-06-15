@@ -17,6 +17,7 @@ const jurnal = {
     editingDate: '',
     selectedSummaryMonth: '',
     settingsListenerBound: false,
+    dataUpdateBound: false,
 
     async init() {
         const currentUserId = this.getCurrentUserId();
@@ -43,10 +44,15 @@ const jurnal = {
     },
 
     initSettingsListener() {
-        if (this.settingsListenerBound) return;
         if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
-        window.addEventListener('settingsUpdated', (event) => this.handleSettingsUpdated(event));
-        this.settingsListenerBound = true;
+        if (!this.settingsListenerBound) {
+            window.addEventListener('settingsUpdated', (event) => this.handleSettingsUpdated(event));
+            this.settingsListenerBound = true;
+        }
+        if (!this.dataUpdateBound) {
+            window.addEventListener('dataUpdated', (event) => this.handleDataUpdated(event));
+            this.dataUpdateBound = true;
+        }
     },
 
     async handleSettingsUpdated(event) {
@@ -57,6 +63,20 @@ const jurnal = {
         this.renderJurnalList();
         this.updateUI();
         this.updateSummary();
+    },
+
+    async handleDataUpdated(event) {
+        const detail = event?.detail || {};
+        const relevantTypes = ['settings', 'journals', 'attendance', 'employees'];
+        if (!relevantTypes.includes(detail.type)) return;
+        if (router?.currentPage !== 'jurnal') return;
+
+        this.loadCachedJurnals();
+        this.loadCachedAttendanceRecords(this.getCurrentUserId());
+        this.renderJurnalList();
+        this.updateUI();
+        this.updateSummary();
+        await this.loadJournals();
     },
 
     resetForCurrentUser() {

@@ -11,9 +11,11 @@ const izin = {
     selectedSummaryMonth: '',
     currentPreviewUrl: null,
     isSubmitting: false,
+    dataUpdateBound: false,
 
     async init() {
         if (!this.initialized) {
+            this.bindDataUpdateEvents();
             this.loadCachedIzin();
             this.initForm();
             this.initFilters();
@@ -29,6 +31,25 @@ const izin = {
         if (dateInput) {
             dateInput.value = this.formatDateInputForDisplay(dateTime.getLocalDate ? dateTime.getLocalDate() : new Date());
         }
+    },
+
+    bindDataUpdateEvents() {
+        if (this.dataUpdateBound) return;
+        if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+        window.addEventListener('dataUpdated', (event) => this.handleDataUpdated(event));
+        this.dataUpdateBound = true;
+    },
+
+    async handleDataUpdated(event) {
+        const detail = event?.detail || {};
+        const relevantTypes = ['settings', 'izin', 'employees'];
+        if (!relevantTypes.includes(detail.type)) return;
+        if (router?.currentPage !== 'izin') return;
+
+        this.loadCachedIzin();
+        this.renderIzinList();
+        this.updateStats();
+        await this.loadIzinData();
     },
 
     formatDateInputForDisplay(value) {

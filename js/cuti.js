@@ -11,6 +11,7 @@ const cuti = {
     selectedSummaryMonth: '',
     isSubmitting: false,
     settingsListenerBound: false,
+    dataUpdateBound: false,
 
     async init() {
         if (!this.initialized) {
@@ -28,10 +29,15 @@ const cuti = {
     },
 
     initSettingsListener() {
-        if (this.settingsListenerBound) return;
         if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
-        window.addEventListener('settingsUpdated', (event) => this.handleSettingsUpdated(event));
-        this.settingsListenerBound = true;
+        if (!this.settingsListenerBound) {
+            window.addEventListener('settingsUpdated', (event) => this.handleSettingsUpdated(event));
+            this.settingsListenerBound = true;
+        }
+        if (!this.dataUpdateBound) {
+            window.addEventListener('dataUpdated', (event) => this.handleDataUpdated(event));
+            this.dataUpdateBound = true;
+        }
     },
 
     handleSettingsUpdated(event) {
@@ -42,6 +48,18 @@ const cuti = {
         this.applyAnnualLeaveSetting(value);
         this.updateStats();
         this.renderLeaveList();
+    },
+
+    async handleDataUpdated(event) {
+        const detail = event?.detail || {};
+        const relevantTypes = ['settings', 'leaves', 'employees'];
+        if (!relevantTypes.includes(detail.type)) return;
+        if (router?.currentPage !== 'cuti') return;
+
+        this.loadCachedLeaves();
+        this.updateStats();
+        this.renderLeaveList();
+        await this.loadLeaves();
     },
 
     loadCachedLeaves() {

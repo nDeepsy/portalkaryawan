@@ -8,8 +8,8 @@ const authJs = fs.readFileSync(path.join(root, 'js', 'auth.js'), 'utf8');
 const routerJs = fs.readFileSync(path.join(root, 'js', 'router.js'), 'utf8');
 
 assert(
-    /cacheTtl:\s*60000/.test(apiJs),
-    'API read cache should last long enough to speed menu switching'
+    /cacheTtl:\s*15000/.test(apiJs),
+    'API read cache should stay short so active menus do not show stale data too long'
 );
 
 assert(

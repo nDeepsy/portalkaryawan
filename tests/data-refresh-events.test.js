@@ -8,11 +8,22 @@ const settingsJs = fs.readFileSync(path.join(root, 'js', 'settings.js'), 'utf8')
 const adminDashboardJs = fs.readFileSync(path.join(root, 'js', 'admin-dashboard.js'), 'utf8');
 const adminReportsJs = fs.readFileSync(path.join(root, 'js', 'admin-reports.js'), 'utf8');
 const shiftScheduleJs = fs.readFileSync(path.join(root, 'js', 'shift-schedule.js'), 'utf8');
+const dashboardJs = fs.readFileSync(path.join(root, 'js', 'dashboard.js'), 'utf8');
+const absensiJs = fs.readFileSync(path.join(root, 'js', 'absensi.js'), 'utf8');
+const izinJs = fs.readFileSync(path.join(root, 'js', 'izin.js'), 'utf8');
+const jurnalJs = fs.readFileSync(path.join(root, 'js', 'jurnal.js'), 'utf8');
+const cutiJs = fs.readFileSync(path.join(root, 'js', 'cuti.js'), 'utf8');
+const adminEmployeesJs = fs.readFileSync(path.join(root, 'js', 'admin-employees.js'), 'utf8');
 
 assert(
     apiJs.includes('broadcastDataUpdated') &&
     apiJs.includes("new CustomEvent('dataUpdated'"),
     'api should expose a global dataUpdated event helper'
+);
+
+assert(
+    apiJs.includes('cacheTtl: 15000'),
+    'api cache TTL should be short enough that active menus do not show stale data too long'
 );
 
 assert(
@@ -49,5 +60,20 @@ assert(
     shiftScheduleJs.includes('handleDataUpdated'),
     'shift schedule should react to shared data update events'
 );
+
+[
+    ['employee dashboard', dashboardJs],
+    ['attendance page', absensiJs],
+    ['permission page', izinJs],
+    ['journal page', jurnalJs],
+    ['leave page', cutiJs],
+    ['employee management page', adminEmployeesJs]
+].forEach(([label, source]) => {
+    assert(
+        source.includes("addEventListener('dataUpdated'") &&
+        source.includes('handleDataUpdated'),
+        `${label} should react to shared data update events`
+    );
+});
 
 console.log('Data refresh event tests passed');

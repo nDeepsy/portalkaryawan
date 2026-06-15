@@ -19,6 +19,7 @@ const adminEmployees = {
     currentPage: 1,
     perPage: 10,
     eventsBound: false,
+    dataUpdateBound: false,
     employeeModalMode: 'add',
     filters: {
         search: '',
@@ -35,11 +36,34 @@ const adminEmployees = {
 
         this.loadCachedEmployees();
         this.bindEvents();
+        this.bindDataUpdateEvents();
         this.renderTable();
         this.renderMobileCards();
         this.updatePaginationInfo();
         this.applyRoleControls();
         this.refreshEmployees();
+    },
+
+    bindDataUpdateEvents() {
+        if (this.dataUpdateBound) return;
+        if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+        window.addEventListener('dataUpdated', (event) => this.handleDataUpdated(event));
+        this.dataUpdateBound = true;
+    },
+
+    async handleDataUpdated(event) {
+        const detail = event?.detail || {};
+        const relevantTypes = ['settings', 'employees', 'shifts'];
+        if (!relevantTypes.includes(detail.type)) return;
+        if (router?.currentPage !== 'employees') return;
+        if (!auth.canAccessAdminReports()) return;
+
+        this.loadCachedEmployees();
+        this.renderTable();
+        this.renderMobileCards();
+        this.updatePaginationInfo();
+        this.applyRoleControls();
+        await this.refreshEmployees();
     },
 
     canManageEmployees() {

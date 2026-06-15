@@ -10,7 +10,7 @@
 const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbzrvlMvDrTzpp4OduHyE7PMdjaH_hfJt03hSd-yV3WfCKxGzjq_BULQZe3O58H_NNhQsQ/exec'; // Kosongkan untuk mode localStorage, isi dengan URL Web App GAS
 
 const api = {
-    cacheTtl: 60000,
+    cacheTtl: 15000,
     requestTimeoutMs: 20000,
     requestCachePrefix: 'api_cache_',
     pendingRequests: new Map(),
