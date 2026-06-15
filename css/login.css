@@ -141,17 +141,24 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 80px;
-    height: 80px;
-    background: var(--color-primary-gradient);
+    width: 112px;
+    height: 112px;
+    background: rgba(255, 255, 255, 0.96);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.5rem;
-    color: var(--color-white);
     box-shadow: 0 0 40px rgba(0, 123, 255, 0.5);
     animation: pulse-core 2s ease-in-out infinite;
+    overflow: hidden;
+    padding: 8px;
+}
+
+.logo-core img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
 }
 
 @keyframes pulse-core {
@@ -424,9 +431,9 @@
     }
     
     .logo-core {
-        width: 60px;
-        height: 60px;
-        font-size: 1.75rem;
+        width: 86px;
+        height: 86px;
+        padding: 7px;
     }
     
     .company-name {
@@ -465,9 +472,9 @@
     }
 
     .logo-core {
-        width: 42px;
-        height: 42px;
-        font-size: 1.2rem;
+        width: 62px;
+        height: 62px;
+        padding: 5px;
     }
 
     .company-name {

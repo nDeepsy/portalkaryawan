@@ -909,9 +909,9 @@
     }
     
     .logo-core {
-        width: 50px;
-        height: 50px;
-        font-size: 1.5rem;
+        width: 72px;
+        height: 72px;
+        padding: 6px;
     }
     
     .floating-icons i {
