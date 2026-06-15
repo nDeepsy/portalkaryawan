@@ -1431,8 +1431,8 @@ const adminReports = {
                 <img src="${this.escapeAttr(logoSrc)}" alt="Logo PT Magtas Radio 107.3 FM" class="print-logo">
                 <div class="print-company">
                     <h1>PT MAGTAS RADIO 107.3 FM</h1>
-                    <p>Alamat: ............................................................</p>
-                    <p>Telp/Email: ........................................................</p>
+                    <p>Alamat: Desa Margalaksana, Kp. Tambakbaya RT.11/RW.05, Kec. Sukaraja, Margalaksana, Tasikmalaya, Kabupaten Tasikmalaya, Jawa Barat 46183</p>
+                    <p>No. Telepon: 082116917610</p>
                 </div>
             </div>
             <div class="print-letterhead-line"></div>

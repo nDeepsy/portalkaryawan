@@ -21,9 +21,9 @@ assert(
 
 assert(
     adminReportsJs.includes('PT MAGTAS RADIO 107.3 FM') &&
-    adminReportsJs.includes('Alamat: ............................................................') &&
-    adminReportsJs.includes('Telp/Email: ........................................................'),
-    'formal print header should include company identity and editable placeholders'
+    adminReportsJs.includes('Desa Margalaksana, Kp. Tambakbaya RT.11/RW.05') &&
+    adminReportsJs.includes('No. Telepon: 082116917610'),
+    'formal print header should include final company identity, address, and phone number'
 );
 
 assert(
