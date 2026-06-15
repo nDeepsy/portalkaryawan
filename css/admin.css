@@ -2020,7 +2020,7 @@
         font-family: "Times New Roman", Times, serif;
         font-size: 10.5pt;
         line-height: 1.35;
-        margin-top: 28px;
+        margin-top: 34px;
         text-align: center;
     }
 
@@ -2029,6 +2029,6 @@
     }
 
     body.printing-formal-report .print-signature-space {
-        height: 106px;
+        height: 84px;
     }
 }
