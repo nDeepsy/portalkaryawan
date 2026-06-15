@@ -1425,9 +1425,10 @@ const adminReports = {
     },
 
     buildPrintHeader(config) {
+        const logoSrc = this.getPrintLogoSrc();
         return `
             <div class="print-letterhead">
-                <img src="assets/images/logo-magtas.png" alt="Logo PT Magtas Radio 107.3 FM" class="print-logo">
+                <img src="${this.escapeAttr(logoSrc)}" alt="Logo PT Magtas Radio 107.3 FM" class="print-logo">
                 <div class="print-company">
                     <h1>PT MAGTAS RADIO 107.3 FM</h1>
                     <p>Alamat: ............................................................</p>
@@ -1442,6 +1443,15 @@ const adminReports = {
                 ${this.buildPrintInfoRows(config)}
             </div>
         `;
+    },
+
+    getPrintLogoSrc() {
+        const logoPath = 'assets/images/logo-magtas.png';
+        try {
+            return new URL(logoPath, window.location.origin + '/').href;
+        } catch (e) {
+            return logoPath;
+        }
     },
 
     buildPrintInfoRows(config) {
