@@ -137,18 +137,19 @@ function testPemilikRouterAllowsOnlyOwnerPages() {
 function testDashboardBrowserTitleMatchesRole() {
     const adminContext = loadRouterForRole('admin');
     adminContext.router.navigate('admin-dashboard');
-    assert.strictEqual(adminContext.document.title, 'Dashboard Admin - PT Magtas Radio 107.3 FM');
+    assert.strictEqual(adminContext.document.title, 'Beranda Admin - PT Magtas Radio 107.3 FM');
 
     const ownerContext = loadRouterForRole('pemilik');
     ownerContext.router.navigate('admin-dashboard');
-    assert.strictEqual(ownerContext.document.title, 'Dashboard Pemilik - PT Magtas Radio 107.3 FM');
+    assert.strictEqual(ownerContext.document.title, 'Beranda Pemilik - PT Magtas Radio 107.3 FM');
 }
 
 function testPemilikMenusHideShiftAndSettings() {
     assert(indexSource.includes('data-admin-only="true"'), 'admin-only menu items should be marked for pemilik hiding');
     assert(authSource.includes('applyRoleVisibility'), 'auth should apply role visibility to admin-only controls');
     assert(mobileSource.includes('applyRoleVisibility'), 'mobile resize should re-apply pemilik menu visibility');
-    assert(indexSource.includes('data-owner-label="Dashboard"'), 'owner dashboard label should be available for sidebar/mobile nav');
+    assert(indexSource.includes('data-owner-label="Beranda Pemilik"'), 'owner dashboard label should be available for sidebar nav');
+    assert(indexSource.includes('data-owner-label="Beranda"'), 'owner dashboard label should be available for mobile nav');
     assert(authSource.includes('dataset.adminLabel') && authSource.includes('dataset.ownerLabel'), 'auth should swap admin/owner labels for shared menus');
 }
 
@@ -181,7 +182,7 @@ function testPemilikDashboardShowsConfirmationRequests() {
 }
 
 function testPemilikDashboardUsesOwnerLabels() {
-    assert(adminDashboardSource.includes("setText('admin-dashboard-heading', isOwner ? 'Dashboard Pemilik' : 'Dashboard Admin')"), 'owner dashboard heading should not say admin');
+    assert(adminDashboardSource.includes("setText('admin-dashboard-heading', isOwner ? 'Beranda Pemilik' : 'Beranda Admin')"), 'owner dashboard heading should not say admin');
     assert(adminDashboardSource.includes("setText('admin-dashboard-subtitle', isOwner ? 'Monitoring aktivitas dan pengajuan karyawan' : 'Ringkasan statistik seluruh karyawan')"), 'owner dashboard subtitle should focus on monitoring');
     assert(adminDashboardSource.includes("setText('pending-requests-label', isOwner ? 'Pengajuan Menunggu' : 'Menunggu Approval')"), 'owner dashboard pending label should use owner wording');
     assert(adminDashboardSource.includes("setText('on-leave-label', isOwner ? 'Cuti / Izin Aktif' : 'Sedang Cuti')"), 'owner dashboard active leave label should use owner wording');

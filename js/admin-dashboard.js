@@ -57,7 +57,7 @@ const adminDashboard = {
             if (el) el.textContent = text;
         };
 
-        setText('admin-dashboard-heading', isOwner ? 'Dashboard Pemilik' : 'Dashboard Admin');
+        setText('admin-dashboard-heading', isOwner ? 'Beranda Pemilik' : 'Beranda Admin');
         setText('admin-dashboard-subtitle', isOwner ? 'Monitoring aktivitas dan pengajuan karyawan' : 'Ringkasan statistik seluruh karyawan');
         setText('pending-requests-label', isOwner ? 'Pengajuan Menunggu' : 'Menunggu Approval');
         setText('on-leave-label', isOwner ? 'Cuti / Izin Aktif' : 'Sedang Cuti');

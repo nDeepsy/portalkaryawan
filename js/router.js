@@ -36,7 +36,7 @@ const router = {
         });
         
         // Halaman awal setelah login/session dipilih oleh auth.showApp():
-        // admin -> Dashboard Admin, karyawan -> Dashboard.
+        // admin -> Beranda Admin, karyawan -> Beranda.
     },
     
     navigate(page) {
@@ -53,12 +53,12 @@ const router = {
         
         // Update page title
         const titles = {
-            dashboard: 'Dashboard',
+            dashboard: 'Beranda',
             absensi: 'Absensi',
             izin: 'Izin / Sakit',
             jurnal: 'Jurnal Kerja',
             cuti: 'Pengajuan Cuti',
-            'admin-dashboard': 'Dashboard Admin',
+            'admin-dashboard': 'Beranda Admin',
             employees: 'Data Karyawan',
             'attendance-reports': 'Rekap Absensi',
             'jurnal-reports': 'Rekap Jurnal',
@@ -116,7 +116,7 @@ const router = {
 
     getPageTitle(page, titles = {}) {
         if (page === 'admin-dashboard' && typeof auth !== 'undefined' && typeof auth.isPemilik === 'function' && auth.isPemilik()) {
-            return 'Dashboard Pemilik';
+            return 'Beranda Pemilik';
         }
 
         return titles[page] || 'Portal Karyawan';
