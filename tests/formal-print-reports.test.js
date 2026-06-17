@@ -62,6 +62,13 @@ assert(
 );
 
 assert(
+    adminCss.includes('.reports-table .status-badge') &&
+    adminCss.includes('background: transparent !important') &&
+    adminCss.includes('body.printing-jurnal #jurnal-reports-table col.jurnal-col-photo'),
+    'formal print CSS should render statuses as plain text and hide non-formal journal photo columns'
+);
+
+assert(
     mobileCss.includes('.print-only'),
     'mobile print CSS should not conflict with formal print-only elements'
 );
