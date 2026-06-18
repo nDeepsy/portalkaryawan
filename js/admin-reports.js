@@ -278,6 +278,7 @@ const adminReports = {
                     attachmentType: i.attachmentType || i.fileType || '',
                     attachmentData: i.attachmentData || i.attachment || i.lampiran || i.file || '',
                     attachmentUrl: i.attachmentUrl || i.fileUrl || i.file_url || i.attachment_url || '',
+                    attachmentError: i.attachmentError || '',
                     confirmedBy: i.confirmedBy || i.approvedBy || '',
                     confirmedByName: i.confirmedByName || i.approvedByName || '',
                     confirmedByRole: i.confirmedByRole || i.approvedByRole || '',
@@ -2189,11 +2190,12 @@ const adminReports = {
         }
 
         if (item.hasAttachment || attachmentName) {
+            const attachmentError = item.attachmentError || 'File lampiran belum memiliki data untuk dibuka.';
             return `
                 <div class="leave-detail-section">
                     <label>Lampiran</label>
                     <p><i class="fas fa-paperclip"></i> ${this.escapeHtml(attachmentName || 'Lampiran tersedia')}</p>
-                    <p class="no-photo">File lama belum memiliki data lampiran untuk dibuka.</p>
+                    <p class="no-photo">${this.escapeHtml(attachmentError)}</p>
                 </div>
             `;
         }

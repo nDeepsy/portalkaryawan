@@ -9,6 +9,7 @@ const adminReportsJs = fs.readFileSync(path.join(root, 'js', 'admin-reports.js')
 const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const permissionJs = fs.readFileSync(path.join(repoRoot, 'apps-script-absensi', 'Permission.js'), 'utf8');
 const databaseJs = fs.readFileSync(path.join(repoRoot, 'apps-script-absensi', 'Database.js'), 'utf8');
+const codeJs = fs.readFileSync(path.join(repoRoot, 'apps-script-absensi', 'Code.js'), 'utf8');
 
 assert(
     izinJs.includes("file.type === 'application/pdf'") &&
@@ -40,14 +41,23 @@ assert(
     permissionJs.includes('getBase64ByteSize') &&
     permissionJs.includes('File PDF terlalu besar. Maksimum 15MB.') &&
     permissionJs.includes('attachmentUrl') &&
-    permissionJs.includes('attachmentFileId'),
+    permissionJs.includes('attachmentFileId') &&
+    permissionJs.includes('attachmentError') &&
+    permissionJs.includes('blockSubmit: true'),
     'Apps Script should store PDF attachments in Drive and keep the URL in the sheet'
 );
 
 assert(
     databaseJs.includes('attachmentUrl') &&
-    databaseJs.includes('attachmentFileId'),
+    databaseJs.includes('attachmentFileId') &&
+    databaseJs.includes('attachmentError'),
     'Izin sheet schema should include PDF attachment URL columns'
+);
+
+assert(
+    codeJs.includes("case 'checkIzinDriveAccess'") &&
+    permissionJs.includes('checkIzinDriveAccessData'),
+    'Apps Script should expose a lightweight Drive access check for troubleshooting'
 );
 
 console.log('Permission PDF attachment tests passed');
