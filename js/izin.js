@@ -29,8 +29,16 @@ const izin = {
 
         const dateInput = document.getElementById('izin-date');
         if (dateInput) {
-            dateInput.value = this.formatDateInputForDisplay(dateTime.getLocalDate ? dateTime.getLocalDate() : new Date());
+            this.setDefaultIzinDate();
         }
+    },
+
+    setDefaultIzinDate() {
+        const dateInput = document.getElementById('izin-date');
+        if (!dateInput) return;
+
+        dateInput.value = this.formatDateInputForDisplay(dateTime.getLocalDate ? dateTime.getLocalDate() : new Date());
+        dateInput.readOnly = true;
     },
 
     bindDataUpdateEvents() {
@@ -173,11 +181,14 @@ const izin = {
     },
 
     handleFile(file) {
-        const maxSize = 5 * 1024 * 1024; // 5MB
+        const maxImageSize = 5 * 1024 * 1024; // 5MB
+        const maxPdfSize = 15 * 1024 * 1024; // 15MB
         const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        const maxSize = file.type === 'application/pdf' ? maxPdfSize : maxImageSize;
+        const maxSizeLabel = file.type === 'application/pdf' ? '15MB' : '5MB';
 
         if (file.size > maxSize) {
-            toast.error('File terlalu besar. Maksimum 5MB');
+            toast.error(`File terlalu besar. Maksimum ${maxSizeLabel}`);
             return;
         }
 
@@ -320,10 +331,6 @@ const izin = {
         this.renderIzinList();
         this.updateStats();
 
-        const form = document.getElementById('izin-form');
-        if (form) form.reset();
-        this.removeFile();
-
         try {
             const attachment = await this.getAttachmentPayloadFromFile(selectedFile);
 
@@ -359,6 +366,7 @@ const izin = {
             if (window.notificationCenter) {
                 notificationCenter.refreshForCurrentUser({ silent: true });
             }
+            this.resetIzinForm();
             toast.success('Pengajuan izin berhasil dikirim!');
         } catch (error) {
             console.error('Error submitting izin:', error);
@@ -379,6 +387,13 @@ const izin = {
 
     async getAttachmentPayload() {
         return this.getAttachmentPayloadFromFile(this.currentFile);
+    },
+
+    resetIzinForm() {
+        const form = document.getElementById('izin-form');
+        if (form) form.reset();
+        this.removeFile();
+        this.setDefaultIzinDate();
     },
 
     async getAttachmentPayloadFromFile(file) {
