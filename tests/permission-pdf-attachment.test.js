@@ -31,8 +31,10 @@ assert(
     adminReportsJs.includes('attachmentStorage') &&
     adminReportsJs.includes('Buka PDF') &&
     adminReportsJs.includes('viewDocument(documentUrl') &&
+    adminReportsJs.includes('createPdfObjectUrl') &&
+    adminReportsJs.includes("new Blob([bytes], { type: 'application/pdf' })") &&
     adminReportsJs.includes('api.getIzinAttachment'),
-    'admin and owner leave detail should be able to open PDF attachments from Drive or Sheet fallback'
+    'admin and owner leave detail should open PDF attachments from Drive or Sheet fallback using a stable PDF Blob URL'
 );
 
 assert(

@@ -13,6 +13,7 @@ const adminReports = {
     currentLeaveAttachmentName: '',
     currentLeaveAttachmentId: '',
     currentLeaveAttachmentStorage: '',
+    currentDocumentObjectUrl: '',
     attendanceRefreshTimer: null,
     dataUpdateBound: false,
     filters: {
@@ -1926,6 +1927,8 @@ const adminReports = {
     },
 
     async viewCurrentLeaveAttachment() {
+        const documentTab = this.openDocumentTab(this.currentLeaveAttachmentName || 'Lampiran');
+
         if (!this.currentLeaveAttachmentUrl && this.currentLeaveAttachmentStorage === 'sheet') {
             const result = await api.getIzinAttachment(this.currentLeaveAttachmentId);
             if (result?.success && result.data?.attachmentData) {
@@ -1933,12 +1936,14 @@ const adminReports = {
                 this.currentLeaveAttachmentType = result.data.attachmentType || this.currentLeaveAttachmentType || 'application/pdf';
                 this.currentLeaveAttachmentName = result.data.attachmentName || this.currentLeaveAttachmentName || 'Lampiran';
             } else {
+                this.renderDocumentTabError(documentTab, result?.error || 'Lampiran PDF tidak ditemukan');
                 toast.error(result?.error || 'Lampiran PDF tidak ditemukan');
                 return;
             }
         }
 
         if (!this.currentLeaveAttachmentUrl) {
+            this.renderDocumentTabError(documentTab, 'Lampiran tidak ditemukan');
             toast.error('Lampiran tidak ditemukan');
             return;
         }
@@ -1949,11 +1954,12 @@ const adminReports = {
             attachmentUrl: this.currentLeaveAttachmentUrl,
             attachmentName: this.currentLeaveAttachmentName
         })) {
+            if (documentTab && !documentTab.closed) documentTab.close();
             this.viewPhoto(this.currentLeaveAttachmentUrl);
             return;
         }
 
-        this.viewDocument(this.currentLeaveAttachmentUrl, this.currentLeaveAttachmentName || 'Lampiran');
+        this.viewDocument(this.currentLeaveAttachmentUrl, this.currentLeaveAttachmentName || 'Lampiran', documentTab);
     },
 
     handlePhotoError(img) {
@@ -2259,19 +2265,39 @@ const adminReports = {
             || attachmentName.endsWith('.pdf');
     },
 
-    viewDocument(documentUrl, title = 'Lampiran') {
-        const newTab = window.open('', '_blank', 'noopener,noreferrer');
+    openDocumentTab(title = 'Lampiran') {
+        const newTab = window.open('', '_blank');
         if (!newTab) {
             toast.error('Popup diblokir. Izinkan popup untuk membuka lampiran.');
-            return;
+            return null;
         }
+
+        newTab.document.write(this.buildDocumentLoadingHtml(title));
+        newTab.document.close();
+        return newTab;
+    },
+
+    viewDocument(documentUrl, title = 'Lampiran', targetTab = null) {
+        const newTab = targetTab || this.openDocumentTab(title);
+        if (!newTab) return;
 
         if (/^https?:\/\//i.test(documentUrl)) {
             newTab.location.href = documentUrl;
             return;
         }
 
-        newTab.document.write(`
+        const objectUrl = this.createPdfObjectUrl(documentUrl);
+        if (!objectUrl) {
+            this.renderDocumentTabError(newTab, 'PDF tidak bisa dibuka. Data lampiran tidak valid.');
+            toast.error('PDF tidak bisa dibuka. Data lampiran tidak valid.');
+            return;
+        }
+
+        newTab.location.href = objectUrl;
+    },
+
+    buildDocumentLoadingHtml(title = 'Lampiran') {
+        return `
             <!DOCTYPE html>
             <html lang="id">
             <head>
@@ -2279,26 +2305,93 @@ const adminReports = {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>${this.escapeHtml(title)}</title>
                 <style>
-                    html, body {
-                        width: 100%;
-                        height: 100%;
+                    body {
                         margin: 0;
+                        min-height: 100vh;
+                        display: grid;
+                        place-items: center;
                         background: #111827;
+                        color: #ffffff;
+                        font-family: Arial, sans-serif;
                     }
-                    iframe {
-                        width: 100%;
-                        height: 100%;
-                        border: 0;
-                        background: #ffffff;
+                    .box {
+                        text-align: center;
+                        padding: 24px;
                     }
                 </style>
             </head>
             <body>
-                <iframe src="${this.escapeAttr(documentUrl)}" title="${this.escapeAttr(title)}"></iframe>
+                <div class="box">
+                    <h1>Membuka PDF...</h1>
+                    <p>Mohon tunggu sebentar.</p>
+                </div>
+            </body>
+            </html>
+        `;
+    },
+
+    renderDocumentTabError(tab, message) {
+        if (!tab || tab.closed) return;
+        tab.document.write(`
+            <!DOCTYPE html>
+            <html lang="id">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Lampiran tidak bisa dibuka</title>
+                <style>
+                    body {
+                        margin: 0;
+                        min-height: 100vh;
+                        display: grid;
+                        place-items: center;
+                        background: #111827;
+                        color: #ffffff;
+                        font-family: Arial, sans-serif;
+                    }
+                    .box {
+                        max-width: 560px;
+                        padding: 24px;
+                        text-align: center;
+                    }
+                    p {
+                        color: #fecaca;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="box">
+                    <h1>Lampiran tidak bisa dibuka</h1>
+                    <p>${this.escapeHtml(message || 'PDF tidak tersedia.')}</p>
+                </div>
             </body>
             </html>
         `);
-        newTab.document.close();
+        tab.document.close();
+    },
+
+    createPdfObjectUrl(documentUrl) {
+        const raw = String(documentUrl || '');
+        const dataPrefix = 'data:application/pdf';
+        if (!raw.startsWith(dataPrefix)) return '';
+
+        try {
+            const base64 = raw.includes(',') ? raw.split(',').pop() : raw;
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+
+            if (this.currentDocumentObjectUrl) {
+                URL.revokeObjectURL(this.currentDocumentObjectUrl);
+            }
+            this.currentDocumentObjectUrl = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+            return this.currentDocumentObjectUrl;
+        } catch (error) {
+            console.error('Error opening PDF attachment:', error);
+            return '';
+        }
     },
 
     async approveLeaveOrPermission(index) {
