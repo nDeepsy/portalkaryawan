@@ -35,6 +35,8 @@ assert(
 assert(
     permissionJs.includes('saveIzinAttachmentToDrive') &&
     permissionJs.includes('DriveApp.createFile') &&
+    permissionJs.includes('authorizeDriveForIzinPdf') &&
+    permissionJs.includes('isDriveAuthorizationError') &&
     permissionJs.includes('getBase64ByteSize') &&
     permissionJs.includes('File PDF terlalu besar. Maksimum 15MB.') &&
     permissionJs.includes('attachmentUrl') &&
