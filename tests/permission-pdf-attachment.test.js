@@ -28,9 +28,11 @@ assert(
 
 assert(
     adminReportsJs.includes('attachmentUrl') &&
+    adminReportsJs.includes('attachmentStorage') &&
     adminReportsJs.includes('Buka PDF') &&
-    adminReportsJs.includes('viewDocument(documentUrl'),
-    'admin and owner leave detail should be able to open PDF attachments'
+    adminReportsJs.includes('viewDocument(documentUrl') &&
+    adminReportsJs.includes('api.getIzinAttachment'),
+    'admin and owner leave detail should be able to open PDF attachments from Drive or Sheet fallback'
 );
 
 assert(
@@ -42,22 +44,27 @@ assert(
     permissionJs.includes('File PDF terlalu besar. Maksimum 15MB.') &&
     permissionJs.includes('attachmentUrl') &&
     permissionJs.includes('attachmentFileId') &&
+    permissionJs.includes('saveIzinAttachmentToSheet') &&
+    permissionJs.includes('getIzinAttachmentData') &&
     permissionJs.includes('attachmentError') &&
     permissionJs.includes('blockSubmit: true'),
-    'Apps Script should store PDF attachments in Drive and keep the URL in the sheet'
+    'Apps Script should store PDF attachments in Drive or Sheet fallback and keep metadata in the Izin sheet'
 );
 
 assert(
     databaseJs.includes('attachmentUrl') &&
     databaseJs.includes('attachmentFileId') &&
-    databaseJs.includes('attachmentError'),
-    'Izin sheet schema should include PDF attachment URL columns'
+    databaseJs.includes('attachmentStorage') &&
+    databaseJs.includes('attachmentError') &&
+    databaseJs.includes('IzinAttachments'),
+    'Izin sheet schema should include PDF attachment URL and fallback storage columns'
 );
 
 assert(
+    codeJs.includes("case 'getIzinAttachment'") &&
     codeJs.includes("case 'checkIzinDriveAccess'") &&
     permissionJs.includes('checkIzinDriveAccessData'),
-    'Apps Script should expose a lightweight Drive access check for troubleshooting'
+    'Apps Script should expose attachment retrieval and a lightweight Drive access check for troubleshooting'
 );
 
 console.log('Permission PDF attachment tests passed');

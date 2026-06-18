@@ -602,6 +602,16 @@ const api = {
         }
         return this.request('getAllIzin');
     },
+
+    async getIzinAttachment(id) {
+        if (!API_BASE_URL) {
+            const item = storage.get('izin', []).find(i => String(i.id) === String(id));
+            return item?.attachmentData
+                ? { success: true, data: item }
+                : { success: false, error: 'Lampiran PDF tidak ditemukan.' };
+        }
+        return this.request('getIzinAttachment', { id });
+    },
     // ========== NOTIFICATIONS ==========
 
     async getNotifications(role, userId) {

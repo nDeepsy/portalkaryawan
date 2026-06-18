@@ -11,6 +11,8 @@ const adminReports = {
     currentLeaveAttachmentUrl: '',
     currentLeaveAttachmentType: '',
     currentLeaveAttachmentName: '',
+    currentLeaveAttachmentId: '',
+    currentLeaveAttachmentStorage: '',
     attendanceRefreshTimer: null,
     dataUpdateBound: false,
     filters: {
@@ -278,6 +280,7 @@ const adminReports = {
                     attachmentType: i.attachmentType || i.fileType || '',
                     attachmentData: i.attachmentData || i.attachment || i.lampiran || i.file || '',
                     attachmentUrl: i.attachmentUrl || i.fileUrl || i.file_url || i.attachment_url || '',
+                    attachmentStorage: i.attachmentStorage || '',
                     attachmentError: i.attachmentError || '',
                     confirmedBy: i.confirmedBy || i.approvedBy || '',
                     confirmedByName: i.confirmedByName || i.approvedByName || '',
@@ -1922,7 +1925,19 @@ const adminReports = {
         this.viewPhoto(this.currentPhotoUrl);
     },
 
-    viewCurrentLeaveAttachment() {
+    async viewCurrentLeaveAttachment() {
+        if (!this.currentLeaveAttachmentUrl && this.currentLeaveAttachmentStorage === 'sheet') {
+            const result = await api.getIzinAttachment(this.currentLeaveAttachmentId);
+            if (result?.success && result.data?.attachmentData) {
+                this.currentLeaveAttachmentUrl = result.data.attachmentData;
+                this.currentLeaveAttachmentType = result.data.attachmentType || this.currentLeaveAttachmentType || 'application/pdf';
+                this.currentLeaveAttachmentName = result.data.attachmentName || this.currentLeaveAttachmentName || 'Lampiran';
+            } else {
+                toast.error(result?.error || 'Lampiran PDF tidak ditemukan');
+                return;
+            }
+        }
+
         if (!this.currentLeaveAttachmentUrl) {
             toast.error('Lampiran tidak ditemukan');
             return;
@@ -2082,6 +2097,8 @@ const adminReports = {
         this.currentLeaveAttachmentUrl = this.getLeaveAttachmentUrl(item);
         this.currentLeaveAttachmentType = item.attachmentType || '';
         this.currentLeaveAttachmentName = item.attachmentName || 'Lampiran';
+        this.currentLeaveAttachmentId = item.id || '';
+        this.currentLeaveAttachmentStorage = item.attachmentStorage || '';
         const attachmentHtml = this.renderLeaveAttachment(item);
         const confirmationHtml = this.renderLeaveConfirmationInfo(item);
 
@@ -2162,6 +2179,7 @@ const adminReports = {
         const hasAttachmentUrl = Boolean(this.currentLeaveAttachmentUrl);
         const isImage = this.isImageAttachment(item);
         const isPdf = this.isPdfAttachment(item);
+        const hasSheetAttachment = item.attachmentStorage === 'sheet';
 
         if (hasAttachmentUrl && isImage) {
             return `
@@ -2175,7 +2193,7 @@ const adminReports = {
             `;
         }
 
-        if (hasAttachmentUrl) {
+        if (hasAttachmentUrl || hasSheetAttachment) {
             const buttonLabel = isPdf ? 'Buka PDF' : 'Buka Lampiran';
             const icon = isPdf ? 'fa-file-pdf' : 'fa-paperclip';
             return `
