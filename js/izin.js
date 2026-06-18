@@ -392,12 +392,26 @@ const izin = {
             data: ''
         };
 
+        if (file.type === 'application/pdf') {
+            payload.data = await this.readFileAsDataUrl(file);
+            return payload;
+        }
+
         if (!file.type.startsWith('image/')) {
             return payload;
         }
 
         payload.data = await this.compressImageFile(file);
         return payload;
+    },
+
+    readFileAsDataUrl(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result || '');
+            reader.onerror = () => reject(new Error('File gagal diproses'));
+            reader.readAsDataURL(file);
+        });
     },
 
     compressImageFile(file) {

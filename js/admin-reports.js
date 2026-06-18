@@ -9,6 +9,8 @@ const adminReports = {
     leaveData: [],
     currentPhotoUrl: '',
     currentLeaveAttachmentUrl: '',
+    currentLeaveAttachmentType: '',
+    currentLeaveAttachmentName: '',
     attendanceRefreshTimer: null,
     dataUpdateBound: false,
     filters: {
@@ -275,6 +277,7 @@ const adminReports = {
                     attachmentName: i.attachmentName || i.fileName || i.filename || '',
                     attachmentType: i.attachmentType || i.fileType || '',
                     attachmentData: i.attachmentData || i.attachment || i.lampiran || i.file || '',
+                    attachmentUrl: i.attachmentUrl || i.fileUrl || i.file_url || i.attachment_url || '',
                     confirmedBy: i.confirmedBy || i.approvedBy || '',
                     confirmedByName: i.confirmedByName || i.approvedByName || '',
                     confirmedByRole: i.confirmedByRole || i.approvedByRole || '',
@@ -1920,11 +1923,21 @@ const adminReports = {
 
     viewCurrentLeaveAttachment() {
         if (!this.currentLeaveAttachmentUrl) {
-            toast.error('Foto lampiran tidak ditemukan');
+            toast.error('Lampiran tidak ditemukan');
             return;
         }
 
-        this.viewPhoto(this.currentLeaveAttachmentUrl);
+        if (this.isImageAttachment({
+            attachmentType: this.currentLeaveAttachmentType,
+            attachmentData: this.currentLeaveAttachmentUrl,
+            attachmentUrl: this.currentLeaveAttachmentUrl,
+            attachmentName: this.currentLeaveAttachmentName
+        })) {
+            this.viewPhoto(this.currentLeaveAttachmentUrl);
+            return;
+        }
+
+        this.viewDocument(this.currentLeaveAttachmentUrl, this.currentLeaveAttachmentName || 'Lampiran');
     },
 
     handlePhotoError(img) {
@@ -2065,7 +2078,9 @@ const adminReports = {
                 ? 'Disetujui'
                 : 'Ditolak';
         const sourceText = item.source === 'leave' ? 'Cuti' : 'Izin / Sakit';
-        this.currentLeaveAttachmentUrl = this.getLeaveAttachmentImage(item);
+        this.currentLeaveAttachmentUrl = this.getLeaveAttachmentUrl(item);
+        this.currentLeaveAttachmentType = item.attachmentType || '';
+        this.currentLeaveAttachmentName = item.attachmentName || 'Lampiran';
         const attachmentHtml = this.renderLeaveAttachment(item);
         const confirmationHtml = this.renderLeaveConfirmationInfo(item);
 
@@ -2143,8 +2158,11 @@ const adminReports = {
         if (item.source !== 'permission') return '';
 
         const attachmentName = item.attachmentName || 'Lampiran';
+        const hasAttachmentUrl = Boolean(this.currentLeaveAttachmentUrl);
+        const isImage = this.isImageAttachment(item);
+        const isPdf = this.isPdfAttachment(item);
 
-        if (this.currentLeaveAttachmentUrl) {
+        if (hasAttachmentUrl && isImage) {
             return `
                 <div class="detail-photo-section">
                     <label>Lampiran Foto:</label>
@@ -2156,11 +2174,26 @@ const adminReports = {
             `;
         }
 
+        if (hasAttachmentUrl) {
+            const buttonLabel = isPdf ? 'Buka PDF' : 'Buka Lampiran';
+            const icon = isPdf ? 'fa-file-pdf' : 'fa-paperclip';
+            return `
+                <div class="leave-detail-section">
+                    <label>Lampiran</label>
+                    <p><i class="fas ${icon}"></i> ${this.escapeHtml(attachmentName || 'Lampiran tersedia')}</p>
+                    <button type="button" class="btn-secondary btn-view-photo" onclick="adminReports.viewCurrentLeaveAttachment()">
+                        <i class="fas fa-external-link-alt"></i><span>${buttonLabel}</span>
+                    </button>
+                </div>
+            `;
+        }
+
         if (item.hasAttachment || attachmentName) {
             return `
                 <div class="leave-detail-section">
                     <label>Lampiran</label>
                     <p><i class="fas fa-paperclip"></i> ${this.escapeHtml(attachmentName || 'Lampiran tersedia')}</p>
+                    <p class="no-photo">File lama belum memiliki data lampiran untuk dibuka.</p>
                 </div>
             `;
         }
@@ -2174,11 +2207,78 @@ const adminReports = {
     },
 
     getLeaveAttachmentImage(item) {
-        const attachmentData = item?.attachmentData || '';
-        const isImage = String(item?.attachmentType || '').startsWith('image/')
-            || String(attachmentData).startsWith('data:image/');
+        const attachmentData = this.getLeaveAttachmentUrl(item);
+        const isImage = this.isImageAttachment(item);
 
         return isImage && attachmentData ? attachmentData : '';
+    },
+
+    getLeaveAttachmentUrl(item) {
+        const directUrl = item?.attachmentUrl || item?.fileUrl || item?.file_url || item?.attachment_url || '';
+        const attachmentData = item?.attachmentData || '';
+        return directUrl || attachmentData || '';
+    },
+
+    isImageAttachment(item) {
+        const attachmentType = String(item?.attachmentType || '').toLowerCase();
+        const attachmentData = String(item?.attachmentData || item?.attachmentUrl || '');
+        const attachmentName = String(item?.attachmentName || '').toLowerCase();
+
+        return attachmentType.startsWith('image/')
+            || attachmentData.startsWith('data:image/')
+            || /\.(jpg|jpeg|png|webp)$/i.test(attachmentName);
+    },
+
+    isPdfAttachment(item) {
+        const attachmentType = String(item?.attachmentType || '').toLowerCase();
+        const attachmentData = String(item?.attachmentData || item?.attachmentUrl || '');
+        const attachmentName = String(item?.attachmentName || '').toLowerCase();
+
+        return attachmentType === 'application/pdf'
+            || attachmentData.startsWith('data:application/pdf')
+            || attachmentName.endsWith('.pdf');
+    },
+
+    viewDocument(documentUrl, title = 'Lampiran') {
+        const newTab = window.open('', '_blank', 'noopener,noreferrer');
+        if (!newTab) {
+            toast.error('Popup diblokir. Izinkan popup untuk membuka lampiran.');
+            return;
+        }
+
+        if (/^https?:\/\//i.test(documentUrl)) {
+            newTab.location.href = documentUrl;
+            return;
+        }
+
+        newTab.document.write(`
+            <!DOCTYPE html>
+            <html lang="id">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>${this.escapeHtml(title)}</title>
+                <style>
+                    html, body {
+                        width: 100%;
+                        height: 100%;
+                        margin: 0;
+                        background: #111827;
+                    }
+                    iframe {
+                        width: 100%;
+                        height: 100%;
+                        border: 0;
+                        background: #ffffff;
+                    }
+                </style>
+            </head>
+            <body>
+                <iframe src="${this.escapeAttr(documentUrl)}" title="${this.escapeAttr(title)}"></iframe>
+            </body>
+            </html>
+        `);
+        newTab.document.close();
     },
 
     async approveLeaveOrPermission(index) {
