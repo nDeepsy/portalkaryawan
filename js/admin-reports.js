@@ -2315,6 +2315,7 @@ const adminReports = {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>${this.escapeHtml(title)}</title>
+                <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
                 <style>
                     * {
                         box-sizing: border-box;
@@ -2326,44 +2327,28 @@ const adminReports = {
                         place-items: center;
                         background: #f8fafc;
                         color: #1f2937;
-                        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+                        font-family: "Poppins", Arial, sans-serif;
                     }
                     .box {
-                        width: min(420px, calc(100vw - 48px));
+                        width: min(320px, calc(100vw - 48px));
                         text-align: center;
-                        padding: 32px 28px;
-                        background: #ffffff;
-                        border: 1px solid #e5e7eb;
-                        border-radius: 12px;
-                        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
-                    }
-                    .icon {
-                        width: 48px;
-                        height: 48px;
-                        margin: 0 auto 18px;
-                        display: grid;
-                        place-items: center;
-                        border-radius: 12px;
-                        background: #eff6ff;
-                        color: #2563eb;
-                        font-size: 24px;
-                        font-weight: 700;
+                        padding: 20px;
                     }
                     h1 {
-                        margin: 0 0 8px;
-                        font-size: 20px;
+                        margin: 0 0 6px;
+                        font-size: 16px;
                         line-height: 1.3;
-                        font-weight: 700;
+                        font-weight: 600;
                     }
                     p {
                         margin: 0;
                         color: #64748b;
-                        font-size: 14px;
+                        font-size: 13px;
                         line-height: 1.5;
                     }
                     .bar {
-                        height: 3px;
-                        margin-top: 24px;
+                        height: 2px;
+                        margin: 18px auto 0;
                         overflow: hidden;
                         border-radius: 999px;
                         background: #e5e7eb;
@@ -2384,9 +2369,8 @@ const adminReports = {
             </head>
             <body>
                 <div class="box">
-                    <div class="icon">PDF</div>
-                    <h1>Memuat Dokumen</h1>
-                    <p>Lampiran sedang disiapkan untuk dibuka.</p>
+                    <h1>Memuat dokumen</h1>
+                    <p>Sedang menyiapkan lampiran PDF.</p>
                     <div class="bar"><span></span></div>
                 </div>
             </body>
