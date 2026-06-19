@@ -166,6 +166,10 @@ function testPemilikCanUseReportsAndConfirmLeave() {
     assert(adminReportsSource.includes('getConfirmationActor'), 'approval should include the current confirmation actor');
     assert(adminReportsSource.includes('confirmedByRole'), 'confirmation actor should include role metadata');
     assert(adminReportsSource.includes('confirmedByName'), 'leave reports should expose who confirmed the request');
+    assert(adminReportsSource.includes('mergeLeaveReportItem'), 'leave confirmation should merge status updates into local report rows');
+    assert(adminReportsSource.includes('syncLeaveMutationCache'), 'leave confirmation should sync status updates into local cache');
+    assert(adminReportsSource.includes('formatConfirmationActorText'), 'leave confirmation detail should format the actor text cleanly');
+    assert(adminReportsSource.includes("if (name.toLowerCase() === role.toLowerCase()) return name"), 'leave confirmation detail should avoid duplicated Pemilik (Pemilik) text');
     assert(apiSource.includes("this.request('approveLeave', { id, ...actor })"), 'API approve leave should forward confirmation actor metadata');
     assert(backendLeaveSource.includes('isOwnerConfirmationActor'), 'backend leave confirmation should require pemilik role metadata');
     assert(backendPermissionSource.includes('isOwnerIzinConfirmationActor'), 'backend izin confirmation should require pemilik role metadata');

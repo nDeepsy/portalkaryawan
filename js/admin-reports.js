@@ -2169,13 +2169,24 @@ const adminReports = {
         const actorName = item.confirmedByName || item.confirmedBy || 'Pemilik';
         const actorRole = auth?.getRoleLabel ? auth.getRoleLabel(item.confirmedByRole || 'pemilik') : 'Pemilik';
         const confirmedAt = item.confirmedAt ? this.formatReportDisplayDate(item.confirmedAt) : '-';
+        const actorText = this.formatConfirmationActorText(actorName, actorRole);
 
         return `
             <div class="leave-detail-section">
                 <label>Dikonfirmasi oleh</label>
-                <p>${this.escapeHtml(actorName)} (${this.escapeHtml(actorRole)})${confirmedAt !== '-' ? ` - ${this.escapeHtml(confirmedAt)}` : ''}</p>
+                <p>${this.escapeHtml(actorText)}${confirmedAt !== '-' ? ` - ${this.escapeHtml(confirmedAt)}` : ''}</p>
             </div>
         `;
+    },
+
+    formatConfirmationActorText(actorName, actorRole) {
+        const name = String(actorName || '').trim();
+        const role = String(actorRole || '').trim();
+        if (!name && !role) return '-';
+        if (!name) return role;
+        if (!role) return name;
+        if (name.toLowerCase() === role.toLowerCase()) return name;
+        return `${name} (${role})`;
     },
 
     renderLeaveAttachment(item) {
@@ -2419,32 +2430,95 @@ const adminReports = {
         modal.close();
 
         const previousStatus = item.status;
-        item.status = nextStatus;
+        const previousItem = { ...item };
+        this.mergeLeaveReportItem(item, { status: nextStatus, ...this.getConfirmationActor(), confirmedAt: new Date().toISOString() });
         this.renderLeaveReports();
 
         try {
             const actor = this.getConfirmationActor();
+            const mutationAction = item.source === 'leave'
+                ? (nextStatus === 'approved' ? 'approveLeave' : 'rejectLeave')
+                : (nextStatus === 'approved' ? 'approveIzin' : 'rejectIzin');
             const result = item.source === 'leave'
                 ? (nextStatus === 'approved' ? await api.approveLeave(item.id, actor) : await api.rejectLeave(item.id, actor))
                 : (nextStatus === 'approved' ? await api.approveIzin(item.id, actor) : await api.rejectIzin(item.id, actor));
 
             if (!result || !result.success) {
-                item.status = previousStatus;
+                this.mergeLeaveReportItem(item, { ...previousItem, status: previousStatus });
                 this.renderLeaveReports();
                 toast.error(result?.error || 'Gagal memperbarui pengajuan');
                 return;
             }
 
+            const updatedRow = this.normalizeUpdatedLeaveReportItem(item, result.data, nextStatus, actor);
+            this.mergeLeaveReportItem(item, updatedRow);
+            this.syncLeaveMutationCache(item, updatedRow);
+            api.clearRequestCacheForMutation(mutationAction);
             toast.success(nextStatus === 'approved' ? 'Pengajuan berhasil disetujui' : 'Pengajuan berhasil ditolak');
-            await this.loadData();
             this.renderLeaveReports();
+            if (window.notificationCenter) {
+                notificationCenter.refreshForCurrentUser({ silent: true });
+            }
         } catch (error) {
             console.error('Error updating leave/permission status:', error);
-            item.status = previousStatus;
-            await this.loadData();
+            this.mergeLeaveReportItem(item, { ...previousItem, status: previousStatus });
             this.renderLeaveReports();
             toast.error('Gagal memperbarui pengajuan');
         }
+    },
+
+    normalizeUpdatedLeaveReportItem(originalItem, backendData = {}, nextStatus, actor = {}) {
+        const updated = { ...originalItem };
+        if (backendData && typeof backendData === 'object') {
+            updated.status = backendData.status || nextStatus;
+            updated.confirmedBy = backendData.confirmedBy || actor.confirmedBy || updated.confirmedBy || '';
+            updated.confirmedByName = backendData.confirmedByName || actor.confirmedByName || updated.confirmedByName || '';
+            updated.confirmedByRole = backendData.confirmedByRole || actor.confirmedByRole || updated.confirmedByRole || '';
+            updated.confirmedAt = backendData.confirmedAt || updated.confirmedAt || new Date().toISOString();
+        } else {
+            updated.status = nextStatus;
+            updated.confirmedBy = actor.confirmedBy || updated.confirmedBy || '';
+            updated.confirmedByName = actor.confirmedByName || updated.confirmedByName || '';
+            updated.confirmedByRole = actor.confirmedByRole || updated.confirmedByRole || '';
+            updated.confirmedAt = new Date().toISOString();
+        }
+        return updated;
+    },
+
+    mergeLeaveReportItem(targetItem, updates = {}) {
+        if (!targetItem) return null;
+        const targetSource = String(targetItem.source || '');
+        const targetId = String(targetItem.id || '');
+        const index = this.leaveData.findIndex(row =>
+            String(row.id || '') === targetId &&
+            String(row.source || '') === targetSource
+        );
+        const merged = { ...(index >= 0 ? this.leaveData[index] : targetItem), ...updates };
+        Object.assign(targetItem, merged);
+        if (index >= 0) {
+            this.leaveData[index] = merged;
+        }
+        return merged;
+    },
+
+    syncLeaveMutationCache(originalItem, updatedRow) {
+        if (!originalItem || !updatedRow) return;
+        const storageKey = originalItem.source === 'leave' ? 'leaves' : 'izin';
+        const cached = storage.get(storageKey, []);
+        if (!Array.isArray(cached)) return;
+
+        const nextCached = cached.map(row => {
+            if (String(row.id || '') !== String(originalItem.id || '')) return row;
+            return {
+                ...row,
+                status: updatedRow.status,
+                confirmedBy: updatedRow.confirmedBy || row.confirmedBy || '',
+                confirmedByName: updatedRow.confirmedByName || row.confirmedByName || '',
+                confirmedByRole: updatedRow.confirmedByRole || row.confirmedByRole || '',
+                confirmedAt: updatedRow.confirmedAt || row.confirmedAt || ''
+            };
+        });
+        storage.set(storageKey, nextCached);
     }
 };
 
