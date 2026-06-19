@@ -47,5 +47,21 @@ assert(
     /\.donut-value\s*\{[^}]*font-size:\s*20px;/s.test(mobileCss),
     'mobile donut value should fit comfortably inside the ring'
 );
+assert(
+    dashboardJs.includes('getScheduledWorkDateKeys') &&
+    dashboardJs.includes('scheduledWorkDates.forEach') &&
+    dashboardJs.includes('absentDates.add(dateKey)'),
+    'dashboard attendance stats should count elapsed scheduled workdays without attendance as absent'
+);
+assert(
+    dashboardJs.includes('getApprovedLeaveDateKeys') &&
+    dashboardJs.includes('getApprovedIzinDateKeys'),
+    'dashboard attendance stats should keep approved leave and izin counted in absent days'
+);
+assert(
+    dashboardJs.includes('presentDates.forEach(dateKey => absentDates.delete(dateKey));') &&
+    dashboardJs.includes('lateDates.forEach(dateKey => absentDates.delete(dateKey));'),
+    'dashboard attendance stats should not double-count present or late dates as absent'
+);
 
 console.log('dashboard responsive tests passed');

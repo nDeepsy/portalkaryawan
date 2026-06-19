@@ -319,28 +319,53 @@ const dashboard = {
         const now = new Date();
         const month = now.getMonth();
         const year = now.getFullYear();
+        const currentUserId = String(auth.getCurrentUser()?.id || '');
+        const statsRange = this.getDashboardStatsRange(now, currentUserId);
         const monthAttendance = this.attendanceData.filter(a => {
             const date = new Date(this.getLocalDate(a.date));
             return date.getMonth() === month && date.getFullYear() === year;
         });
 
-        const present = monthAttendance.filter(a => a.clockIn && !this.isLate(a.status)).length;
-        const late = monthAttendance.filter(a => a.clockIn && this.isLate(a.status)).length;
-        const absentFromAttendance = monthAttendance.filter(a => {
+        const presentDates = new Set();
+        const lateDates = new Set();
+        const absentDates = new Set();
+
+        monthAttendance.forEach(a => {
+            const dateKey = this.getLocalDate(a.date);
+            if (!dateKey || !this.isDateInDashboardRange(dateKey, statsRange)) return;
+
+            if (a.clockIn && this.isLate(a.status)) {
+                lateDates.add(dateKey);
+                return;
+            }
+
+            if (a.clockIn) {
+                presentDates.add(dateKey);
+                return;
+            }
+
             const status = String(a.status || '').toLowerCase();
-            return status === 'absent' || status === 'tidak hadir' || (!a.clockIn && status && status !== 'waiting');
-        }).length;
-        const approvedLeaves = this.leaves.filter(l => {
-            const status = String(l.status || '').toLowerCase();
-            const start = new Date(this.getLocalDate(l.startDate));
-            return status === 'approved' && start.getMonth() === month && start.getFullYear() === year;
-        }).reduce((sum, item) => sum + (parseInt(item.duration, 10) || 1), 0);
-        const approvedIzin = this.izin.filter(i => {
-            const status = String(i.status || '').toLowerCase();
-            const date = new Date(this.getLocalDate(i.date));
-            return status === 'approved' && date.getMonth() === month && date.getFullYear() === year;
-        }).reduce((sum, item) => sum + (parseInt(item.duration, 10) || 1), 0);
-        const absent = absentFromAttendance + approvedLeaves + approvedIzin;
+            if (status === 'absent' || status === 'tidak hadir' || (status && status !== 'waiting')) {
+                absentDates.add(dateKey);
+            }
+        });
+
+        this.getApprovedLeaveDateKeys(statsRange, currentUserId).forEach(dateKey => absentDates.add(dateKey));
+        this.getApprovedIzinDateKeys(statsRange, currentUserId).forEach(dateKey => absentDates.add(dateKey));
+
+        const scheduledWorkDates = this.getScheduledWorkDateKeys(statsRange, currentUserId);
+        scheduledWorkDates.forEach(dateKey => {
+            if (!presentDates.has(dateKey) && !lateDates.has(dateKey) && !absentDates.has(dateKey)) {
+                absentDates.add(dateKey);
+            }
+        });
+
+        presentDates.forEach(dateKey => absentDates.delete(dateKey));
+        lateDates.forEach(dateKey => absentDates.delete(dateKey));
+
+        const present = presentDates.size;
+        const late = lateDates.size;
+        const absent = absentDates.size;
         const total = present + late + absent;
         const presentPercent = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
 
@@ -354,6 +379,107 @@ const dashboard = {
             legendValues[1].textContent = `${late} hari`;
             legendValues[2].textContent = `${absent} hari`;
         }
+    },
+
+    getDashboardStatsRange(now = new Date(), userId = auth.getCurrentUser()?.id || '') {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        return {
+            userId: String(userId || ''),
+            year: now.getFullYear(),
+            month: now.getMonth(),
+            start,
+            end
+        };
+    },
+
+    isDateInDashboardRange(dateKey, range) {
+        const date = this.parseDashboardDate(dateKey);
+        if (!date || !range) return false;
+        return date >= range.start && date <= range.end;
+    },
+
+    getScheduledWorkDateKeys(range, userId) {
+        const dates = [];
+        this.eachDateInRange(range.start, range.end, date => {
+            const dateKey = this.formatDashboardDate(date);
+            const shiftName = this.getScheduledShiftName(userId, dateKey);
+            if (String(shiftName || '').toLowerCase() !== 'libur') {
+                dates.push(dateKey);
+            }
+        });
+        return dates;
+    },
+
+    getApprovedLeaveDateKeys(range, userId) {
+        const dates = new Set();
+        this.leaves.forEach(item => {
+            if (!this.isApprovedAbsenceForUser(item, userId)) return;
+
+            const start = this.parseDashboardDate(item.startDate);
+            const end = this.parseDashboardDate(item.endDate || item.startDate);
+            if (!start || !end) return;
+
+            this.eachDateInRange(start, end, date => {
+                const dateKey = this.formatDashboardDate(date);
+                if (!this.isDateInDashboardRange(dateKey, range)) return;
+                if (String(this.getScheduledShiftName(userId, dateKey) || '').toLowerCase() === 'libur') return;
+                dates.add(dateKey);
+            });
+        });
+        return dates;
+    },
+
+    getApprovedIzinDateKeys(range, userId) {
+        const dates = new Set();
+        this.izin.forEach(item => {
+            if (!this.isApprovedAbsenceForUser(item, userId)) return;
+
+            const start = this.parseDashboardDate(item.date);
+            if (!start) return;
+            const duration = Math.max(1, parseInt(item.duration, 10) || 1);
+
+            for (let offset = 0; offset < duration; offset++) {
+                const date = new Date(start);
+                date.setDate(start.getDate() + offset);
+                const dateKey = this.formatDashboardDate(date);
+                if (!this.isDateInDashboardRange(dateKey, range)) continue;
+                if (String(this.getScheduledShiftName(userId, dateKey) || '').toLowerCase() === 'libur') continue;
+                dates.add(dateKey);
+            }
+        });
+        return dates;
+    },
+
+    isApprovedAbsenceForUser(item, userId) {
+        const status = String(item?.status || '').toLowerCase();
+        const itemUserId = String(item?.userId || item?.user_id || '');
+        return status === 'approved' && (!userId || itemUserId === String(userId));
+    },
+
+    eachDateInRange(start, end, callback) {
+        if (!start || !end || typeof callback !== 'function') return;
+        const current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+        const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+        while (current <= last) {
+            callback(new Date(current));
+            current.setDate(current.getDate() + 1);
+        }
+    },
+
+    parseDashboardDate(value) {
+        const dateKey = this.getLocalDate(value);
+        const match = String(dateKey || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!match) return null;
+        return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    },
+
+    formatDashboardDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     },
 
     updateDonutChart(present, late, absent) {
