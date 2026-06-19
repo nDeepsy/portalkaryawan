@@ -342,6 +342,8 @@ const faceRecognition = {
                         title="Peta satelit lokasi absensi"
                         src="${satelliteMapUrl}"
                         loading="lazy"
+                        allow="fullscreen"
+                        allowfullscreen
                         referrerpolicy="no-referrer-when-downgrade"
                     ></iframe>
                     <div class="map-note">

@@ -354,6 +354,7 @@
     overflow: hidden;
     isolation: isolate;
     background: #18251f;
+    touch-action: auto;
 }
 
 .map-satellite-frame {
@@ -364,7 +365,7 @@
     height: 100%;
     border: 0;
     filter: saturate(1.05) contrast(1.02);
-    pointer-events: none;
+    pointer-events: auto;
 }
 
 .map-static-fallback {
@@ -455,6 +456,7 @@
     color: var(--text-primary);
     font-size: var(--font-size-xs);
     font-weight: 600;
+    pointer-events: none;
 }
 
 .location-actions {

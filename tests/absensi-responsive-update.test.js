@@ -412,8 +412,10 @@ function testLocationMapUsesSingleSatelliteEmbed() {
     assert(!faceRecognitionJs.includes('class="map-marker"'), 'location map should rely on the Google Maps marker only');
     assert(!faceRecognitionJs.includes('class="map-accuracy-ring"'), 'location map should not overlay a competing blue accuracy point');
     assert(!faceRecognitionJs.includes('map-layer-controls'), 'location map should not render multiple layer controls');
+    assert(faceRecognitionJs.includes('allowfullscreen'), 'location map iframe should allow the built-in Google Maps fullscreen control');
     assert(faceCss.includes('.map-satellite-frame'), 'location map should style the satellite iframe');
-    assert(/\.map-satellite-frame\s*\{[^}]*pointer-events:\s*none;/s.test(faceCss), 'satellite iframe should be non-interactive to avoid desktop Ctrl zoom prompts');
+    assert(/\.map-satellite-frame\s*\{[^}]*pointer-events:\s*auto;/s.test(faceCss), 'satellite iframe should stay interactive for desktop and mobile map controls');
+    assert(/\.map-note\s*\{[^}]*pointer-events:\s*none;/s.test(faceCss), 'location note overlay should not block map touch controls');
     assert(faceCss.includes('.map-static-fallback'), 'location map should keep a visual fallback');
 }
 
