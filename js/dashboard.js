@@ -15,9 +15,12 @@ const dashboard = {
     lastLoadedAt: 0,
     refreshTtl: 30000,
     dataUpdateBound: false,
+    statsPeriodBound: false,
+    selectedStatsMonth: '',
 
     async init() {
         this.bindDataUpdateEvents();
+        this.bindStatsPeriodFilter();
         this.loadCachedData();
         this.renderDashboard();
 
@@ -69,6 +72,7 @@ const dashboard = {
     },
 
     renderDashboard() {
+        this.bindStatsPeriodFilter();
         this.updateWelcomeCard();
         this.updateStats();
         this.updateSessionInfo();
@@ -124,6 +128,57 @@ const dashboard = {
                 <div class="presence-item"><span class="presence-dot offline"></span><span>0 Offline</span></div>
             `;
         }
+    },
+
+    bindStatsPeriodFilter() {
+        const select = document.querySelector('.stats-card .select-period');
+        if (!select) return;
+
+        this.populateStatsPeriodOptions(select);
+        if (this.statsPeriodBound) return;
+
+        select.addEventListener('change', (event) => {
+            this.selectedStatsMonth = event.target.value || this.getCurrentStatsMonth();
+            this.updateStats();
+        });
+        this.statsPeriodBound = true;
+    },
+
+    populateStatsPeriodOptions(select) {
+        const currentMonth = this.getCurrentStatsMonth();
+        const selectedValue = this.selectedStatsMonth || select.value || currentMonth;
+        const year = new Date().getFullYear();
+        const monthNames = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+
+        const options = monthNames.map((name, index) => {
+            const value = `${year}-${String(index + 1).padStart(2, '0')}`;
+            const label = value === currentMonth ? `${name} ${year} (Bulan Ini)` : `${name} ${year}`;
+            return `<option value="${value}">${label}</option>`;
+        }).join('');
+
+        if (select.dataset.monthOptionsYear !== String(year) || select.options.length !== 12) {
+            select.innerHTML = options;
+            select.dataset.monthOptionsYear = String(year);
+        }
+
+        this.selectedStatsMonth = this.isValidStatsMonth(selectedValue) ? selectedValue : currentMonth;
+        select.value = this.selectedStatsMonth;
+    },
+
+    getCurrentStatsMonth() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    },
+
+    isValidStatsMonth(value) {
+        const match = String(value || '').match(/^(\d{4})-(\d{2})$/);
+        if (!match) return false;
+        return Number(match[1]) === new Date().getFullYear() &&
+            Number(match[2]) >= 1 &&
+            Number(match[2]) <= 12;
     },
 
     loadCachedData() {
@@ -317,10 +372,13 @@ const dashboard = {
 
     updateStats() {
         const now = new Date();
-        const month = now.getMonth();
-        const year = now.getFullYear();
+        const statsMonth = this.isValidStatsMonth(this.selectedStatsMonth)
+            ? this.selectedStatsMonth
+            : this.getCurrentStatsMonth();
+        const [year, selectedMonthNumber] = statsMonth.split('-').map(Number);
+        const month = selectedMonthNumber - 1;
         const currentUserId = String(auth.getCurrentUser()?.id || '');
-        const statsRange = this.getDashboardStatsRange(now, currentUserId);
+        const statsRange = this.getDashboardStatsRange(now, currentUserId, year, month);
         const monthAttendance = this.attendanceData.filter(a => {
             const date = new Date(this.getLocalDate(a.date));
             return date.getMonth() === month && date.getFullYear() === year;
@@ -381,13 +439,17 @@ const dashboard = {
         }
     },
 
-    getDashboardStatsRange(now = new Date(), userId = auth.getCurrentUser()?.id || '') {
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    getDashboardStatsRange(now = new Date(), userId = auth.getCurrentUser()?.id || '', year = now.getFullYear(), month = now.getMonth()) {
+        const start = new Date(year, month, 1);
+        const selectedMonthEnd = new Date(year, month + 1, 0);
+        const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+        const end = isCurrentMonth
+            ? new Date(year, month, now.getDate())
+            : selectedMonthEnd;
         return {
             userId: String(userId || ''),
-            year: now.getFullYear(),
-            month: now.getMonth(),
+            year,
+            month,
             start,
             end
         };

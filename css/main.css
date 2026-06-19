@@ -731,7 +731,7 @@ img {
     position: relative;
     width: 140px;
     height: 140px;
-    filter: drop-shadow(0 12px 24px rgba(15, 23, 42, 0.08));
+    filter: drop-shadow(0 14px 24px rgba(15, 23, 42, 0.06));
 }
 
 .donut-chart svg {
@@ -742,33 +742,34 @@ img {
 
 .donut-bg {
     fill: none;
-    stroke: var(--color-gray-200);
-    stroke-width: 8;
-    opacity: 0.85;
+    stroke: #edf1f7;
+    stroke-width: 7;
+    opacity: 1;
 }
 
 .donut-fill {
     fill: none;
-    stroke-width: 8;
+    stroke-width: 7;
     stroke-linecap: round;
+    opacity: 0.92;
     transition: stroke-dasharray var(--transition-slow), stroke-dashoffset var(--transition-slow);
 }
 
 .donut-fill.present {
     stroke: var(--color-success);
-    stroke-dasharray: 180 251;
+    stroke-dasharray: 0 251;
 }
 
 .donut-fill.late {
     stroke: var(--color-warning);
-    stroke-dasharray: 25 251;
-    stroke-dashoffset: -185;
+    stroke-dasharray: 0 251;
+    stroke-dashoffset: 0;
 }
 
 .donut-fill.absent {
     stroke: var(--color-danger);
-    stroke-dasharray: 10 251;
-    stroke-dashoffset: -215;
+    stroke-dasharray: 0 251;
+    stroke-dashoffset: 0;
 }
 
 .donut-center {

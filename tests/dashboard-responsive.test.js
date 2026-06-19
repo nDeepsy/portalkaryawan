@@ -28,12 +28,18 @@ assert(
     'dashboard init should not block first render while waiting for remote data'
 );
 assert(
-    /\.donut-bg\s*\{[^}]*stroke-width:\s*8;/s.test(mainCss),
+    /\.donut-bg\s*\{[^}]*stroke-width:\s*7;/s.test(mainCss),
     'dashboard donut background ring should use a slimmer modern stroke'
 );
 assert(
-    /\.donut-fill\s*\{[^}]*stroke-width:\s*8;[^}]*stroke-linecap:\s*round;/s.test(mainCss),
+    /\.donut-fill\s*\{[^}]*stroke-width:\s*7;[^}]*stroke-linecap:\s*round;/s.test(mainCss),
     'dashboard donut segments should use a slim rounded stroke'
+);
+assert(
+    /\.donut-fill\.present\s*\{[^}]*stroke-dasharray:\s*0\s+251;/s.test(mainCss) &&
+    /\.donut-fill\.late\s*\{[^}]*stroke-dasharray:\s*0\s+251;/s.test(mainCss) &&
+    /\.donut-fill\.absent\s*\{[^}]*stroke-dasharray:\s*0\s+251;/s.test(mainCss),
+    'dashboard donut should not show fake colored segments before real stats render'
 );
 assert(
     /\.donut-value\s*\{[^}]*font-size:\s*var\(--font-size-xl\);/s.test(mainCss),
@@ -57,6 +63,23 @@ assert(
     dashboardJs.includes('getApprovedLeaveDateKeys') &&
     dashboardJs.includes('getApprovedIzinDateKeys'),
     'dashboard attendance stats should keep approved leave and izin counted in absent days'
+);
+assert(
+    dashboardJs.includes('populateStatsPeriodOptions') &&
+    dashboardJs.includes('Januari') &&
+    dashboardJs.includes('Desember') &&
+    dashboardJs.includes('select.options.length !== 12'),
+    'dashboard attendance stats period dropdown should provide 12 months for the current year'
+);
+assert(
+    dashboardJs.includes('this.selectedStatsMonth = event.target.value') &&
+    dashboardJs.includes('this.updateStats();'),
+    'dashboard attendance stats should recalculate when the selected month changes'
+);
+assert(
+    dashboardJs.includes('const selectedMonthEnd = new Date(year, month + 1, 0);') &&
+    dashboardJs.includes('const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();'),
+    'dashboard attendance stats should use realtime current month and full past months'
 );
 assert(
     dashboardJs.includes('presentDates.forEach(dateKey => absentDates.delete(dateKey));') &&
