@@ -2316,25 +2316,78 @@ const adminReports = {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>${this.escapeHtml(title)}</title>
                 <style>
+                    * {
+                        box-sizing: border-box;
+                    }
                     body {
                         margin: 0;
                         min-height: 100vh;
                         display: grid;
                         place-items: center;
-                        background: #111827;
-                        color: #ffffff;
-                        font-family: Arial, sans-serif;
+                        background: #f8fafc;
+                        color: #1f2937;
+                        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
                     }
                     .box {
+                        width: min(420px, calc(100vw - 48px));
                         text-align: center;
-                        padding: 24px;
+                        padding: 32px 28px;
+                        background: #ffffff;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 12px;
+                        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+                    }
+                    .icon {
+                        width: 48px;
+                        height: 48px;
+                        margin: 0 auto 18px;
+                        display: grid;
+                        place-items: center;
+                        border-radius: 12px;
+                        background: #eff6ff;
+                        color: #2563eb;
+                        font-size: 24px;
+                        font-weight: 700;
+                    }
+                    h1 {
+                        margin: 0 0 8px;
+                        font-size: 20px;
+                        line-height: 1.3;
+                        font-weight: 700;
+                    }
+                    p {
+                        margin: 0;
+                        color: #64748b;
+                        font-size: 14px;
+                        line-height: 1.5;
+                    }
+                    .bar {
+                        height: 3px;
+                        margin-top: 24px;
+                        overflow: hidden;
+                        border-radius: 999px;
+                        background: #e5e7eb;
+                    }
+                    .bar span {
+                        display: block;
+                        width: 38%;
+                        height: 100%;
+                        border-radius: inherit;
+                        background: #2563eb;
+                        animation: loading 1.1s ease-in-out infinite;
+                    }
+                    @keyframes loading {
+                        0% { transform: translateX(-110%); }
+                        100% { transform: translateX(280%); }
                     }
                 </style>
             </head>
             <body>
                 <div class="box">
-                    <h1>Membuka PDF...</h1>
-                    <p>Mohon tunggu sebentar.</p>
+                    <div class="icon">PDF</div>
+                    <h1>Memuat Dokumen</h1>
+                    <p>Lampiran sedang disiapkan untuk dibuka.</p>
+                    <div class="bar"><span></span></div>
                 </div>
             </body>
             </html>

@@ -198,6 +198,11 @@ const cuti = {
             return;
         }
 
+        if (type.value === 'sick') {
+            toast.error('Cuti sakit diajukan melalui menu Izin / Sakit.');
+            return;
+        }
+
         // Calculate duration
         const start = new Date(startDate.value);
         const end = new Date(endDate.value);
