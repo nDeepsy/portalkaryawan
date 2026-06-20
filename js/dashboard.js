@@ -155,7 +155,7 @@ const dashboard = {
 
         const options = monthNames.map((name, index) => {
             const value = `${year}-${String(index + 1).padStart(2, '0')}`;
-            const label = value === currentMonth ? `${name} ${year} (Bulan Ini)` : `${name} ${year}`;
+            const label = `${name} ${year}`;
             return `<option value="${value}">${label}</option>`;
         }).join('');
 
@@ -292,9 +292,36 @@ const dashboard = {
 
     getLocalDate(value) {
         if (!value) return '';
-        if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return String(value);
+        if (value instanceof Date && !Number.isNaN(value.getTime())) {
+            return this.formatDashboardDate(value);
+        }
+
+        const text = String(value).trim();
+        const isoMatch = text.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+        if (isoMatch) {
+            return [
+                isoMatch[1],
+                String(isoMatch[2]).padStart(2, '0'),
+                String(isoMatch[3]).padStart(2, '0')
+            ].join('-');
+        }
+
+        const numericMatch = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/);
+        if (numericMatch) {
+            const first = Number(numericMatch[1]);
+            const second = Number(numericMatch[2]);
+            const year = String(numericMatch[3]).length === 2 ? '20' + numericMatch[3] : String(numericMatch[3]);
+            const day = second > 12 ? second : first;
+            const month = second > 12 ? first : second;
+            return [
+                year,
+                String(month).padStart(2, '0'),
+                String(day).padStart(2, '0')
+            ].join('-');
+        }
+
         const parsed = new Date(value);
-        if (Number.isNaN(parsed.getTime())) return String(value).slice(0, 10);
+        if (Number.isNaN(parsed.getTime())) return text.slice(0, 10);
         return new Date(parsed.getTime() - (parsed.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     },
 
@@ -380,8 +407,8 @@ const dashboard = {
         const currentUserId = String(auth.getCurrentUser()?.id || '');
         const statsRange = this.getDashboardStatsRange(now, currentUserId, year, month);
         const monthAttendance = this.attendanceData.filter(a => {
-            const date = new Date(this.getLocalDate(a.date));
-            return date.getMonth() === month && date.getFullYear() === year;
+            const date = this.parseDashboardDate(a.date);
+            return date && date.getMonth() === month && date.getFullYear() === year;
         });
 
         const presentDates = new Set();

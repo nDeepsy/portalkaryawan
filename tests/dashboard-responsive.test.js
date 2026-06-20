@@ -72,6 +72,21 @@ assert(
     'dashboard attendance stats period dropdown should provide 12 months for the current year'
 );
 assert(
+    !dashboardJs.includes('(Bulan Ini)'),
+    'dashboard stats month dropdown should not add extra "(Bulan Ini)" wording'
+);
+assert(
+    dashboardJs.includes('const numericMatch = text.match') &&
+    dashboardJs.includes('const day = second > 12 ? second : first;') &&
+    dashboardJs.includes('const month = second > 12 ? first : second;'),
+    'dashboard stats should normalize dd/mm/yyyy and legacy mm/dd/yyyy dates before filtering real attendance data'
+);
+assert(
+    dashboardJs.includes('const date = this.parseDashboardDate(a.date);') &&
+    dashboardJs.includes('return date && date.getMonth() === month && date.getFullYear() === year;'),
+    'dashboard stats should filter attendance using normalized local dates instead of browser-dependent Date parsing'
+);
+assert(
     dashboardJs.includes('this.selectedStatsMonth = event.target.value') &&
     dashboardJs.includes('this.updateStats();'),
     'dashboard attendance stats should recalculate when the selected month changes'

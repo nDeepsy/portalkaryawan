@@ -185,6 +185,7 @@ function testEmployeeLeaveAndPermissionSummariesUseSingleMonthFilter() {
     assert(!indexHtml.includes('id="cuti-history-date"'), 'leave history should not expose a duplicate date filter');
     assert(!indexHtml.includes('id="jurnal-history-date"'), 'journal history should not expose a duplicate date filter');
     assert(indexHtml.includes('id="izin-summary-month"'), 'permission summary should expose a month filter');
+    assert(indexHtml.includes('<option value="other">Lainnya</option>'), 'permission form should include a Lainnya option');
     assert(indexHtml.includes('id="cuti-summary-month"'), 'leave summary should expose a month filter');
     assert(
         indexHtml.includes('class="employee-date-input jurnal-date-filter izin-summary-month"'),
@@ -198,6 +199,8 @@ function testEmployeeLeaveAndPermissionSummariesUseSingleMonthFilter() {
     assert(izinSource.includes("document.getElementById('izin-summary-month')"), 'permission script should bind the summary month filter');
     assert(izinSource.includes('getIzinStatsForSelectedMonth'), 'permission summary should count rows for the selected month');
     assert(izinSource.includes('this.renderIzinList();'), 'permission summary month filter should refresh the history list');
+    assert(izinSource.includes("'other': 'Lainnya'"), 'permission submissions should save the Lainnya label');
+    assert(izinSource.includes("'other': 'fa-ellipsis-h'"), 'permission history should show an icon for Lainnya');
     assert(!cutiSource.includes("document.getElementById('cuti-history-date')"), 'leave script should not bind a duplicate history date filter');
     assert(cutiSource.includes("document.getElementById('cuti-summary-month')"), 'leave script should bind the summary month filter');
     assert(cutiSource.includes('getLeaveStatsForSelectedMonth'), 'leave summary should count rows for the selected month');

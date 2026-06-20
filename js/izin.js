@@ -291,7 +291,8 @@ const izin = {
         const typeLabels = {
             'sick': 'Sakit',
             'permission': 'Izin Penting',
-            'emergency': 'Keadaan Darurat'
+            'emergency': 'Keadaan Darurat',
+            'other': 'Lainnya'
         };
 
         const currentUser = auth.getCurrentUser();
@@ -528,7 +529,8 @@ const izin = {
             const icons = {
                 'sick': 'fa-heartbeat',
                 'permission': 'fa-hand-paper',
-                'emergency': 'fa-exclamation-triangle'
+                'emergency': 'fa-exclamation-triangle',
+                'other': 'fa-ellipsis-h'
             };
 
             return `
