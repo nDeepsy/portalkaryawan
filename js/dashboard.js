@@ -254,7 +254,10 @@ const dashboard = {
                 storage.set('attendance', this.allAttendance);
             }
             if (shiftsResult?.success) storage.set('shifts', shiftsResult.data || []);
-            if (settingsRes?.success && settingsRes.data) this.cacheSchedules(settingsRes.data);
+            if (settingsRes?.success && settingsRes.data) {
+                storage.set('app_settings', { ...(storage.get('app_settings', {}) || {}), ...(settingsRes.data || {}) });
+                this.cacheSchedules(settingsRes.data);
+            }
         } catch (error) {
             console.error('Error loading dashboard data:', error);
         } finally {
@@ -341,6 +344,67 @@ const dashboard = {
         }
 
         return currentShiftName;
+    },
+
+    getScheduledShiftName(userId = auth.getCurrentUser()?.id || '', dateValue = dateTime.getLocalDate()) {
+        let currentShift = auth.getCurrentUser()?.shift || 'Pagi';
+
+        try {
+            const stringUserId = String(userId || auth.getCurrentUser()?.id || '');
+            const schedules = storage.get('shift_schedule', {}) || {};
+            const date = this.parseDashboardDate(dateValue) || new Date();
+            const key = `${date.getFullYear()}-${date.getMonth()}`;
+            const assignedShift = schedules?.[key]?.[stringUserId]?.[date.getDate()];
+
+            if (assignedShift) {
+                currentShift = assignedShift;
+            } else if (!this.isConfiguredWorkday(date)) {
+                currentShift = 'Libur';
+            } else if (String(currentShift || '').toLowerCase() === 'libur') {
+                currentShift = this.getDefaultWorkdayShiftName();
+            }
+        } catch (e) {
+            console.error('Error reading dashboard shift schedule:', e);
+        }
+
+        return currentShift;
+    },
+
+    getDefaultWorkdayShiftName() {
+        const shifts = storage.get('shifts', []) || [];
+        const firstShift = Array.isArray(shifts)
+            ? shifts.find(shift => String(shift?.name || '').trim())
+            : null;
+        return firstShift?.name || 'Pagi';
+    },
+
+    isConfiguredWorkday(date = new Date()) {
+        const dayKeys = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
+        const dayKey = dayKeys[date.getDay()];
+        const defaults = {
+            senin: true,
+            selasa: true,
+            rabu: true,
+            kamis: true,
+            jumat: true,
+            sabtu: false,
+            minggu: false
+        };
+        const settings = storage.get('app_settings', {}) || {};
+        let workdays = defaults;
+
+        try {
+            if (settings.working_days) {
+                const parsed = typeof settings.working_days === 'string'
+                    ? JSON.parse(settings.working_days)
+                    : settings.working_days;
+                workdays = { ...defaults, ...parsed };
+            }
+        } catch (e) {
+            workdays = defaults;
+        }
+
+        return workdays[dayKey] !== false;
     },
 
     updateWelcomeCard() {
