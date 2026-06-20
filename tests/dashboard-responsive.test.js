@@ -97,6 +97,11 @@ assert(
     'dashboard attendance stats should use realtime current month and full past months'
 );
 assert(
+    dashboardJs.includes('const isFutureMonth = year > now.getFullYear() || (year === now.getFullYear() && month > now.getMonth());') &&
+    dashboardJs.includes('end: isFutureMonth ? new Date(year, month, 0) : end'),
+    'dashboard attendance stats should not count future month workdays as absent before they happen'
+);
+assert(
     dashboardJs.includes('presentDates.forEach(dateKey => absentDates.delete(dateKey));') &&
     dashboardJs.includes('lateDates.forEach(dateKey => absentDates.delete(dateKey));'),
     'dashboard attendance stats should not double-count present or late dates as absent'

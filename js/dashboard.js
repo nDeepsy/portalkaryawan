@@ -534,6 +534,7 @@ const dashboard = {
         const start = new Date(year, month, 1);
         const selectedMonthEnd = new Date(year, month + 1, 0);
         const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+        const isFutureMonth = year > now.getFullYear() || (year === now.getFullYear() && month > now.getMonth());
         const end = isCurrentMonth
             ? new Date(year, month, now.getDate())
             : selectedMonthEnd;
@@ -542,7 +543,7 @@ const dashboard = {
             year,
             month,
             start,
-            end
+            end: isFutureMonth ? new Date(year, month, 0) : end
         };
     },
 
