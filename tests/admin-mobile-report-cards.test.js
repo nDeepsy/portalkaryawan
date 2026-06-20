@@ -86,12 +86,25 @@ function testShiftScheduleSearchInputDoesNotAutofillItself() {
     const shiftScheduleJs = fs.readFileSync(path.join(root, 'js', 'shift-schedule.js'), 'utf8');
 
     assert(
-        /id="schedule-employee-search"[^>]*autocomplete="off"[^>]*autocorrect="off"[^>]*spellcheck="false"/s.test(indexHtml),
+        /id="schedule-employee-search"[^>]*autocomplete="off"[^>]*autocorrect="off"[^>]*spellcheck="false"[^>]*readonly/s.test(indexHtml),
         'shift schedule search input should opt out of mobile/browser autofill and correction'
     );
     assert(
         shiftScheduleJs.includes("searchInput.value = this.filters.search || '';"),
         'shift schedule search input should be reset to the module filter state during init'
+    );
+    assert(
+        shiftScheduleJs.includes('protectSearchInputFromAutofill()'),
+        'shift schedule search should actively clear delayed browser autofill'
+    );
+    assert(
+        shiftScheduleJs.includes("searchInput.readOnly = false"),
+        'shift schedule search should only become editable after the user focuses it'
+    );
+    assert(
+        shiftScheduleJs.includes('looksLikeBrowserAutofill') &&
+        shiftScheduleJs.includes("e.target.value = '';"),
+        'shift schedule search should clear email-like autofill values during input events'
     );
 }
 

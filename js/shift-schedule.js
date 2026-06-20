@@ -244,6 +244,7 @@ const shiftSchedule = {
 
     bindEvents() {
         this.syncSearchInputValue();
+        this.protectSearchInputFromAutofill();
 
         if (this.eventsBound) return;
         this.eventsBound = true;
@@ -285,7 +286,19 @@ const shiftSchedule = {
         // Search filter
         const searchInput = document.getElementById('schedule-employee-search');
         if (searchInput) {
+            searchInput.addEventListener('focus', () => {
+                searchInput.readOnly = false;
+                if (!this.filters.search && this.looksLikeBrowserAutofill(searchInput.value)) {
+                    searchInput.value = '';
+                }
+            });
+            searchInput.addEventListener('pointerdown', () => {
+                searchInput.readOnly = false;
+            });
             searchInput.addEventListener('input', (e) => {
+                if (!this.filters.search && this.looksLikeBrowserAutofill(e.target.value)) {
+                    e.target.value = '';
+                }
                 this.filters.search = e.target.value.toLowerCase();
                 this.renderTable();
                 this.updateSummary();
@@ -332,6 +345,30 @@ const shiftSchedule = {
         if (searchInput) {
             searchInput.value = this.filters.search || '';
         }
+    },
+
+    protectSearchInputFromAutofill() {
+        const searchInput = document.getElementById('schedule-employee-search');
+        if (!searchInput) return;
+
+        const clearUnexpectedAutofill = () => {
+            if (this.filters.search) return;
+            if (document.activeElement === searchInput && !searchInput.readOnly) return;
+            if (!searchInput.value) return;
+            if (!this.looksLikeBrowserAutofill(searchInput.value)) return;
+
+            searchInput.value = '';
+        };
+
+        searchInput.readOnly = true;
+        clearUnexpectedAutofill();
+        setTimeout(clearUnexpectedAutofill, 50);
+        setTimeout(clearUnexpectedAutofill, 250);
+        setTimeout(clearUnexpectedAutofill, 800);
+    },
+
+    looksLikeBrowserAutofill(value) {
+        return /@/.test(String(value || ''));
     },
 
     scrollCalendar(direction) {
