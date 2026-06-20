@@ -221,6 +221,29 @@ function testCompactMobileDensityRulesAreScopedToMobile() {
     );
 }
 
+function testFinalMobileResponsiveGuardsExist() {
+    assert(
+        /Final responsive guards/.test(mobileCssSource),
+        'mobile.css should include final responsive guard rules for release readiness'
+    );
+    assert(
+        /@media \(max-width:\s*768px\)\s*\{[\s\S]*\.app-container,[\s\S]*\.main-content,[\s\S]*\.page-content[\s\S]*min-width:\s*0;/s.test(mobileCssSource),
+        'mobile layout containers should be allowed to shrink without horizontal overflow'
+    );
+    assert(
+        /:is\(\.form-row,[\s\S]*\.employees-filters,[\s\S]*\.reports-filters,[\s\S]*\.settings-grid[\s\S]*\)\s*>\s*\*\s*\{[^}]*min-width:\s*0;/s.test(mobileCssSource),
+        'mobile grid/flex children should not force the viewport wider than the screen'
+    );
+    assert(
+        /\.mobile-card-title,[\s\S]*\.mobile-card-value[\s\S]*overflow-wrap:\s*anywhere;/s.test(mobileCssSource),
+        'mobile card text should wrap safely for long names, emails, and labels'
+    );
+    assert(
+        /@media \(max-width:\s*576px\)\s*\{[\s\S]*:is\(\.header-actions,[\s\S]*\.reports-actions,[\s\S]*\.employees-actions,[\s\S]*\.shift-schedule-actions\)[\s\S]*flex-wrap:\s*wrap;/s.test(mobileCssSource),
+        'phone action groups should wrap instead of overflowing'
+    );
+}
+
 function testMobileDashboardDonutTextIsCompact() {
     assert(
         /\.donut-value\s*\{[^}]*font-size:\s*20px;/.test(mobileCssSource),
@@ -319,6 +342,7 @@ testAdminMobileHeaderAlsoUsesCompanyLogo();
 testProfileModalBodyIsScrollableOnMobile();
 testEmployeeHistoryHeaderActionsAlignRightOnMobile();
 testCompactMobileDensityRulesAreScopedToMobile();
+testFinalMobileResponsiveGuardsExist();
 testMobileDashboardDonutTextIsCompact();
 testMobileModalCompactRulesExist();
 testProfileModalShowsBeforeProfileFetch();

@@ -1496,6 +1496,67 @@
 
 }
 
+/* Final responsive guards - keep every role usable on narrow screens */
+@media (max-width: 768px) {
+    .app-container,
+    .main-content,
+    .page,
+    .page-content,
+    .dashboard-container,
+    .absensi-container,
+    .jurnal-container,
+    .izin-container,
+    .cuti-container,
+    .admin-container,
+    .employees-container,
+    .reports-container,
+    .settings-container,
+    .shift-schedule-container {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    :is(.dashboard-grid, .stats-grid, .admin-stats-grid, .settings-grid, .form-row,
+    .employees-filters, .reports-filters, .shift-schedule-filters .filter-row,
+    .jurnal-reports-filters, .employee-detail-grid, .profile-info-grid) {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    :is(.form-row, .employees-filters, .reports-filters, .shift-schedule-filters .filter-row,
+    .settings-grid, .admin-stats-grid, .employee-detail-grid, .profile-info-grid) > * {
+        min-width: 0;
+    }
+
+    :is(input, select, textarea, button, .btn-primary, .btn-secondary, .btn-danger,
+    .filter-group, .setting-item, .setting-info, .mobile-card, .admin-stat-card,
+    .dashboard-card, .settings-card, .reports-table-card, .employees-table-card) {
+        max-width: 100%;
+    }
+
+    .mobile-card-title,
+    .mobile-card-value,
+    .employee-detail-value,
+    .profile-info-value,
+    .setting-desc,
+    .table-pagination,
+    .empty-state,
+    .mobile-empty-state {
+        overflow-wrap: anywhere;
+        word-break: normal;
+    }
+
+    .btn-primary span,
+    .btn-secondary span,
+    .btn-danger span,
+    .settings-save-btn span,
+    .bottom-nav-item span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
 @media (max-width: 576px) {
     .welcome-card {
         min-height: 148px;
@@ -1522,6 +1583,22 @@
     body .admin-stat-card {
         min-height: 72px;
         padding: 10px;
+    }
+
+    :is(.header-actions, .reports-actions, .employees-actions, .shift-schedule-actions) {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: stretch;
+        gap: 8px;
+    }
+
+    :is(.reports-actions, .employees-actions, .shift-schedule-actions) > * {
+        flex: 1 1 150px;
+    }
+
+    :is(.reports-actions, .employees-actions, .shift-schedule-actions) :is(button, .btn-primary, .btn-secondary) {
+        width: 100%;
+        justify-content: center;
     }
 }
 
