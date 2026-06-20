@@ -268,7 +268,6 @@ const settings = {
             ? window.shiftSchedule.currentYear
             : now.getFullYear();
         const key = `${year}-${month}`;
-        const settingKey = `shift_schedule_${key}`;
         const employees = window.shiftSchedule?.employees?.length
             ? window.shiftSchedule.employees
             : storage.get('admin_employees', []);
@@ -284,26 +283,6 @@ const settings = {
                 shiftSchedule.updateSummary();
             }
         }
-
-        return api.getEmployees().then(result => {
-            const freshEmployees = result?.data || [];
-            if (freshEmployees.length) {
-                this.applyWorkdaysToMonthSchedule(freshEmployees, schedules, key, year, month, workdays);
-                storage.set('shift_schedule', schedules);
-                if (window.shiftSchedule) {
-                    shiftSchedule.employees = freshEmployees;
-                    shiftSchedule.scheduleData = schedules;
-                    if (shiftSchedule.currentYear === year && shiftSchedule.currentMonth === month) {
-                        shiftSchedule.renderTable();
-                        shiftSchedule.updateSummary();
-                    }
-                }
-            }
-            return api.saveSetting(settingKey, JSON.stringify(schedules[key] || {}));
-        }).catch(error => {
-            console.error('Error syncing workdays schedule:', error);
-            toast.warning('Kalender tampil lokal, tetapi server belum tersinkron');
-        });
     },
 
     applyWorkdaysToMonthSchedule(employees, schedules, key, year, month, workdays) {

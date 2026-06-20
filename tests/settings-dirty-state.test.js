@@ -116,6 +116,12 @@ assert(
 );
 
 assert(
+    !settingsJs.includes('return api.getEmployees().then') &&
+    !settingsJs.includes('api.saveSetting(settingKey'),
+    'saving workdays should not duplicate backend schedule sync after working_days is saved'
+);
+
+assert(
     settingsJs.includes("await this.refreshAfterSettingsChange('workdays'") &&
     settingsJs.includes("await this.refreshAfterSettingsChange('system'") &&
     settingsJs.includes("await this.refreshAfterSettingsChange('shifts'") &&
