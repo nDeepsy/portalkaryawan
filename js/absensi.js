@@ -901,6 +901,9 @@ const absensi = {
 
         try {
             const result = await api.saveAttendance(payload);
+            if (result && !result.success) {
+                throw new Error(result.error || 'Gagal menyimpan absensi');
+            }
             if (result && result.success && result.data) {
                 // Keep the frontend in sync with server-calculated data (especially 'status')
                 this.attendanceData = this.mergeAttendanceRecords(this.attendanceData, result.data);
@@ -908,7 +911,11 @@ const absensi = {
             this.syncAttendanceCache();
         } catch (error) {
             console.error('Error saving attendance:', error);
+            if (window.toast?.error) {
+                toast.error(error.message || 'Gagal menyimpan absensi');
+            }
             this.syncAttendanceCache();
+            throw error;
         }
     },
 

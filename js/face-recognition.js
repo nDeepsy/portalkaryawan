@@ -19,6 +19,8 @@ const faceRecognition = {
     locationStartedAt: 0,
     isConfirming: false,
     isCapturing: false,
+    attendanceLocationSettings: null,
+    locationRadiusStatus: null,
     desiredAccuracyMeters: 50,
     maxAcceptableAccuracyMeters: 150,
     locationMaxWaitMs: 15000,
@@ -39,11 +41,14 @@ const faceRecognition = {
         this.capturedPhotoData = null;
         this.isConfirming = false;
         this.isCapturing = false;
+        this.attendanceLocationSettings = null;
+        this.locationRadiusStatus = null;
         this.locationStartedAt = Date.now();
 
         this.updateActionTitle(action);
         this.bindButtons();
         this.startLocationClock();
+        this.loadAttendanceLocationSettings();
         this.initCamera();
         this.initLocation();
     },
@@ -187,6 +192,103 @@ const faceRecognition = {
         );
     },
 
+    async loadAttendanceLocationSettings() {
+        if (!this.requiresAttendanceRadius()) {
+            this.attendanceLocationSettings = { enabled: false, configured: true };
+            return;
+        }
+
+        try {
+            if (window.api?.clearRequestCacheForActions) {
+                api.clearRequestCacheForActions(['getSettings', 'batch']);
+            }
+            const result = await api.getSettings();
+            const data = result?.data || storage.get('app_settings', {}) || {};
+            storage.set('app_settings', { ...storage.get('app_settings', {}), ...data });
+            this.attendanceLocationSettings = this.normalizeAttendanceLocationSettings(data);
+            if (this.position) {
+                this.locationRadiusStatus = this.getLocationRadiusStatus(this.position);
+                this.renderLocation(this.position, this.locationVerified);
+                this.checkCanSubmit();
+            }
+        } catch (error) {
+            console.error('Error loading attendance location settings:', error);
+            this.attendanceLocationSettings = this.normalizeAttendanceLocationSettings(storage.get('app_settings', {}) || {});
+        }
+    },
+
+    normalizeAttendanceLocationSettings(data = {}) {
+        const enabled = String(data.attendance_location_enabled || 'true') !== 'false';
+        const latitude = Number(data.attendance_location_latitude);
+        const longitude = Number(data.attendance_location_longitude);
+        const radius = Math.min(1000, Math.max(10, Number(data.attendance_location_radius || 100) || 100));
+        const configured = Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
+            && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
+
+        return { enabled, latitude, longitude, radius, configured };
+    },
+
+    requiresAttendanceRadius() {
+        return this.currentAction !== 'izin';
+    },
+
+    calculateDistanceMeters(lat1, lon1, lat2, lon2) {
+        const earthRadiusMeters = 6371000;
+        const toRadians = value => Number(value) * Math.PI / 180;
+        const dLat = toRadians(lat2 - lat1);
+        const dLon = toRadians(lon2 - lon1);
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+            + Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2))
+            * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return earthRadiusMeters * c;
+    },
+
+    getLocationRadiusStatus(position) {
+        if (!this.requiresAttendanceRadius()) {
+            return { allowed: true, enabled: false, configured: true, message: 'Lokasi terverifikasi akurat' };
+        }
+
+        const settings = this.attendanceLocationSettings || this.normalizeAttendanceLocationSettings(storage.get('app_settings', {}) || {});
+        this.attendanceLocationSettings = settings;
+
+        if (!settings.enabled) {
+            return { allowed: true, enabled: false, configured: true, message: 'Validasi radius nonaktif' };
+        }
+
+        if (!settings.configured) {
+            return {
+                allowed: false,
+                enabled: true,
+                configured: false,
+                radius: settings.radius,
+                message: 'Lokasi absensi belum diatur admin'
+            };
+        }
+
+        const distance = this.calculateDistanceMeters(
+            Number(position.coords.latitude),
+            Number(position.coords.longitude),
+            settings.latitude,
+            settings.longitude
+        );
+        const roundedDistance = Math.round(distance);
+        const allowed = distance <= settings.radius;
+
+        return {
+            allowed,
+            enabled: true,
+            configured: true,
+            distance,
+            radius: settings.radius,
+            officeLatitude: settings.latitude,
+            officeLongitude: settings.longitude,
+            message: allowed
+                ? `Dalam radius absensi (${roundedDistance}m dari kantor, batas ${settings.radius}m)`
+                : `Di luar radius absensi. Jarak Anda ${roundedDistance}m dari kantor, batas ${settings.radius}m.`
+        };
+    },
+
     refreshLocation() {
         if (this.isConfirming) return;
 
@@ -227,7 +329,9 @@ const faceRecognition = {
 
         const accuracy = Number(this.position.coords.accuracy || Infinity);
         const waitedLongEnough = (Date.now() - this.locationStartedAt) >= this.locationMaxWaitMs;
-        this.locationVerified = accuracy <= this.maxAcceptableAccuracyMeters || waitedLongEnough;
+        const accuracyReady = accuracy <= this.maxAcceptableAccuracyMeters || waitedLongEnough;
+        this.locationRadiusStatus = this.getLocationRadiusStatus(this.position);
+        this.locationVerified = accuracyReady && this.locationRadiusStatus.allowed;
 
         this.renderLocation(this.position, this.locationVerified);
         this.checkCanSubmit();
@@ -237,8 +341,9 @@ const faceRecognition = {
             const remainingWait = Math.max(1000, this.locationMaxWaitMs - (Date.now() - this.locationStartedAt));
             this.locationAccuracyTimer = setTimeout(() => {
                 if (this.position && !this.locationVerified) {
-                    this.locationVerified = true;
-                    this.renderLocation(this.position, true);
+                    this.locationRadiusStatus = this.getLocationRadiusStatus(this.position);
+                    this.locationVerified = this.locationRadiusStatus.allowed;
+                    this.renderLocation(this.position, this.locationVerified);
                     this.checkCanSubmit();
                 }
             }, remainingWait);
@@ -298,12 +403,16 @@ const faceRecognition = {
         const mapEl = document.getElementById('location-map');
         const accuracy = Math.round(Number(position.coords.accuracy || 0));
         const isPrecise = accuracy <= this.desiredAccuracyMeters;
+        const radiusStatus = this.getLocationRadiusStatus(position);
+        this.locationRadiusStatus = radiusStatus;
 
         if (statusEl) {
             statusEl.className = `location-status ${isReady ? 'verified' : ''}`;
             statusEl.innerHTML = isReady
                 ? '<i class="fas fa-check-circle"></i> Terverifikasi'
-                : '<i class="fas fa-spinner fa-spin"></i> Memperbaiki akurasi...';
+                : radiusStatus.allowed
+                    ? '<i class="fas fa-spinner fa-spin"></i> Memperbaiki akurasi...'
+                    : '<i class="fas fa-exclamation-circle"></i> Lokasi ditolak';
         }
 
         if (infoEl) {
@@ -315,9 +424,9 @@ const faceRecognition = {
 
             if (coordsEl) coordsEl.textContent = `${position.coords.latitude.toFixed(7)}, ${position.coords.longitude.toFixed(7)}`;
             if (addressEl) {
-                addressEl.textContent = isReady
-                    ? 'Lokasi terverifikasi akurat'
-                    : 'Lokasi terdeteksi, menunggu GPS lebih akurat';
+                addressEl.textContent = radiusStatus.allowed
+                    ? (isReady ? radiusStatus.message : 'Lokasi terdeteksi, menunggu GPS lebih akurat')
+                    : radiusStatus.message;
                 addressEl.classList.toggle('location-ready', isReady);
             }
             if (timeEl) this.updateLocationTime();
@@ -348,7 +457,7 @@ const faceRecognition = {
                     ></iframe>
                     <div class="map-note">
                         <i class="fas fa-crosshairs"></i>
-                        ${isPrecise ? 'Titik perangkat terdeteksi' : 'Mencari titik GPS terbaik'}
+                        ${radiusStatus.allowed ? (isPrecise ? 'Titik perangkat terdeteksi' : 'Mencari titik GPS terbaik') : radiusStatus.message}
                     </div>
                 </div>
             `;
@@ -581,7 +690,12 @@ const faceRecognition = {
                 accuracy: this.position.coords.accuracy,
                 altitude: this.position.coords.altitude || '',
                 heading: this.position.coords.heading || '',
-                speed: this.position.coords.speed || ''
+                speed: this.position.coords.speed || '',
+                distanceFromOffice: this.locationRadiusStatus?.distance !== undefined ? Math.round(this.locationRadiusStatus.distance) : '',
+                allowedRadius: this.locationRadiusStatus?.radius || '',
+                withinAttendanceRadius: this.locationRadiusStatus?.allowed !== false,
+                officeLatitude: this.locationRadiusStatus?.officeLatitude || '',
+                officeLongitude: this.locationRadiusStatus?.officeLongitude || ''
             },
             photo: this.capturedPhotoData
         };
@@ -595,7 +709,7 @@ const faceRecognition = {
             if (window.izin) {
                 window.izin.submitWithVerification(attendanceData).catch(error => {
                     console.error('Processing error:', error);
-                    toast.error('Terjadi kesalahan saat memproses data.');
+                    toast.error(error.message || 'Terjadi kesalahan saat memproses data.');
                 });
             }
             return;
@@ -605,7 +719,7 @@ const faceRecognition = {
         if (window.absensi) {
             window.absensi.processWithVerification(this.currentAction, attendanceData).catch(error => {
                 console.error('Processing error:', error);
-                toast.error('Terjadi kesalahan saat memproses data.');
+                toast.error(error.message || 'Terjadi kesalahan saat memproses data.');
             });
         }
     },
@@ -635,6 +749,13 @@ document.addEventListener('visibilitychange', () => {
     } else if (router?.currentPage === 'face-recognition' && faceRecognition.currentAction) {
         faceRecognition.init(faceRecognition.currentAction);
     }
+});
+
+window.addEventListener('settingsUpdated', (event) => {
+    if (router?.currentPage !== 'face-recognition' || !faceRecognition.currentAction) return;
+    const section = event?.detail?.section || '';
+    if (section && section !== 'system') return;
+    faceRecognition.loadAttendanceLocationSettings();
 });
 
 window.faceRecognition = faceRecognition;

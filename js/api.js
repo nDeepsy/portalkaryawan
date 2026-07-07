@@ -741,7 +741,11 @@ const api = {
                         minggu: false
                     }),
                     late_tolerance: localSettings.late_tolerance || '15',
-                    annual_leave_days: localSettings.annual_leave_days || '12'
+                    annual_leave_days: localSettings.annual_leave_days || '12',
+                    attendance_location_enabled: localSettings.attendance_location_enabled || 'true',
+                    attendance_location_latitude: localSettings.attendance_location_latitude || '',
+                    attendance_location_longitude: localSettings.attendance_location_longitude || '',
+                    attendance_location_radius: localSettings.attendance_location_radius || '100'
                 }
             };
         }

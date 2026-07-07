@@ -128,6 +128,18 @@ const settings = {
             const el = document.getElementById('setting-annual-leave-days');
             if (el) el.value = allSettings.annual_leave_days;
         }
+
+        if (this.canApplySection('system')) {
+            const enabledEl = document.getElementById('setting-attendance-location-enabled');
+            const latEl = document.getElementById('setting-attendance-location-latitude');
+            const lngEl = document.getElementById('setting-attendance-location-longitude');
+            const radiusEl = document.getElementById('setting-attendance-location-radius');
+
+            if (enabledEl) enabledEl.checked = String(allSettings.attendance_location_enabled || 'true') !== 'false';
+            if (latEl && allSettings.attendance_location_latitude !== undefined) latEl.value = allSettings.attendance_location_latitude;
+            if (lngEl && allSettings.attendance_location_longitude !== undefined) lngEl.value = allSettings.attendance_location_longitude;
+            if (radiusEl) radiusEl.value = allSettings.attendance_location_radius || '100';
+        }
     },
 
     getLocalSettingsOverride() {
@@ -214,7 +226,14 @@ const settings = {
         }
 
         // Save system settings
-        ['setting-late-tolerance', 'setting-annual-leave-days'].forEach(id => {
+        [
+            'setting-late-tolerance',
+            'setting-annual-leave-days',
+            'setting-attendance-location-enabled',
+            'setting-attendance-location-latitude',
+            'setting-attendance-location-longitude',
+            'setting-attendance-location-radius'
+        ].forEach(id => {
             const input = document.getElementById(id);
             if (input) {
                 input.oninput = () => this.markSectionDirty('system');
@@ -330,16 +349,52 @@ const settings = {
         const annualLeaveInput = document.getElementById('setting-annual-leave-days');
         const annualLeaveDays = String(Math.min(365, Math.max(0, Number(annualLeaveInput ? annualLeaveInput.value : 12) || 0)));
         if (annualLeaveInput) annualLeaveInput.value = annualLeaveDays;
+        const locationEnabledInput = document.getElementById('setting-attendance-location-enabled');
+        const latitudeInput = document.getElementById('setting-attendance-location-latitude');
+        const longitudeInput = document.getElementById('setting-attendance-location-longitude');
+        const radiusInput = document.getElementById('setting-attendance-location-radius');
+        const locationEnabled = locationEnabledInput && !locationEnabledInput.checked ? 'false' : 'true';
+        const latitude = String(latitudeInput ? latitudeInput.value : '').trim();
+        const longitude = String(longitudeInput ? longitudeInput.value : '').trim();
+        const locationRadius = String(Math.min(1000, Math.max(10, Number(radiusInput ? radiusInput.value : 100) || 100)));
+        if (radiusInput) radiusInput.value = locationRadius;
+
+        if (locationEnabled === 'true') {
+            const latNumber = Number(latitude);
+            const lngNumber = Number(longitude);
+            if (!Number.isFinite(latNumber) || latNumber < -90 || latNumber > 90) {
+                toast.error('Latitude kantor harus diisi antara -90 sampai 90');
+                return;
+            }
+            if (!Number.isFinite(lngNumber) || lngNumber < -180 || lngNumber > 180) {
+                toast.error('Longitude kantor harus diisi antara -180 sampai 180');
+                return;
+            }
+        }
 
         try {
             await this.setSaveButtonLoading(saveSystemBtn, '<i class="fas fa-spinner fa-spin"></i><span>Menyimpan...</span>', async () => {
-                this.setLocalSettingsOverride({ late_tolerance: tolerance, annual_leave_days: annualLeaveDays });
+                const locationSettings = {
+                    attendance_location_enabled: locationEnabled,
+                    attendance_location_latitude: latitude,
+                    attendance_location_longitude: longitude,
+                    attendance_location_radius: locationRadius
+                };
+                this.setLocalSettingsOverride({
+                    late_tolerance: tolerance,
+                    annual_leave_days: annualLeaveDays,
+                    ...locationSettings
+                });
                 this.clearSectionDirty('system');
                 if (window.api?.clearRequestCacheForMutation) api.clearRequestCacheForMutation('saveSetting');
 
                 const results = await Promise.all([
                     api.saveSetting('late_tolerance', tolerance),
-                    api.saveSetting('annual_leave_days', annualLeaveDays)
+                    api.saveSetting('annual_leave_days', annualLeaveDays),
+                    api.saveSetting('attendance_location_enabled', locationEnabled),
+                    api.saveSetting('attendance_location_latitude', latitude),
+                    api.saveSetting('attendance_location_longitude', longitude),
+                    api.saveSetting('attendance_location_radius', locationRadius)
                 ]);
                 const failed = results.find(result => !result?.success);
                 if (failed) {
@@ -349,7 +404,11 @@ const settings = {
                 if (window.cuti && typeof cuti.applyAnnualLeaveSetting === 'function') {
                     cuti.applyAnnualLeaveSetting(annualLeaveDays);
                 }
-                await this.refreshAfterSettingsChange('system', { late_tolerance: tolerance, annual_leave_days: annualLeaveDays });
+                await this.refreshAfterSettingsChange('system', {
+                    late_tolerance: tolerance,
+                    annual_leave_days: annualLeaveDays,
+                    ...locationSettings
+                });
                 toast.success('Pengaturan sistem berhasil disimpan!');
             });
         } catch (error) {
