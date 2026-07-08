@@ -15,7 +15,7 @@ function testSettingsHasLocationPickerControls() {
     assertContains(indexHtml, 'attendance-location-settings', 'attendance location settings should be separated into its own card');
     assertContains(indexHtml, '<h3>Lokasi Absensi</h3>', 'attendance location card should have its own heading');
     assertContains(indexHtml, 'btn-use-current-attendance-location', 'settings page should include a button to capture current admin GPS');
-    assertContains(indexHtml, 'attendance-location-map', 'settings page should include a map preview for the office point');
+    assertContains(indexHtml, 'attendance-location-map location-map', 'settings page should reuse the employee attendance map class');
     assertContains(indexHtml, 'attendance-location-helper', 'settings page should explain how latitude and longitude are filled');
     assertContains(indexHtml, 'Latitude adalah posisi', 'settings page should explain latitude and longitude in Indonesian');
 }
@@ -33,6 +33,7 @@ function testSettingsMapPreviewHasStableStyles() {
     assertContains(settingsCss, '.attendance-location-fields', 'technical coordinate fields should be grouped separately');
     assertContains(settingsJs, 'map-static-fallback', 'settings map should reuse the attendance map visual fallback');
     assertContains(settingsJs, 'map-satellite-frame', 'settings map should reuse the attendance satellite iframe styling');
+    assertContains(settingsJs, 'attendance-office-pin', 'settings map should show a visible office marker overlay');
     assertContains(settingsJs, 'map-note', 'settings map should reuse the attendance map note styling');
 }
 

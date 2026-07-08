@@ -317,7 +317,7 @@ const settings = {
             && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
 
         if (!hasPoint) {
-            mapEl.classList.add('attendance-location-map--empty');
+            mapEl.classList.add('attendance-location-map--empty', 'location-map--empty');
             mapEl.innerHTML = `
                 <div class="map-placeholder">
                     <i class="fas fa-map-marker-alt"></i>
@@ -327,7 +327,7 @@ const settings = {
             return;
         }
 
-        mapEl.classList.remove('attendance-location-map--empty');
+        mapEl.classList.remove('attendance-location-map--empty', 'location-map--empty');
         const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}&z=18&t=k&output=embed`;
         const accuracyText = accuracy ? `Akurasi GPS sekitar +/-${Math.round(Number(accuracy))}m` : 'Titik kantor dari koordinat tersimpan';
         mapEl.innerHTML = `
@@ -347,6 +347,9 @@ const settings = {
                     allowfullscreen
                     referrerpolicy="no-referrer-when-downgrade"
                 ></iframe>
+                <div class="attendance-office-pin" aria-hidden="true">
+                    <i class="fas fa-location-dot"></i>
+                </div>
                 <div class="map-note settings-map-note">
                     <i class="fas fa-location-dot"></i>
                     ${accuracyText}
