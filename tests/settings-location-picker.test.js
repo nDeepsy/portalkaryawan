@@ -20,6 +20,11 @@ function testSettingsHasLocationPickerControls() {
     assertContains(indexHtml, 'Latitude adalah posisi', 'settings page should explain latitude and longitude in Indonesian');
 }
 
+function testSettingsAssetsUseCacheBustingVersion() {
+    assertContains(indexHtml, 'css/settings.css?v=', 'settings stylesheet should use cache busting so visual fixes reach the browser');
+    assertContains(indexHtml, 'js/settings.js?v=', 'settings script should use cache busting so map logic fixes reach the browser');
+}
+
 function testSettingsJsHandlesCurrentLocationPicker() {
     assertContains(settingsJs, 'initAttendanceLocationPreview', 'settings should initialize a non-saved location preview on page load');
     assertContains(settingsJs, 'useApproximateAttendanceLocationPreview', 'settings should show an approximate map before admin captures the official point');
@@ -46,6 +51,7 @@ function testSettingsMapPreviewHasStableStyles() {
 }
 
 testSettingsHasLocationPickerControls();
+testSettingsAssetsUseCacheBustingVersion();
 testSettingsJsHandlesCurrentLocationPicker();
 testSettingsMapPreviewHasStableStyles();
 console.log('settings location picker tests passed');
