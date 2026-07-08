@@ -24,7 +24,8 @@ function testSettingsJsHandlesCurrentLocationPicker() {
     assertContains(settingsJs, 'useCurrentAttendanceLocation', 'settings should implement current GPS capture');
     assertContains(settingsJs, 'navigator.geolocation.getCurrentPosition', 'settings should use browser geolocation for admin office point');
     assertContains(settingsJs, 'renderAttendanceLocationMap', 'settings should render office map preview');
-    assertContains(settingsJs, 'https://maps.google.com/maps?q=', 'settings should render Google Maps preview');
+    assertContains(settingsJs, 'https://maps.google.com/maps?ll=', 'settings should center Google Maps without adding a second Google marker');
+    assert(!settingsJs.includes('https://maps.google.com/maps?q=${encodeURIComponent'), 'settings map should not use q= because it creates a second Google pin');
 }
 
 function testSettingsMapPreviewHasStableStyles() {

@@ -328,7 +328,7 @@ const settings = {
         }
 
         mapEl.classList.remove('attendance-location-map--empty', 'location-map--empty');
-        const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}&z=18&t=k&output=embed`;
+        const mapUrl = `https://maps.google.com/maps?ll=${encodeURIComponent(`${latitude},${longitude}`)}&z=19&t=k&output=embed`;
         const accuracyText = accuracy ? `Akurasi GPS sekitar +/-${Math.round(Number(accuracy))}m` : 'Titik kantor dari koordinat tersimpan';
         mapEl.innerHTML = `
             <div class="map-container settings-map-container">
