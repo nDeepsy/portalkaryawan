@@ -140,6 +140,7 @@ const settings = {
             if (latEl && allSettings.attendance_location_latitude !== undefined) latEl.value = allSettings.attendance_location_latitude;
             if (lngEl && allSettings.attendance_location_longitude !== undefined) lngEl.value = allSettings.attendance_location_longitude;
             if (radiusEl) radiusEl.value = allSettings.attendance_location_radius || '100';
+            this.clearAttendanceLocationPlaceholderInputs();
             this.renderAttendanceLocationMap();
             this.initAttendanceLocationPreview();
         }
@@ -314,6 +315,21 @@ const settings = {
     isAttendanceLocationPlaceholder(latitude, longitude) {
         return Math.abs(Number(latitude) - (-7.327123)) < 0.000001
             && Math.abs(Number(longitude) - 108.220456) < 0.000001;
+    },
+
+    clearAttendanceLocationPlaceholderInputs() {
+        const latitudeInput = document.getElementById('setting-attendance-location-latitude');
+        const longitudeInput = document.getElementById('setting-attendance-location-longitude');
+        const latitude = Number(latitudeInput?.value);
+        const longitude = Number(longitudeInput?.value);
+        if (!this.isAttendanceLocationPlaceholder(latitude, longitude)) return;
+
+        if (latitudeInput) latitudeInput.value = '';
+        if (longitudeInput) longitudeInput.value = '';
+        this.setLocalSettingsOverride({
+            attendance_location_latitude: '',
+            attendance_location_longitude: ''
+        });
     },
 
     useCurrentAttendanceLocation() {

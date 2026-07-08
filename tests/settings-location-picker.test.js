@@ -30,6 +30,7 @@ function testSettingsJsHandlesCurrentLocationPicker() {
     assertContains(settingsJs, 'useApproximateAttendanceLocationPreview', 'settings should show an approximate map before admin captures the official point');
     assert(!settingsJs.includes('if (hasSavedPoint) return;'), 'settings should still try an approximate preview even when old saved coordinates exist');
     assertContains(settingsJs, 'isAttendanceLocationPlaceholder', 'settings should treat example coordinates as placeholders, not saved office points');
+    assertContains(settingsJs, 'clearAttendanceLocationPlaceholderInputs', 'settings should clear old example coordinates from the form instead of showing them as saved');
     assertContains(settingsJs, 'getDefaultAttendanceLocationPreviewPoint', 'settings should have a default map point when browser location is not available yet');
     assertContains(settingsJs, 'Tampilan awal perkiraan lokasi', 'settings should immediately label the default preview as approximate');
     assertContains(settingsJs, 'useCurrentAttendanceLocation', 'settings should implement current GPS capture');
@@ -38,6 +39,15 @@ function testSettingsJsHandlesCurrentLocationPicker() {
     assertContains(settingsJs, 'https://maps.google.com/maps?q=', 'settings should use the same satellite embed pattern as employee attendance map');
     assertContains(settingsJs, '&z=18&t=k&output=embed', 'settings map should request Google satellite view like the employee attendance map');
     assertContains(settingsJs, 'Tampilan awal dari lokasi perangkat', 'settings should label approximate preview differently from saved office point');
+}
+
+function testSettingsDoesNotRenderExampleCoordinatesAsSavedOfficePoint() {
+    assertContains(settingsJs, 'clearAttendanceLocationPlaceholderInputs();', 'settings should remove placeholder latitude and longitude before rendering the admin map');
+    assertContains(settingsJs, "latitudeInput.value = ''", 'settings should blank the example latitude value');
+    assertContains(settingsJs, "longitudeInput.value = ''", 'settings should blank the example longitude value');
+    assertContains(settingsJs, "this.setLocalSettingsOverride({", 'settings should update the local cached settings after removing the placeholder');
+    assertContains(settingsJs, "attendance_location_latitude: ''", 'settings should clear placeholder latitude from the local settings cache');
+    assertContains(settingsJs, "attendance_location_longitude: ''", 'settings should clear placeholder longitude from the local settings cache');
 }
 
 function testSettingsMapSupportsManualPointSelection() {
@@ -62,6 +72,7 @@ function testSettingsMapPreviewHasStableStyles() {
 testSettingsHasLocationPickerControls();
 testSettingsAssetsUseCacheBustingVersion();
 testSettingsJsHandlesCurrentLocationPicker();
+testSettingsDoesNotRenderExampleCoordinatesAsSavedOfficePoint();
 testSettingsMapSupportsManualPointSelection();
 testSettingsMapPreviewHasStableStyles();
 console.log('settings location picker tests passed');
