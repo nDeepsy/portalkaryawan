@@ -36,8 +36,8 @@ function testSettingsJsHandlesCurrentLocationPicker() {
     assertContains(settingsJs, 'useCurrentAttendanceLocation', 'settings should implement current GPS capture');
     assertContains(settingsJs, 'navigator.geolocation.getCurrentPosition', 'settings should use browser geolocation for admin office point');
     assertContains(settingsJs, 'renderAttendanceLocationMap', 'settings should render office map preview');
-    assertContains(settingsJs, 'https://maps.google.com/maps?ll=', 'settings should center the Google satellite map without adding a second Google marker');
-    assertContains(settingsJs, '&z=17&t=k&output=embed', 'settings map should request Google satellite view at a stable zoom level');
+    assertContains(settingsJs, 'https://maps.google.com/maps?q=', 'settings should use the same working Google satellite query as employee attendance');
+    assertContains(settingsJs, '&z=18&t=k&output=embed', 'settings map should request Google satellite view at the same zoom as employee attendance');
     assertContains(settingsJs, 'Tampilan awal dari lokasi perangkat', 'settings should label approximate preview differently from saved office point');
 }
 
@@ -59,19 +59,13 @@ function testSettingsMapSupportsManualPointSelection() {
     assertContains(settingsJs, 'Titik kantor dipilih dari peta', 'settings should tell admin when a manual point is selected');
 }
 
-function testSettingsMapSupportsDirectionalNudgeControls() {
-    assertContains(settingsJs, 'settings-map-nudge-controls', 'settings map should render directional controls for fine-tuning the office point');
-    assertContains(settingsJs, 'settings-map-nudge-pad', 'settings map should present directional controls as one compact pad');
-    assertContains(settingsJs, 'data-direction="north"', 'settings map should include a north nudge button');
-    assertContains(settingsJs, 'data-direction="south"', 'settings map should include a south nudge button');
-    assertContains(settingsJs, 'data-direction="west"', 'settings map should include a west nudge button');
-    assertContains(settingsJs, 'data-direction="east"', 'settings map should include an east nudge button');
-    assertContains(settingsJs, 'nudgeAttendanceLocationPoint', 'settings should implement office point nudging');
-    assertContains(settingsJs, 'const nudgeMeters = 10', 'settings should move the office point by 10 meters per click');
-    assertContains(settingsJs, 'Titik kantor digeser', 'settings should tell admin when the point is moved with directional controls');
-    assertContains(settingsCss, '.settings-map-nudge-controls', 'settings should style the directional control cluster');
-    assertContains(settingsCss, '.settings-map-nudge-pad', 'settings should style the directional controls as a single pad');
-    assertContains(settingsCss, '.settings-map-nudge-button', 'settings should style each directional nudge button');
+function testSettingsMapDoesNotDuplicateGoogleControls() {
+    assert(!settingsJs.includes('settings-map-nudge-controls'), 'settings map should not render a second directional control over Google Maps');
+    assert(!settingsJs.includes('settings-map-nudge-pad'), 'settings map should not render the duplicate directional pad');
+    assert(!settingsJs.includes('nudgeAttendanceLocationPoint'), 'settings should not keep unused duplicate nudge behavior');
+    assert(!settingsCss.includes('.settings-map-nudge-controls'), 'settings should not keep styling for duplicate directional controls');
+    assert(!settingsCss.includes('.settings-map-nudge-pad'), 'settings should not keep styling for the duplicate directional pad');
+    assert(!settingsCss.includes('.settings-map-nudge-button'), 'settings should not keep styling for duplicate directional buttons');
 }
 
 function testSettingsMapPreviewHasStableStyles() {
@@ -80,9 +74,8 @@ function testSettingsMapPreviewHasStableStyles() {
     assertContains(settingsCss, '.attendance-location-fields', 'technical coordinate fields should be grouped separately');
     assertContains(settingsJs, 'map-static-fallback', 'settings map should reuse the attendance map visual fallback');
     assertContains(settingsJs, 'map-satellite-frame', 'settings map should reuse the attendance satellite iframe styling');
-    assertContains(settingsJs, 'settings-office-pin', 'settings map should render exactly one custom office pin');
+    assert(!settingsJs.includes('settings-office-pin'), 'settings map should use only the single Google marker from the query');
     assert(!settingsJs.includes('attendance-office-pin'), 'settings map should not use the old double-pin overlay');
-    assert(!settingsJs.includes('allow="fullscreen"'), 'settings admin map should not show a separate Google fullscreen control');
     assertContains(settingsJs, 'map-note', 'settings map should reuse the attendance map note styling');
 }
 
@@ -91,6 +84,6 @@ testSettingsAssetsUseCacheBustingVersion();
 testSettingsJsHandlesCurrentLocationPicker();
 testSettingsDoesNotRenderExampleCoordinatesAsSavedOfficePoint();
 testSettingsMapSupportsManualPointSelection();
-testSettingsMapSupportsDirectionalNudgeControls();
+testSettingsMapDoesNotDuplicateGoogleControls();
 testSettingsMapPreviewHasStableStyles();
 console.log('settings location picker tests passed');

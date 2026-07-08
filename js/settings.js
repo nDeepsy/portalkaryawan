@@ -401,7 +401,7 @@ const settings = {
         }
 
         mapEl.classList.remove('attendance-location-map--empty', 'location-map--empty');
-        const mapUrl = `https://maps.google.com/maps?ll=${encodeURIComponent(`${latitude},${longitude}`)}&z=17&t=k&output=embed`;
+        const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}&z=18&t=k&output=embed`;
         const accuracyText = activePreviewPoint
             ? activePreviewPoint.defaultPreview
                 ? 'Tampilan awal perkiraan lokasi, belum disimpan'
@@ -422,26 +422,7 @@ const settings = {
                     loading="lazy"
                     referrerpolicy="no-referrer-when-downgrade"
                 ></iframe>
-                <div class="settings-office-pin" aria-hidden="true">
-                    <i class="fas fa-location-dot"></i>
-                </div>
                 <button type="button" class="settings-map-click-layer" aria-label="Klik peta untuk memilih titik kantor"></button>
-                <div class="settings-map-nudge-controls" aria-label="Geser titik kantor 10 meter">
-                    <div class="settings-map-nudge-pad">
-                        <button type="button" class="settings-map-nudge-button nudge-up" data-direction="north" title="Geser titik ke utara">
-                            <i class="fas fa-chevron-up"></i>
-                        </button>
-                        <button type="button" class="settings-map-nudge-button nudge-left" data-direction="west" title="Geser titik ke barat">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <button type="button" class="settings-map-nudge-button nudge-right" data-direction="east" title="Geser titik ke timur">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                        <button type="button" class="settings-map-nudge-button nudge-down" data-direction="south" title="Geser titik ke selatan">
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                    </div>
-                </div>
                 <div class="map-note settings-map-note">
                     <i class="fas fa-location-dot"></i>
                     ${accuracyText}
@@ -454,12 +435,6 @@ const settings = {
             clickLayer.addEventListener('click', (event) => this.selectAttendanceLocationFromMapClick(event, latitude, longitude));
         }
 
-        mapEl.querySelectorAll('.settings-map-nudge-button').forEach(button => {
-            button.addEventListener('click', (event) => {
-                event.stopPropagation();
-                this.nudgeAttendanceLocationPoint(button.dataset.direction, latitude, longitude);
-            });
-        });
     },
 
     selectAttendanceLocationFromMapClick(event, centerLatitude, centerLongitude) {
@@ -474,36 +449,6 @@ const settings = {
         this.markSectionDirty('system');
         this.renderAttendanceLocationMap();
         toast.success('Titik kantor dipilih dari peta');
-    },
-
-    nudgeAttendanceLocationPoint(direction, centerLatitude, centerLongitude) {
-        const latitude = Number(centerLatitude);
-        const longitude = Number(centerLongitude);
-        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
-
-        const nudgeMeters = 10;
-        const latRadians = latitude * Math.PI / 180;
-        const metersPerDegreeLatitude = 111320;
-        const metersPerDegreeLongitude = Math.max(1, metersPerDegreeLatitude * Math.cos(latRadians));
-        const movement = {
-            north: { latitude: nudgeMeters / metersPerDegreeLatitude, longitude: 0 },
-            south: { latitude: -nudgeMeters / metersPerDegreeLatitude, longitude: 0 },
-            east: { latitude: 0, longitude: nudgeMeters / metersPerDegreeLongitude },
-            west: { latitude: 0, longitude: -nudgeMeters / metersPerDegreeLongitude }
-        }[direction];
-        if (!movement) return;
-
-        const latitudeInput = document.getElementById('setting-attendance-location-latitude');
-        const longitudeInput = document.getElementById('setting-attendance-location-longitude');
-        const nextLatitude = Math.max(-90, Math.min(90, latitude + movement.latitude));
-        const nextLongitude = Math.max(-180, Math.min(180, longitude + movement.longitude));
-
-        if (latitudeInput) latitudeInput.value = nextLatitude.toFixed(7);
-        if (longitudeInput) longitudeInput.value = nextLongitude.toFixed(7);
-
-        this.markSectionDirty('system');
-        this.renderAttendanceLocationMap();
-        toast.success('Titik kantor digeser 10 meter');
     },
 
     calculateMapClickCoordinates(event, centerLatitude, centerLongitude) {
