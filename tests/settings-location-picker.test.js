@@ -59,6 +59,19 @@ function testSettingsMapSupportsManualPointSelection() {
     assertContains(settingsJs, 'Titik kantor dipilih dari peta', 'settings should tell admin when a manual point is selected');
 }
 
+function testSettingsMapSupportsDirectionalNudgeControls() {
+    assertContains(settingsJs, 'settings-map-nudge-controls', 'settings map should render directional controls for fine-tuning the office point');
+    assertContains(settingsJs, 'data-direction="north"', 'settings map should include a north nudge button');
+    assertContains(settingsJs, 'data-direction="south"', 'settings map should include a south nudge button');
+    assertContains(settingsJs, 'data-direction="west"', 'settings map should include a west nudge button');
+    assertContains(settingsJs, 'data-direction="east"', 'settings map should include an east nudge button');
+    assertContains(settingsJs, 'nudgeAttendanceLocationPoint', 'settings should implement office point nudging');
+    assertContains(settingsJs, 'const nudgeMeters = 10', 'settings should move the office point by 10 meters per click');
+    assertContains(settingsJs, 'Titik kantor digeser', 'settings should tell admin when the point is moved with directional controls');
+    assertContains(settingsCss, '.settings-map-nudge-controls', 'settings should style the directional control cluster');
+    assertContains(settingsCss, '.settings-map-nudge-button', 'settings should style each directional nudge button');
+}
+
 function testSettingsMapPreviewHasStableStyles() {
     assertContains(settingsCss, '.attendance-location-map', 'settings map preview should have dedicated styling');
     assertContains(settingsCss, '.settings-card.attendance-location-settings', 'attendance location card should have layout styling');
@@ -74,5 +87,6 @@ testSettingsAssetsUseCacheBustingVersion();
 testSettingsJsHandlesCurrentLocationPicker();
 testSettingsDoesNotRenderExampleCoordinatesAsSavedOfficePoint();
 testSettingsMapSupportsManualPointSelection();
+testSettingsMapSupportsDirectionalNudgeControls();
 testSettingsMapPreviewHasStableStyles();
 console.log('settings location picker tests passed');
