@@ -279,6 +279,7 @@ const settings = {
     },
 
     useApproximateAttendanceLocationPreview() {
+        this.renderAttendanceLocationMap(null, this.getDefaultAttendanceLocationPreviewPoint());
         if (!navigator.geolocation) return;
 
         navigator.geolocation.getCurrentPosition(
@@ -291,10 +292,18 @@ const settings = {
                 this.renderAttendanceLocationMap(previewPoint.accuracy, previewPoint);
             },
             () => {
-                this.renderAttendanceLocationMap();
+                this.renderAttendanceLocationMap(null, this.getDefaultAttendanceLocationPreviewPoint());
             },
             { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
         );
+    },
+
+    getDefaultAttendanceLocationPreviewPoint() {
+        return {
+            latitude: -7.327123,
+            longitude: 108.220456,
+            defaultPreview: true
+        };
     },
 
     useCurrentAttendanceLocation() {
@@ -365,7 +374,9 @@ const settings = {
         mapEl.classList.remove('attendance-location-map--empty', 'location-map--empty');
         const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}&z=18&t=k&output=embed`;
         const accuracyText = previewPoint
-            ? `Tampilan awal dari lokasi perangkat, belum disimpan${accuracy ? ` (+/-${Math.round(Number(accuracy))}m)` : ''}`
+            ? previewPoint.defaultPreview
+                ? 'Tampilan awal perkiraan lokasi, belum disimpan'
+                : `Tampilan awal dari lokasi perangkat, belum disimpan${accuracy ? ` (+/-${Math.round(Number(accuracy))}m)` : ''}`
             : accuracy ? `Akurasi GPS sekitar +/-${Math.round(Number(accuracy))}m` : 'Titik kantor dari koordinat tersimpan';
         mapEl.innerHTML = `
             <div class="map-container settings-map-container">
