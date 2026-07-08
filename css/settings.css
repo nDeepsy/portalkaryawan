@@ -288,30 +288,63 @@
     cursor: crosshair;
 }
 
+.settings-office-pin {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 4;
+    color: #dc2626;
+    font-size: 44px;
+    line-height: 1;
+    text-shadow: 0 3px 10px rgba(15, 23, 42, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.85);
+    transform: translate(-50%, -95%);
+    pointer-events: none;
+}
+
+.settings-office-pin::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 3px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(127, 29, 29, 0.55);
+    transform: translateX(-50%);
+}
+
 .settings-map-nudge-controls {
     position: absolute;
     top: var(--spacing);
     right: var(--spacing);
     z-index: 5;
-    display: grid;
-    grid-template-columns: repeat(3, 34px);
-    grid-template-rows: repeat(3, 34px);
-    gap: 4px;
     pointer-events: auto;
+}
+
+.settings-map-nudge-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 30px);
+    grid-template-rows: repeat(3, 30px);
+    gap: 2px;
+    padding: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.38);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(4px);
 }
 
 .settings-map-nudge-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     padding: 0;
-    border: 1px solid rgba(148, 163, 184, 0.45);
-    border-radius: var(--border-radius-sm);
-    background: rgba(255, 255, 255, 0.94);
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
     color: var(--text-primary);
-    box-shadow: var(--shadow);
     cursor: pointer;
     transition: transform var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
 }

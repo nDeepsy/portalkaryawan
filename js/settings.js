@@ -313,8 +313,8 @@ const settings = {
     },
 
     isAttendanceLocationPlaceholder(latitude, longitude) {
-        return Math.abs(Number(latitude) - (-7.327123)) < 0.000001
-            && Math.abs(Number(longitude) - 108.220456) < 0.000001;
+        return Math.abs(Number(latitude) - (-7.327123)) < 0.001
+            && Math.abs(Number(longitude) - 108.220456) < 0.001;
     },
 
     clearAttendanceLocationPlaceholderInputs() {
@@ -401,7 +401,7 @@ const settings = {
         }
 
         mapEl.classList.remove('attendance-location-map--empty', 'location-map--empty');
-        const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}&z=18&t=k&output=embed`;
+        const mapUrl = `https://maps.google.com/maps?ll=${encodeURIComponent(`${latitude},${longitude}`)}&z=17&t=k&output=embed`;
         const accuracyText = activePreviewPoint
             ? activePreviewPoint.defaultPreview
                 ? 'Tampilan awal perkiraan lokasi, belum disimpan'
@@ -420,24 +420,27 @@ const settings = {
                     title="Peta titik kantor absensi"
                     src="${mapUrl}"
                     loading="lazy"
-                    allow="fullscreen"
-                    allowfullscreen
                     referrerpolicy="no-referrer-when-downgrade"
                 ></iframe>
+                <div class="settings-office-pin" aria-hidden="true">
+                    <i class="fas fa-location-dot"></i>
+                </div>
                 <button type="button" class="settings-map-click-layer" aria-label="Klik peta untuk memilih titik kantor"></button>
                 <div class="settings-map-nudge-controls" aria-label="Geser titik kantor 10 meter">
-                    <button type="button" class="settings-map-nudge-button nudge-up" data-direction="north" title="Geser titik ke utara">
-                        <i class="fas fa-chevron-up"></i>
-                    </button>
-                    <button type="button" class="settings-map-nudge-button nudge-left" data-direction="west" title="Geser titik ke barat">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <button type="button" class="settings-map-nudge-button nudge-right" data-direction="east" title="Geser titik ke timur">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                    <button type="button" class="settings-map-nudge-button nudge-down" data-direction="south" title="Geser titik ke selatan">
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
+                    <div class="settings-map-nudge-pad">
+                        <button type="button" class="settings-map-nudge-button nudge-up" data-direction="north" title="Geser titik ke utara">
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                        <button type="button" class="settings-map-nudge-button nudge-left" data-direction="west" title="Geser titik ke barat">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button type="button" class="settings-map-nudge-button nudge-right" data-direction="east" title="Geser titik ke timur">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <button type="button" class="settings-map-nudge-button nudge-down" data-direction="south" title="Geser titik ke selatan">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="map-note settings-map-note">
                     <i class="fas fa-location-dot"></i>
