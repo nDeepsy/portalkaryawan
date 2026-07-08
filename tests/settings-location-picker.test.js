@@ -24,8 +24,8 @@ function testSettingsJsHandlesCurrentLocationPicker() {
     assertContains(settingsJs, 'useCurrentAttendanceLocation', 'settings should implement current GPS capture');
     assertContains(settingsJs, 'navigator.geolocation.getCurrentPosition', 'settings should use browser geolocation for admin office point');
     assertContains(settingsJs, 'renderAttendanceLocationMap', 'settings should render office map preview');
-    assertContains(settingsJs, 'https://maps.google.com/maps?ll=', 'settings should center Google Maps without adding a second Google marker');
-    assert(!settingsJs.includes('https://maps.google.com/maps?q=${encodeURIComponent'), 'settings map should not use q= because it creates a second Google pin');
+    assertContains(settingsJs, 'https://maps.google.com/maps?q=', 'settings should use the same satellite embed pattern as employee attendance map');
+    assertContains(settingsJs, '&z=18&t=k&output=embed', 'settings map should request Google satellite view like the employee attendance map');
 }
 
 function testSettingsMapPreviewHasStableStyles() {
@@ -34,7 +34,7 @@ function testSettingsMapPreviewHasStableStyles() {
     assertContains(settingsCss, '.attendance-location-fields', 'technical coordinate fields should be grouped separately');
     assertContains(settingsJs, 'map-static-fallback', 'settings map should reuse the attendance map visual fallback');
     assertContains(settingsJs, 'map-satellite-frame', 'settings map should reuse the attendance satellite iframe styling');
-    assertContains(settingsJs, 'attendance-office-pin', 'settings map should show a visible office marker overlay');
+    assert(!settingsJs.includes('attendance-office-pin'), 'settings map should not add a custom pin because Google embed already shows one marker');
     assertContains(settingsJs, 'map-note', 'settings map should reuse the attendance map note styling');
 }
 
