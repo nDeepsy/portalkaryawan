@@ -139,6 +139,7 @@ const settings = {
             if (latEl && allSettings.attendance_location_latitude !== undefined) latEl.value = allSettings.attendance_location_latitude;
             if (lngEl && allSettings.attendance_location_longitude !== undefined) lngEl.value = allSettings.attendance_location_longitude;
             if (radiusEl) radiusEl.value = allSettings.attendance_location_radius || '100';
+            this.renderAttendanceLocationMap();
         }
     },
 
@@ -236,15 +237,111 @@ const settings = {
         ].forEach(id => {
             const input = document.getElementById(id);
             if (input) {
-                input.oninput = () => this.markSectionDirty('system');
-                input.onchange = () => this.markSectionDirty('system');
+                input.oninput = () => {
+                    this.markSectionDirty('system');
+                    if (id.includes('attendance-location')) this.renderAttendanceLocationMap();
+                };
+                input.onchange = () => {
+                    this.markSectionDirty('system');
+                    if (id.includes('attendance-location')) this.renderAttendanceLocationMap();
+                };
             }
         });
+
+        const useCurrentLocationBtn = document.getElementById('btn-use-current-attendance-location');
+        if (useCurrentLocationBtn) {
+            useCurrentLocationBtn.onclick = () => this.useCurrentAttendanceLocation();
+        }
 
         const saveSystemBtn = document.getElementById('btn-save-system');
         if (saveSystemBtn) {
             saveSystemBtn.onclick = () => this.saveSystemSettings();
         }
+    },
+
+    useCurrentAttendanceLocation() {
+        const button = document.getElementById('btn-use-current-attendance-location');
+        if (!navigator.geolocation) {
+            toast.error('Browser Anda tidak mendukung geolokasi');
+            return;
+        }
+
+        const originalHtml = button?.innerHTML;
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Mengambil lokasi...</span>';
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const latitudeInput = document.getElementById('setting-attendance-location-latitude');
+                const longitudeInput = document.getElementById('setting-attendance-location-longitude');
+
+                if (latitudeInput) latitudeInput.value = Number(position.coords.latitude).toFixed(7);
+                if (longitudeInput) longitudeInput.value = Number(position.coords.longitude).toFixed(7);
+                this.markSectionDirty('system');
+                this.renderAttendanceLocationMap(position.coords.accuracy);
+                toast.success('Titik kantor berhasil diambil dari lokasi device admin');
+
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = originalHtml;
+                }
+            },
+            (error) => {
+                console.error('Admin location picker error:', error);
+                const denied = error?.code === 1;
+                toast.error(denied ? 'Izin lokasi ditolak. Aktifkan izin lokasi browser lalu coba lagi.' : 'Gagal mengambil lokasi. Coba lagi di area dengan sinyal GPS lebih baik.');
+
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = originalHtml;
+                }
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+    },
+
+    renderAttendanceLocationMap(accuracy = null) {
+        const mapEl = document.getElementById('attendance-location-map');
+        if (!mapEl) return;
+
+        const latitude = Number(document.getElementById('setting-attendance-location-latitude')?.value);
+        const longitude = Number(document.getElementById('setting-attendance-location-longitude')?.value);
+        const hasPoint = Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
+            && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
+
+        if (!hasPoint) {
+            mapEl.classList.add('attendance-location-map--empty');
+            mapEl.innerHTML = `
+                <div class="map-placeholder">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <p>Belum ada titik lokasi kantor</p>
+                </div>
+            `;
+            return;
+        }
+
+        mapEl.classList.remove('attendance-location-map--empty');
+        const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}&z=18&t=k&output=embed`;
+        const accuracyText = accuracy ? `Akurasi GPS sekitar +/-${Math.round(Number(accuracy))}m` : 'Titik kantor dari koordinat tersimpan';
+        mapEl.innerHTML = `
+            <div class="settings-map-container">
+                <iframe
+                    class="settings-map-frame"
+                    title="Peta titik kantor absensi"
+                    src="${mapUrl}"
+                    loading="lazy"
+                    allow="fullscreen"
+                    allowfullscreen
+                    referrerpolicy="no-referrer-when-downgrade"
+                ></iframe>
+                <div class="settings-map-note">
+                    <i class="fas fa-location-dot"></i>
+                    ${accuracyText}
+                </div>
+            </div>
+        `;
     },
 
     async saveWorkdays() {
