@@ -21,11 +21,14 @@ function testSettingsHasLocationPickerControls() {
 }
 
 function testSettingsJsHandlesCurrentLocationPicker() {
+    assertContains(settingsJs, 'initAttendanceLocationPreview', 'settings should initialize a non-saved location preview on page load');
+    assertContains(settingsJs, 'useApproximateAttendanceLocationPreview', 'settings should show an approximate map before admin captures the official point');
     assertContains(settingsJs, 'useCurrentAttendanceLocation', 'settings should implement current GPS capture');
     assertContains(settingsJs, 'navigator.geolocation.getCurrentPosition', 'settings should use browser geolocation for admin office point');
     assertContains(settingsJs, 'renderAttendanceLocationMap', 'settings should render office map preview');
     assertContains(settingsJs, 'https://maps.google.com/maps?q=', 'settings should use the same satellite embed pattern as employee attendance map');
     assertContains(settingsJs, '&z=18&t=k&output=embed', 'settings map should request Google satellite view like the employee attendance map');
+    assertContains(settingsJs, 'Tampilan awal dari lokasi perangkat', 'settings should label approximate preview differently from saved office point');
 }
 
 function testSettingsMapPreviewHasStableStyles() {

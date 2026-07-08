@@ -10,6 +10,7 @@ const settings = {
     pendingDeletedShiftIds: [],
     dirtySections: new Set(),
     localOverrideKey: 'settings_local_override',
+    attendanceLocationPreviewRequested: false,
 
     async init() {
         // Check if admin
@@ -140,6 +141,7 @@ const settings = {
             if (lngEl && allSettings.attendance_location_longitude !== undefined) lngEl.value = allSettings.attendance_location_longitude;
             if (radiusEl) radiusEl.value = allSettings.attendance_location_radius || '100';
             this.renderAttendanceLocationMap();
+            this.initAttendanceLocationPreview();
         }
     },
 
@@ -264,6 +266,37 @@ const settings = {
         }
     },
 
+    initAttendanceLocationPreview() {
+        if (this.attendanceLocationPreviewRequested) return;
+        const latitude = Number(document.getElementById('setting-attendance-location-latitude')?.value);
+        const longitude = Number(document.getElementById('setting-attendance-location-longitude')?.value);
+        const hasSavedPoint = Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
+            && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
+        if (hasSavedPoint) return;
+
+        this.attendanceLocationPreviewRequested = true;
+        this.useApproximateAttendanceLocationPreview();
+    },
+
+    useApproximateAttendanceLocationPreview() {
+        if (!navigator.geolocation) return;
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const previewPoint = {
+                    latitude: Number(position.coords.latitude),
+                    longitude: Number(position.coords.longitude),
+                    accuracy: position.coords.accuracy
+                };
+                this.renderAttendanceLocationMap(previewPoint.accuracy, previewPoint);
+            },
+            () => {
+                this.renderAttendanceLocationMap();
+            },
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+        );
+    },
+
     useCurrentAttendanceLocation() {
         const button = document.getElementById('btn-use-current-attendance-location');
         if (!navigator.geolocation) {
@@ -307,12 +340,14 @@ const settings = {
         );
     },
 
-    renderAttendanceLocationMap(accuracy = null) {
+    renderAttendanceLocationMap(accuracy = null, previewPoint = null) {
         const mapEl = document.getElementById('attendance-location-map');
         if (!mapEl) return;
 
-        const latitude = Number(document.getElementById('setting-attendance-location-latitude')?.value);
-        const longitude = Number(document.getElementById('setting-attendance-location-longitude')?.value);
+        const inputLatitude = Number(document.getElementById('setting-attendance-location-latitude')?.value);
+        const inputLongitude = Number(document.getElementById('setting-attendance-location-longitude')?.value);
+        const latitude = previewPoint ? Number(previewPoint.latitude) : inputLatitude;
+        const longitude = previewPoint ? Number(previewPoint.longitude) : inputLongitude;
         const hasPoint = Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
             && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
 
@@ -329,7 +364,9 @@ const settings = {
 
         mapEl.classList.remove('attendance-location-map--empty', 'location-map--empty');
         const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}&z=18&t=k&output=embed`;
-        const accuracyText = accuracy ? `Akurasi GPS sekitar +/-${Math.round(Number(accuracy))}m` : 'Titik kantor dari koordinat tersimpan';
+        const accuracyText = previewPoint
+            ? `Tampilan awal dari lokasi perangkat, belum disimpan${accuracy ? ` (+/-${Math.round(Number(accuracy))}m)` : ''}`
+            : accuracy ? `Akurasi GPS sekitar +/-${Math.round(Number(accuracy))}m` : 'Titik kantor dari koordinat tersimpan';
         mapEl.innerHTML = `
             <div class="map-container settings-map-container">
                 <div class="map-static-fallback" aria-hidden="true">
