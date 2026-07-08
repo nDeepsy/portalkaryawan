@@ -12,6 +12,8 @@ function assertContains(source, value, message) {
 }
 
 function testSettingsHasLocationPickerControls() {
+    assertContains(indexHtml, 'attendance-location-settings', 'attendance location settings should be separated into its own card');
+    assertContains(indexHtml, '<h3>Lokasi Absensi</h3>', 'attendance location card should have its own heading');
     assertContains(indexHtml, 'btn-use-current-attendance-location', 'settings page should include a button to capture current admin GPS');
     assertContains(indexHtml, 'attendance-location-map', 'settings page should include a map preview for the office point');
     assertContains(indexHtml, 'attendance-location-helper', 'settings page should explain how latitude and longitude are filled');
@@ -27,8 +29,11 @@ function testSettingsJsHandlesCurrentLocationPicker() {
 
 function testSettingsMapPreviewHasStableStyles() {
     assertContains(settingsCss, '.attendance-location-map', 'settings map preview should have dedicated styling');
-    assertContains(settingsCss, '.settings-map-frame', 'settings map iframe should have stable dimensions');
-    assertContains(settingsCss, '.settings-map-note', 'settings map should show a readable note over the preview');
+    assertContains(settingsCss, '.settings-card.attendance-location-settings', 'attendance location card should have layout styling');
+    assertContains(settingsCss, '.attendance-location-fields', 'technical coordinate fields should be grouped separately');
+    assertContains(settingsJs, 'map-static-fallback', 'settings map should reuse the attendance map visual fallback');
+    assertContains(settingsJs, 'map-satellite-frame', 'settings map should reuse the attendance satellite iframe styling');
+    assertContains(settingsJs, 'map-note', 'settings map should reuse the attendance map note styling');
 }
 
 testSettingsHasLocationPickerControls();

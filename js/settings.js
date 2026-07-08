@@ -255,7 +255,12 @@ const settings = {
 
         const saveSystemBtn = document.getElementById('btn-save-system');
         if (saveSystemBtn) {
-            saveSystemBtn.onclick = () => this.saveSystemSettings();
+            saveSystemBtn.onclick = () => this.saveSystemSettings(saveSystemBtn);
+        }
+
+        const saveLocationBtn = document.getElementById('btn-save-location');
+        if (saveLocationBtn) {
+            saveLocationBtn.onclick = () => this.saveSystemSettings(saveLocationBtn);
         }
     },
 
@@ -326,9 +331,15 @@ const settings = {
         const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}&z=18&t=k&output=embed`;
         const accuracyText = accuracy ? `Akurasi GPS sekitar +/-${Math.round(Number(accuracy))}m` : 'Titik kantor dari koordinat tersimpan';
         mapEl.innerHTML = `
-            <div class="settings-map-container">
+            <div class="map-container settings-map-container">
+                <div class="map-static-fallback" aria-hidden="true">
+                    <div class="map-fallback-road road-a"></div>
+                    <div class="map-fallback-road road-b"></div>
+                    <div class="map-fallback-block block-a"></div>
+                    <div class="map-fallback-block block-b"></div>
+                </div>
                 <iframe
-                    class="settings-map-frame"
+                    class="map-satellite-frame settings-map-frame"
                     title="Peta titik kantor absensi"
                     src="${mapUrl}"
                     loading="lazy"
@@ -336,7 +347,7 @@ const settings = {
                     allowfullscreen
                     referrerpolicy="no-referrer-when-downgrade"
                 ></iframe>
-                <div class="settings-map-note">
+                <div class="map-note settings-map-note">
                     <i class="fas fa-location-dot"></i>
                     ${accuracyText}
                 </div>
@@ -438,8 +449,8 @@ const settings = {
         return firstShift?.name || 'Pagi';
     },
 
-    async saveSystemSettings() {
-        const saveSystemBtn = document.getElementById('btn-save-system');
+    async saveSystemSettings(triggerButton = null) {
+        const saveSystemBtn = triggerButton || document.getElementById('btn-save-system') || document.getElementById('btn-save-location');
         const lateTolerance = document.getElementById('setting-late-tolerance');
         const tolerance = String(Math.min(60, Math.max(0, Number(lateTolerance ? lateTolerance.value : 15) || 0)));
         if (lateTolerance) lateTolerance.value = tolerance;

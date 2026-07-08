@@ -1477,34 +1477,22 @@
                                         <div class="setting-control"><input type="number" id="setting-annual-leave-days"
                                                 value="12" min="0" max="365"></div>
                                     </div>
+                                </div>
+                                <div class="settings-actions"><button type="button"
+                                        class="btn-primary btn-sm settings-save-btn" id="btn-save-system"><i
+                                            class="fas fa-save"></i><span>Simpan Pengaturan</span></button></div>
+                            </div>
+                            <div class="settings-card attendance-location-settings">
+                                <div class="card-header">
+                                    <h3>Lokasi Absensi</h3>
+                                </div>
+                                <div class="system-settings">
                                     <div class="setting-item">
                                         <div class="setting-info"><span class="setting-name">Aktifkan Radius
                                                 Absensi</span><span class="setting-desc">Kunci absensi berdasarkan titik
                                                 lokasi kantor</span></div>
                                         <div class="setting-control"><input type="checkbox"
                                                 id="setting-attendance-location-enabled" checked></div>
-                                    </div>
-                                    <div class="setting-item">
-                                        <div class="setting-info"><span class="setting-name">Latitude Kantor</span><span
-                                                class="setting-desc">Koordinat lintang titik absensi kantor</span></div>
-                                        <div class="setting-control"><input type="number"
-                                                id="setting-attendance-location-latitude" step="0.000001"
-                                                placeholder="-7.327123"></div>
-                                    </div>
-                                    <div class="setting-item">
-                                        <div class="setting-info"><span class="setting-name">Longitude Kantor</span><span
-                                                class="setting-desc">Koordinat bujur titik absensi kantor</span></div>
-                                        <div class="setting-control"><input type="number"
-                                                id="setting-attendance-location-longitude" step="0.000001"
-                                                placeholder="108.220456"></div>
-                                    </div>
-                                    <div class="setting-item">
-                                        <div class="setting-info"><span class="setting-name">Radius Absensi</span><span
-                                                class="setting-desc">Jarak maksimal dari titik kantor dalam meter</span>
-                                        </div>
-                                        <div class="setting-control"><input type="number"
-                                                id="setting-attendance-location-radius" value="100" min="10" max="1000">
-                                        </div>
                                     </div>
                                     <div class="setting-item">
                                         <div class="setting-info"><span class="setting-name">Ambil Titik Kantor</span><span
@@ -1522,10 +1510,34 @@
                                             <p>Belum ada titik lokasi kantor</p>
                                         </div>
                                     </div>
+                                    <div class="setting-item">
+                                        <div class="setting-info"><span class="setting-name">Radius Absensi</span><span
+                                                class="setting-desc">Jarak maksimal dari titik kantor dalam meter</span>
+                                        </div>
+                                        <div class="setting-control"><input type="number"
+                                                id="setting-attendance-location-radius" value="100" min="10" max="1000">
+                                        </div>
+                                    </div>
+                                    <div class="attendance-location-fields">
+                                        <div class="setting-item">
+                                            <div class="setting-info"><span class="setting-name">Latitude Kantor</span><span
+                                                    class="setting-desc">Koordinat lintang titik absensi kantor</span></div>
+                                            <div class="setting-control"><input type="number"
+                                                    id="setting-attendance-location-latitude" step="0.000001"
+                                                    placeholder="-7.327123"></div>
+                                        </div>
+                                        <div class="setting-item">
+                                            <div class="setting-info"><span class="setting-name">Longitude Kantor</span><span
+                                                    class="setting-desc">Koordinat bujur titik absensi kantor</span></div>
+                                            <div class="setting-control"><input type="number"
+                                                    id="setting-attendance-location-longitude" step="0.000001"
+                                                    placeholder="108.220456"></div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="settings-actions"><button type="button"
-                                        class="btn-primary btn-sm settings-save-btn" id="btn-save-system"><i
-                                            class="fas fa-save"></i><span>Simpan Pengaturan</span></button></div>
+                                        class="btn-primary btn-sm settings-save-btn" id="btn-save-location"><i
+                                            class="fas fa-save"></i><span>Simpan Lokasi Absensi</span></button></div>
                             </div>
                         </div>
                     </div>
