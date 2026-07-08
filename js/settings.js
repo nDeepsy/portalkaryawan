@@ -271,15 +271,18 @@ const settings = {
         const latitude = Number(document.getElementById('setting-attendance-location-latitude')?.value);
         const longitude = Number(document.getElementById('setting-attendance-location-longitude')?.value);
         const hasSavedPoint = Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
-            && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
-        if (hasSavedPoint) return;
+            && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180
+            && !this.isAttendanceLocationPlaceholder(latitude, longitude);
 
         this.attendanceLocationPreviewRequested = true;
-        this.useApproximateAttendanceLocationPreview();
+        this.useApproximateAttendanceLocationPreview({ keepSavedPoint: hasSavedPoint });
     },
 
-    useApproximateAttendanceLocationPreview() {
-        this.renderAttendanceLocationMap(null, this.getDefaultAttendanceLocationPreviewPoint());
+    useApproximateAttendanceLocationPreview(options = {}) {
+        const keepSavedPoint = Boolean(options.keepSavedPoint);
+        if (!keepSavedPoint) {
+            this.renderAttendanceLocationMap(null, this.getDefaultAttendanceLocationPreviewPoint());
+        }
         if (!navigator.geolocation) return;
 
         navigator.geolocation.getCurrentPosition(
@@ -292,7 +295,9 @@ const settings = {
                 this.renderAttendanceLocationMap(previewPoint.accuracy, previewPoint);
             },
             () => {
-                this.renderAttendanceLocationMap(null, this.getDefaultAttendanceLocationPreviewPoint());
+                if (!keepSavedPoint) {
+                    this.renderAttendanceLocationMap(null, this.getDefaultAttendanceLocationPreviewPoint());
+                }
             },
             { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
         );
@@ -300,10 +305,15 @@ const settings = {
 
     getDefaultAttendanceLocationPreviewPoint() {
         return {
-            latitude: -7.327123,
-            longitude: 108.220456,
+            latitude: -7.35058,
+            longitude: 108.21716,
             defaultPreview: true
         };
+    },
+
+    isAttendanceLocationPlaceholder(latitude, longitude) {
+        return Math.abs(Number(latitude) - (-7.327123)) < 0.000001
+            && Math.abs(Number(longitude) - 108.220456) < 0.000001;
     },
 
     useCurrentAttendanceLocation() {
@@ -355,8 +365,11 @@ const settings = {
 
         const inputLatitude = Number(document.getElementById('setting-attendance-location-latitude')?.value);
         const inputLongitude = Number(document.getElementById('setting-attendance-location-longitude')?.value);
-        const latitude = previewPoint ? Number(previewPoint.latitude) : inputLatitude;
-        const longitude = previewPoint ? Number(previewPoint.longitude) : inputLongitude;
+        const shouldUseDefaultPreview = !previewPoint && this.isAttendanceLocationPlaceholder(inputLatitude, inputLongitude);
+        const fallbackPreviewPoint = shouldUseDefaultPreview ? this.getDefaultAttendanceLocationPreviewPoint() : null;
+        const activePreviewPoint = previewPoint || fallbackPreviewPoint;
+        const latitude = activePreviewPoint ? Number(activePreviewPoint.latitude) : inputLatitude;
+        const longitude = activePreviewPoint ? Number(activePreviewPoint.longitude) : inputLongitude;
         const hasPoint = Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
             && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
 
@@ -373,8 +386,8 @@ const settings = {
 
         mapEl.classList.remove('attendance-location-map--empty', 'location-map--empty');
         const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}&z=18&t=k&output=embed`;
-        const accuracyText = previewPoint
-            ? previewPoint.defaultPreview
+        const accuracyText = activePreviewPoint
+            ? activePreviewPoint.defaultPreview
                 ? 'Tampilan awal perkiraan lokasi, belum disimpan'
                 : `Tampilan awal dari lokasi perangkat, belum disimpan${accuracy ? ` (+/-${Math.round(Number(accuracy))}m)` : ''}`
             : accuracy ? `Akurasi GPS sekitar +/-${Math.round(Number(accuracy))}m` : 'Titik kantor dari koordinat tersimpan';

@@ -23,6 +23,8 @@ function testSettingsHasLocationPickerControls() {
 function testSettingsJsHandlesCurrentLocationPicker() {
     assertContains(settingsJs, 'initAttendanceLocationPreview', 'settings should initialize a non-saved location preview on page load');
     assertContains(settingsJs, 'useApproximateAttendanceLocationPreview', 'settings should show an approximate map before admin captures the official point');
+    assert(!settingsJs.includes('if (hasSavedPoint) return;'), 'settings should still try an approximate preview even when old saved coordinates exist');
+    assertContains(settingsJs, 'isAttendanceLocationPlaceholder', 'settings should treat example coordinates as placeholders, not saved office points');
     assertContains(settingsJs, 'getDefaultAttendanceLocationPreviewPoint', 'settings should have a default map point when browser location is not available yet');
     assertContains(settingsJs, 'Tampilan awal perkiraan lokasi', 'settings should immediately label the default preview as approximate');
     assertContains(settingsJs, 'useCurrentAttendanceLocation', 'settings should implement current GPS capture');
