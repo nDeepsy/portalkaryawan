@@ -40,6 +40,15 @@ function testSettingsJsHandlesCurrentLocationPicker() {
     assertContains(settingsJs, 'Tampilan awal dari lokasi perangkat', 'settings should label approximate preview differently from saved office point');
 }
 
+function testSettingsMapSupportsManualPointSelection() {
+    assertContains(indexHtml, 'Klik peta untuk memilih titik kantor', 'settings page should explain the admin can click the map manually');
+    assertContains(settingsJs, 'selectAttendanceLocationFromMapClick', 'settings should handle manual point selection from the map');
+    assertContains(settingsJs, 'calculateMapClickCoordinates', 'settings should calculate coordinates from a map click');
+    assertContains(settingsJs, 'settings-map-click-layer', 'settings map should render a click layer above the embedded map');
+    assertContains(settingsJs, "addEventListener('click'", 'settings map should listen for manual map clicks');
+    assertContains(settingsJs, 'Titik kantor dipilih dari peta', 'settings should tell admin when a manual point is selected');
+}
+
 function testSettingsMapPreviewHasStableStyles() {
     assertContains(settingsCss, '.attendance-location-map', 'settings map preview should have dedicated styling');
     assertContains(settingsCss, '.settings-card.attendance-location-settings', 'attendance location card should have layout styling');
@@ -53,5 +62,6 @@ function testSettingsMapPreviewHasStableStyles() {
 testSettingsHasLocationPickerControls();
 testSettingsAssetsUseCacheBustingVersion();
 testSettingsJsHandlesCurrentLocationPicker();
+testSettingsMapSupportsManualPointSelection();
 testSettingsMapPreviewHasStableStyles();
 console.log('settings location picker tests passed');

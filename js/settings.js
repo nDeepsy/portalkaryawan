@@ -392,7 +392,7 @@ const settings = {
                 : `Tampilan awal dari lokasi perangkat, belum disimpan${accuracy ? ` (+/-${Math.round(Number(accuracy))}m)` : ''}`
             : accuracy ? `Akurasi GPS sekitar +/-${Math.round(Number(accuracy))}m` : 'Titik kantor dari koordinat tersimpan';
         mapEl.innerHTML = `
-            <div class="map-container settings-map-container">
+            <div class="map-container settings-map-container" data-map-latitude="${latitude}" data-map-longitude="${longitude}">
                 <div class="map-static-fallback" aria-hidden="true">
                     <div class="map-fallback-road road-a"></div>
                     <div class="map-fallback-road road-b"></div>
@@ -408,12 +408,60 @@ const settings = {
                     allowfullscreen
                     referrerpolicy="no-referrer-when-downgrade"
                 ></iframe>
+                <button type="button" class="settings-map-click-layer" aria-label="Klik peta untuk memilih titik kantor"></button>
                 <div class="map-note settings-map-note">
                     <i class="fas fa-location-dot"></i>
                     ${accuracyText}
                 </div>
             </div>
         `;
+
+        const clickLayer = mapEl.querySelector('.settings-map-click-layer');
+        if (clickLayer) {
+            clickLayer.addEventListener('click', (event) => this.selectAttendanceLocationFromMapClick(event, latitude, longitude));
+        }
+    },
+
+    selectAttendanceLocationFromMapClick(event, centerLatitude, centerLongitude) {
+        const nextPoint = this.calculateMapClickCoordinates(event, centerLatitude, centerLongitude);
+        if (!nextPoint) return;
+
+        const latitudeInput = document.getElementById('setting-attendance-location-latitude');
+        const longitudeInput = document.getElementById('setting-attendance-location-longitude');
+        if (latitudeInput) latitudeInput.value = nextPoint.latitude.toFixed(7);
+        if (longitudeInput) longitudeInput.value = nextPoint.longitude.toFixed(7);
+
+        this.markSectionDirty('system');
+        this.renderAttendanceLocationMap();
+        toast.success('Titik kantor dipilih dari peta');
+    },
+
+    calculateMapClickCoordinates(event, centerLatitude, centerLongitude) {
+        const target = event?.currentTarget;
+        const bounds = target?.getBoundingClientRect?.();
+        const latitude = Number(centerLatitude);
+        const longitude = Number(centerLongitude);
+        if (!bounds || !bounds.width || !bounds.height || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+            return null;
+        }
+
+        const xFromCenter = Number(event.clientX) - (bounds.left + bounds.width / 2);
+        const yFromCenter = Number(event.clientY) - (bounds.top + bounds.height / 2);
+        const zoom = 18;
+        const earthMetersPerPixel = 156543.03392;
+        const latRadians = latitude * Math.PI / 180;
+        const metersPerPixel = earthMetersPerPixel * Math.cos(latRadians) / Math.pow(2, zoom);
+        const metersEast = xFromCenter * metersPerPixel;
+        const metersNorth = -yFromCenter * metersPerPixel;
+        const metersPerDegreeLatitude = 111320;
+        const metersPerDegreeLongitude = Math.max(1, metersPerDegreeLatitude * Math.cos(latRadians));
+        const nextLatitude = latitude + metersNorth / metersPerDegreeLatitude;
+        const nextLongitude = longitude + metersEast / metersPerDegreeLongitude;
+
+        return {
+            latitude: Math.max(-90, Math.min(90, nextLatitude)),
+            longitude: Math.max(-180, Math.min(180, nextLongitude))
+        };
     },
 
     async saveWorkdays() {
