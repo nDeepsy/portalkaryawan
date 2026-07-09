@@ -9,6 +9,7 @@ assert(fs.existsSync(syncPath), 'attendance settings synchronizer should exist')
 
 const source = fs.readFileSync(syncPath, 'utf8');
 const authSource = fs.readFileSync(path.join(root, 'js', 'auth.js'), 'utf8');
+const faceRecognitionSource = fs.readFileSync(path.join(root, 'js', 'face-recognition.js'), 'utf8');
 const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
 const listeners = {};
@@ -136,6 +137,16 @@ async function run() {
 
     assert(authSource.includes("new CustomEvent('authChanged'"), 'auth should emit lifecycle changes');
     assert(indexHtml.includes('js/attendance-settings-sync.js'), 'page should load the synchronizer');
+    assert(
+        faceRecognitionSource.includes('applyAttendanceLocationSettings') &&
+        faceRecognitionSource.includes('this.locationVerified = accuracyReady && this.locationRadiusStatus.allowed'),
+        'open attendance modal should recalculate validity from synchronized settings'
+    );
+    assert(
+        faceRecognitionSource.includes('event?.detail?.values') &&
+        faceRecognitionSource.includes('faceRecognition.applyAttendanceLocationSettings'),
+        'settingsUpdated should apply supplied values without a duplicate server request'
+    );
     console.log('attendance settings live sync tests passed');
 }
 

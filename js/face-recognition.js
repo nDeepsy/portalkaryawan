@@ -199,22 +199,29 @@ const faceRecognition = {
         }
 
         try {
-            if (window.api?.clearRequestCacheForActions) {
-                api.clearRequestCacheForActions(['getSettings', 'batch']);
-            }
-            const result = await api.getSettings();
+            const result = window.api?.getFreshSettings
+                ? await api.getFreshSettings()
+                : await api.getSettings();
             const data = result?.data || storage.get('app_settings', {}) || {};
             storage.set('app_settings', { ...storage.get('app_settings', {}), ...data });
-            this.attendanceLocationSettings = this.normalizeAttendanceLocationSettings(data);
-            if (this.position) {
-                this.locationRadiusStatus = this.getLocationRadiusStatus(this.position);
-                this.renderLocation(this.position, this.locationVerified);
-                this.checkCanSubmit();
-            }
+            this.applyAttendanceLocationSettings(data);
         } catch (error) {
             console.error('Error loading attendance location settings:', error);
-            this.attendanceLocationSettings = this.normalizeAttendanceLocationSettings(storage.get('app_settings', {}) || {});
+            this.applyAttendanceLocationSettings(storage.get('app_settings', {}) || {});
         }
+    },
+
+    applyAttendanceLocationSettings(data = {}) {
+        this.attendanceLocationSettings = this.normalizeAttendanceLocationSettings(data);
+        if (!this.position) return;
+
+        const accuracy = Number(this.position.coords?.accuracy || Infinity);
+        const waitedLongEnough = (Date.now() - this.locationStartedAt) >= this.locationMaxWaitMs;
+        const accuracyReady = accuracy <= this.maxAcceptableAccuracyMeters || waitedLongEnough;
+        this.locationRadiusStatus = this.getLocationRadiusStatus(this.position);
+        this.locationVerified = accuracyReady && this.locationRadiusStatus.allowed;
+        this.renderLocation(this.position, this.locationVerified);
+        this.checkCanSubmit();
     },
 
     normalizeAttendanceLocationSettings(data = {}) {
@@ -769,6 +776,12 @@ window.addEventListener('settingsUpdated', (event) => {
     if (router?.currentPage !== 'face-recognition' || !faceRecognition.currentAction) return;
     const section = event?.detail?.section || '';
     if (section && section !== 'system') return;
+
+    const values = event?.detail?.values;
+    if (values) {
+        faceRecognition.applyAttendanceLocationSettings(values);
+        return;
+    }
     faceRecognition.loadAttendanceLocationSettings();
 });
 
