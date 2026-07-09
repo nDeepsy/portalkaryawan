@@ -147,6 +147,9 @@ const auth = {
 
             this.currentUser = user;
             sessionStorage_manager.set('session', user);
+            document.dispatchEvent(new CustomEvent('authChanged', {
+                detail: { authenticated: true, role: user.role }
+            }));
 
             // Update UI
             this.updateUserUI();
@@ -183,6 +186,9 @@ const auth = {
         this.currentUser = null;
         sessionStorage_manager.clear();
         storage.remove('currentPage');
+        document.dispatchEvent(new CustomEvent('authChanged', {
+            detail: { authenticated: false }
+        }));
         this.showLogin();
     },
 
