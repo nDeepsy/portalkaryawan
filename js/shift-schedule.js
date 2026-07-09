@@ -649,7 +649,6 @@ const shiftSchedule = {
         menu.className = 'shift-picker-menu shift-picker-menu-portal';
 
         const options = [
-            { name: '', label: 'Pilih', icon: 'fa-calendar-plus', color: '#64748B' },
             ...this.shifts.map((shift, index) => ({
                 name: shift.name,
                 label: shift.name,
