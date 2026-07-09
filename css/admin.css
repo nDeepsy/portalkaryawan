@@ -666,10 +666,10 @@
     box-sizing: border-box;
 }
 
-#attendance-reports-table .attendance-col-name { width: 26%; }
-#attendance-reports-table .attendance-col-dept { width: 20%; }
-#attendance-reports-table .attendance-col-number { width: 11%; }
-#attendance-reports-table .attendance-col-action { width: 10%; }
+#attendance-reports-table .attendance-col-name { width: 20%; }
+#attendance-reports-table .attendance-col-dept { width: 15%; }
+#attendance-reports-table .attendance-col-number { width: 8%; }
+#attendance-reports-table .attendance-col-action { width: 9%; }
 
 #attendance-reports-table .attendance-th-main {
     color: var(--text-primary);
@@ -706,8 +706,8 @@
     text-align: center !important;
 }
 
-#attendance-reports-table td:nth-child(n+3):nth-child(-n+6),
-#attendance-reports-table th:nth-child(n+3):nth-child(-n+6) {
+#attendance-reports-table td:nth-child(n+3):nth-child(-n+9),
+#attendance-reports-table th:nth-child(n+3):nth-child(-n+9) {
     text-align: center;
 }
 
@@ -750,6 +750,9 @@
 
 #attendance-reports-table .attendance-present { color: var(--color-success); }
 #attendance-reports-table .attendance-late { color: var(--color-warning); }
+#attendance-reports-table .attendance-leave { color: #8B5CF6; }
+#attendance-reports-table .attendance-permission { color: #0EA5E9; }
+#attendance-reports-table .attendance-sick { color: #F97316; }
 #attendance-reports-table .attendance-absent { color: var(--color-danger); }
 #attendance-reports-table .attendance-total { color: var(--text-primary); }
 

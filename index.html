@@ -1131,6 +1131,9 @@
                                 <div class="filter-group"><label>Status</label><select id="report-status-filter">
                                         <option value="">Semua</option>
                                         <option value="present">Hadir</option>
+                                        <option value="leave">Cuti</option>
+                                        <option value="permission">Izin</option>
+                                        <option value="sick">Sakit</option>
                                         <option value="absent">Tidak Hadir</option>
                                         <option value="late">Terlambat</option>
                                     </select></div>
@@ -1146,20 +1149,26 @@
                                         <col class="attendance-col-number">
                                         <col class="attendance-col-number">
                                         <col class="attendance-col-number">
+                                        <col class="attendance-col-number">
+                                        <col class="attendance-col-number">
+                                        <col class="attendance-col-number">
                                         <col class="attendance-col-action">
                                     </colgroup>
                                     <thead>
                                         <tr>
                                             <th rowspan="2" class="attendance-th-main">Nama</th>
                                             <th rowspan="2" class="attendance-th-main">Divisi</th>
-                                            <th colspan="4" class="attendance-summary-heading">Ringkasan</th>
+                                            <th colspan="7" class="attendance-summary-heading">Ringkasan</th>
                                             <th rowspan="2" class="attendance-th-main text-center">Aksi</th>
                                         </tr>
                                         <tr class="attendance-summary-subhead">
                                             <th class="success text-center attendance-number-head">Hadir</th>
                                             <th class="warning text-center attendance-number-head">Telat</th>
-                                            <th class="danger text-center attendance-number-head">Absen</th>
-                                            <th class="text-center attendance-number-head" title="Hadir + Absen/Izin. Telat sudah termasuk Hadir.">Total</th>
+                                            <th class="text-center attendance-number-head attendance-leave">Cuti</th>
+                                            <th class="text-center attendance-number-head attendance-permission">Izin</th>
+                                            <th class="text-center attendance-number-head attendance-sick">Sakit</th>
+                                            <th class="danger text-center attendance-number-head">Tidak Hadir</th>
+                                            <th class="text-center attendance-number-head" title="Hadir + Cuti + Izin + Sakit + Tidak Hadir. Telat sudah termasuk Hadir.">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody id="attendance-reports-body"></tbody>

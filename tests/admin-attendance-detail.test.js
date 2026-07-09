@@ -215,8 +215,14 @@ function testAttendanceStatusFilterIncludesAnyPresentEmployee() {
     adminReports.filters.attendance.status = 'late';
     assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.name), ['B']);
 
-    adminReports.filters.attendance.status = 'absent';
+    adminReports.filters.attendance.status = 'permission';
     assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.name), ['C', 'D']);
+
+    adminReports.filters.attendance.status = 'leave';
+    assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.name), []);
+
+    adminReports.filters.attendance.status = 'absent';
+    assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.name), []);
 
     adminReports.filters.attendance.status = '';
     assert.deepStrictEqual(adminReports.getFilteredAttendance().map(row => row.name), ['A', 'B', 'C', 'D']);

@@ -443,6 +443,7 @@ const adminReports = {
             const empAtt = attendances.filter(a => String(a.userId) === String(emp.id));
             let present = 0;
             let late = 0;
+            let absent = 0;
 
             empAtt.forEach(a => {
                 if (a.clockIn) {
@@ -450,6 +451,12 @@ const adminReports = {
                     if (a.status && a.status.toLowerCase() === 'terlambat') {
                         late++;
                     }
+                    return;
+                }
+
+                const status = String(a.status || '').toLowerCase();
+                if (status === 'absent' || status === 'tidak hadir' || status === 'alpha') {
+                    absent++;
                 }
             });
 
@@ -457,10 +464,19 @@ const adminReports = {
             const empIzin = izinList.filter(i => String(i.userId) === String(emp.id) && i.status === 'approved');
 
             let leaveDays = 0;
+            let permissionDays = 0;
+            let sickDays = 0;
             empLeaves.forEach(l => leaveDays += parseInt(l.duration) || 1);
-            empIzin.forEach(i => leaveDays += parseInt(i.duration) || 1);
-
-            const absent = leaveDays;
+            empIzin.forEach(i => {
+                const duration = parseInt(i.duration) || 1;
+                const type = String(i.type || '').toLowerCase();
+                const label = String(i.typeLabel || '').toLowerCase();
+                if (type === 'sick' || label.includes('sakit')) {
+                    sickDays += duration;
+                } else {
+                    permissionDays += duration;
+                }
+            });
 
             return {
                 userId: emp.id,
@@ -468,8 +484,11 @@ const adminReports = {
                 division: getEmployeeDivision(emp),
                 present,
                 late,
+                leave: leaveDays,
+                permission: permissionDays,
+                sick: sickDays,
                 absent,
-                total: present + absent
+                total: present + leaveDays + permissionDays + sickDays + absent
             };
         });
     },
@@ -811,14 +830,19 @@ const adminReports = {
         const rows = Array.isArray(this.rawAttendance) ? this.rawAttendance : [];
         return rows.filter(row => {
             if (!this.isAttendanceRowInSelectedMonth(row)) return false;
-            if (!status || status === 'present') return Boolean(row.clockIn);
+            if (!status) return true;
+            if (status === 'present') return Boolean(row.clockIn);
             if (status === 'late') return Boolean(row.clockIn) && this.isLateAttendanceRow(row);
+            if (status === 'absent') {
+                const rowStatus = String(row.status || '').toLowerCase();
+                return !row.clockIn && ['absent', 'tidak hadir', 'alpha'].includes(rowStatus);
+            }
             return false;
         });
     },
 
     getAttendanceLeaveRowsForCurrentFilter(status = '') {
-        if (status && status !== 'absent') return [];
+        if (status && status !== 'leave') return [];
         const rows = Array.isArray(this.rawLeaves) ? this.rawLeaves : [];
         return rows.filter(row =>
             String(row.status || '').toLowerCase() === 'approved' &&
@@ -827,12 +851,19 @@ const adminReports = {
     },
 
     getAttendanceIzinRowsForCurrentFilter(status = '') {
-        if (status && status !== 'absent') return [];
+        if (status && !['permission', 'sick'].includes(status)) return [];
         const rows = Array.isArray(this.rawIzin) ? this.rawIzin : [];
         return rows.filter(row =>
             String(row.status || '').toLowerCase() === 'approved' &&
-            this.isLeaveOrPermissionRowInSelectedMonth(row)
+            this.isLeaveOrPermissionRowInSelectedMonth(row) &&
+            (!status || this.getAttendancePermissionCategory(row) === status)
         );
+    },
+
+    getAttendancePermissionCategory(row = {}) {
+        const type = String(row.type || '').toLowerCase();
+        const label = String(row.typeLabel || '').toLowerCase();
+        return type === 'sick' || label.includes('sakit') ? 'sick' : 'permission';
     },
 
     isAttendanceRowInSelectedMonth(row = {}) {
@@ -864,10 +895,16 @@ const adminReports = {
 
         const present = Number(row.present || 0);
         const late = Number(row.late || 0);
+        const leave = Number(row.leave || 0);
+        const permission = Number(row.permission || 0);
+        const sick = Number(row.sick || 0);
         const absent = Number(row.absent || 0);
 
         if (status === 'present') return present > 0;
         if (status === 'late') return late > 0;
+        if (status === 'leave') return leave > 0;
+        if (status === 'permission') return permission > 0;
+        if (status === 'sick') return sick > 0;
         if (status === 'absent') return absent > 0;
 
         return true;
@@ -904,7 +941,7 @@ const adminReports = {
         if (data.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="attendance-empty-cell">Belum ada data absensi karyawan.</td>
+                    <td colspan="10" class="attendance-empty-cell">Belum ada data absensi karyawan.</td>
                 </tr>
             `;
 
@@ -927,6 +964,9 @@ const adminReports = {
                 <td class="attendance-dept-cell">${row.division}</td>
                 <td class="attendance-number-cell attendance-present"><span class="attendance-number-value">${row.present}</span></td>
                 <td class="attendance-number-cell attendance-late"><span class="attendance-number-value">${row.late}</span></td>
+                <td class="attendance-number-cell attendance-leave"><span class="attendance-number-value">${row.leave}</span></td>
+                <td class="attendance-number-cell attendance-permission"><span class="attendance-number-value">${row.permission}</span></td>
+                <td class="attendance-number-cell attendance-sick"><span class="attendance-number-value">${row.sick}</span></td>
                 <td class="attendance-number-cell attendance-absent"><span class="attendance-number-value">${row.absent}</span></td>
                 <td class="attendance-number-cell attendance-total"><span class="attendance-number-value">${row.total}</span></td>
                 <td class="attendance-action-cell">
@@ -955,7 +995,19 @@ const adminReports = {
                         <span class="mobile-card-value" style="color: var(--color-warning);">${row.late}</span>
                     </div>
                     <div class="mobile-card-row">
-                        <span class="mobile-card-label">Absen</span>
+                        <span class="mobile-card-label">Cuti</span>
+                        <span class="mobile-card-value" style="color: #8B5CF6;">${row.leave}</span>
+                    </div>
+                    <div class="mobile-card-row">
+                        <span class="mobile-card-label">Izin</span>
+                        <span class="mobile-card-value" style="color: #0EA5E9;">${row.permission}</span>
+                    </div>
+                    <div class="mobile-card-row">
+                        <span class="mobile-card-label">Sakit</span>
+                        <span class="mobile-card-value" style="color: #F97316;">${row.sick}</span>
+                    </div>
+                    <div class="mobile-card-row">
+                        <span class="mobile-card-label">Tidak Hadir</span>
                         <span class="mobile-card-value" style="color: var(--color-danger);">${row.absent}</span>
                     </div>
                     <div class="mobile-card-row">
@@ -1214,7 +1266,10 @@ const adminReports = {
                     { header: 'Divisi', value: row => row.division || '-', align: 'left', width: 160 },
                     { header: 'Hadir', value: row => row.present || 0, align: 'center', width: 80 },
                     { header: 'Terlambat', value: row => row.late || 0, align: 'center', width: 90 },
-                    { header: 'Absen/Izin', value: row => row.absent || 0, align: 'center', width: 95 },
+                    { header: 'Cuti', value: row => row.leave || 0, align: 'center', width: 80 },
+                    { header: 'Izin', value: row => row.permission || 0, align: 'center', width: 80 },
+                    { header: 'Sakit', value: row => row.sick || 0, align: 'center', width: 80 },
+                    { header: 'Tidak Hadir', value: row => row.absent || 0, align: 'center', width: 95 },
                     { header: 'Total', value: row => row.total || 0, align: 'center', width: 130 }
                 ]
             };
@@ -1573,7 +1628,10 @@ const adminReports = {
                 <div class="attendance-detail-summary">
                     <span>Hadir: <strong>${employee.present}</strong></span>
                     <span>Terlambat: <strong>${employee.late}</strong></span>
-                    <span>Absen/Izin: <strong>${employee.absent}</strong></span>
+                    <span>Cuti: <strong>${employee.leave}</strong></span>
+                    <span>Izin: <strong>${employee.permission}</strong></span>
+                    <span>Sakit: <strong>${employee.sick}</strong></span>
+                    <span>Tidak Hadir: <strong>${employee.absent}</strong></span>
                 </div>
                 <div class="attendance-detail-list">
                     ${rowsHtml}
