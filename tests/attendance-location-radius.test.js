@@ -42,6 +42,26 @@ function testFrontendLocksConfirmationOutsideRadius() {
     assertContains(faceRecognitionJs, 'distanceFromOffice', 'location payload should include distance from office');
     assertContains(faceRecognitionJs, 'Lokasi absensi belum diatur admin', 'employee should see a clear unconfigured-location message');
     assertContains(faceRecognitionJs, 'Di luar radius absensi', 'employee should see a clear outside-radius message');
+    assertContains(
+        faceRecognitionJs,
+        'Anda berada di luar radius absensi',
+        'employee should receive an explicit outside-radius explanation'
+    );
+    assertContains(
+        faceRecognitionJs,
+        '<i class="fas fa-ban"></i><span>Di Luar Radius</span>',
+        'confirmation button should explain that attendance is blocked outside radius'
+    );
+    assertContains(
+        faceRecognitionJs,
+        '<i class="fas fa-check-circle"></i><span>Konfirmasi Absensi</span>',
+        'confirmation button should restore its normal label when attendance becomes valid'
+    );
+    assertContains(
+        faceRecognitionJs,
+        'radiusStatus.configured && radiusStatus.enabled && radiusStatus.allowed === false',
+        'outside-radius button state should not replace unconfigured or disabled-radius behavior'
+    );
 }
 
 function testBackendRejectsManipulatedOutsideRadiusAttendance() {
