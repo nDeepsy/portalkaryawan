@@ -219,8 +219,10 @@ const faceRecognition = {
 
     normalizeAttendanceLocationSettings(data = {}) {
         const enabled = String(data.attendance_location_enabled || 'true') !== 'false';
-        const latitude = Number(data.attendance_location_latitude);
-        const longitude = Number(data.attendance_location_longitude);
+        const latitudeValue = String(data.attendance_location_latitude || '').trim();
+        const longitudeValue = String(data.attendance_location_longitude || '').trim();
+        const latitude = latitudeValue === '' ? NaN : Number(latitudeValue);
+        const longitude = longitudeValue === '' ? NaN : Number(longitudeValue);
         const radius = Math.min(1000, Math.max(10, Number(data.attendance_location_radius || 100) || 100));
         const configured = Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
             && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;

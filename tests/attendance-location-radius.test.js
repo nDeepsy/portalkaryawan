@@ -50,9 +50,19 @@ function testBackendRejectsManipulatedOutsideRadiusAttendance() {
     assertContains(attendanceGs, 'return { success: false, error: locationValidation.error }', 'backend should reject invalid location saves');
     assertContains(attendanceGs, 'Di luar radius absensi', 'backend should return a clear outside-radius error');
     assertContains(attendanceGs, 'Lokasi absensi belum diatur admin', 'backend should reject saves when location is not configured');
+    assertContains(attendanceGs, 'latitude < -90 || latitude > 90', 'backend should reject attendance latitude outside its valid range');
+    assertContains(attendanceGs, 'longitude < -180 || longitude > 180', 'backend should reject attendance longitude outside its valid range');
+}
+
+function testBlankCoordinatesAreNotTreatedAsZeroCoordinates() {
+    assertContains(attendanceGs, "latitudeValue === '' ? NaN", 'backend should reject a blank office latitude instead of treating it as zero');
+    assertContains(attendanceGs, "longitudeValue === '' ? NaN", 'backend should reject a blank office longitude instead of treating it as zero');
+    assertContains(faceRecognitionJs, "latitudeValue === '' ? NaN", 'employee validation should reject a blank office latitude');
+    assertContains(faceRecognitionJs, "longitudeValue === '' ? NaN", 'employee validation should reject a blank office longitude');
 }
 
 testAdminCanConfigureAttendanceLocation();
 testFrontendLocksConfirmationOutsideRadius();
 testBackendRejectsManipulatedOutsideRadiusAttendance();
+testBlankCoordinatesAreNotTreatedAsZeroCoordinates();
 console.log('attendance location radius tests passed');

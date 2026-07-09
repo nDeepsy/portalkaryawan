@@ -23,6 +23,8 @@ function testSettingsHasLocationPickerControls() {
 function testSettingsAssetsUseCacheBustingVersion() {
     assertContains(indexHtml, 'css/settings.css?v=', 'settings stylesheet should use cache busting so visual fixes reach the browser');
     assertContains(indexHtml, 'js/settings.js?v=', 'settings script should use cache busting so map logic fixes reach the browser');
+    assertContains(indexHtml, 'leaflet.min.css', 'settings page should load Leaflet styles');
+    assertContains(indexHtml, 'leaflet.min.js', 'settings page should load Leaflet before settings logic');
 }
 
 function testSettingsJsHandlesCurrentLocationPicker() {
@@ -36,8 +38,10 @@ function testSettingsJsHandlesCurrentLocationPicker() {
     assertContains(settingsJs, 'useCurrentAttendanceLocation', 'settings should implement current GPS capture');
     assertContains(settingsJs, 'navigator.geolocation.getCurrentPosition', 'settings should use browser geolocation for admin office point');
     assertContains(settingsJs, 'renderAttendanceLocationMap', 'settings should render office map preview');
-    assertContains(settingsJs, 'https://maps.google.com/maps?q=', 'settings should use the same working Google satellite query as employee attendance');
-    assertContains(settingsJs, '&z=18&t=k&output=embed', 'settings map should request Google satellite view at the same zoom as employee attendance');
+    assertContains(settingsJs, 'L.map(', 'settings should initialize an interactive Leaflet map');
+    assertContains(settingsJs, 'World_Imagery/MapServer/tile/{z}/{y}/{x}', 'settings should load satellite imagery tiles');
+    assertContains(settingsJs, 'L.marker(', 'settings should render one office marker');
+    assertContains(settingsJs, "this.attendanceLocationMap.on('click'", 'settings should select the office point from a Leaflet map click');
     assertContains(settingsJs, 'Tampilan awal dari lokasi perangkat', 'settings should label approximate preview differently from saved office point');
 }
 
@@ -53,10 +57,10 @@ function testSettingsDoesNotRenderExampleCoordinatesAsSavedOfficePoint() {
 function testSettingsMapSupportsManualPointSelection() {
     assertContains(indexHtml, 'Klik peta untuk memilih titik kantor', 'settings page should explain the admin can click the map manually');
     assertContains(settingsJs, 'selectAttendanceLocationFromMapClick', 'settings should handle manual point selection from the map');
-    assertContains(settingsJs, 'calculateMapClickCoordinates', 'settings should calculate coordinates from a map click');
-    assertContains(settingsJs, 'settings-map-click-layer', 'settings map should render a click layer above the embedded map');
-    assertContains(settingsJs, "addEventListener('click'", 'settings map should listen for manual map clicks');
+    assertContains(settingsJs, 'event?.latlng', 'settings should use the exact coordinates supplied by Leaflet');
     assertContains(settingsJs, 'Titik kantor dipilih dari peta', 'settings should tell admin when a manual point is selected');
+    assert(!settingsJs.includes('settings-map-click-layer'), 'settings map should not block pan and zoom with a transparent click layer');
+    assert(!settingsJs.includes('calculateMapClickCoordinates'), 'settings should not approximate coordinates from screen pixels');
 }
 
 function testSettingsMapDoesNotDuplicateGoogleControls() {
@@ -72,8 +76,10 @@ function testSettingsMapPreviewHasStableStyles() {
     assertContains(settingsCss, '.attendance-location-map', 'settings map preview should have dedicated styling');
     assertContains(settingsCss, '.settings-card.attendance-location-settings', 'attendance location card should have layout styling');
     assertContains(settingsCss, '.attendance-location-fields', 'technical coordinate fields should be grouped separately');
-    assertContains(settingsJs, 'map-static-fallback', 'settings map should reuse the attendance map visual fallback');
-    assertContains(settingsJs, 'map-satellite-frame', 'settings map should reuse the attendance satellite iframe styling');
+    assertContains(settingsCss, '.settings-map-canvas', 'settings should size the interactive map canvas');
+    assertContains(settingsJs, 'invalidateSize()', 'settings should refresh Leaflet dimensions after the page becomes visible');
+    assert(!settingsJs.includes('<iframe'), 'settings admin map should not use the unreliable Google iframe');
+    assert(!settingsJs.includes('map-static-fallback'), 'settings admin map should not cover failed tiles with a fake map');
     assert(!settingsJs.includes('settings-office-pin'), 'settings map should use only the single Google marker from the query');
     assert(!settingsJs.includes('attendance-office-pin'), 'settings map should not use the old double-pin overlay');
     assertContains(settingsJs, 'map-note', 'settings map should reuse the attendance map note styling');

@@ -11,6 +11,8 @@ const settings = {
     dirtySections: new Set(),
     localOverrideKey: 'settings_local_override',
     attendanceLocationPreviewRequested: false,
+    attendanceLocationMap: null,
+    attendanceLocationMarker: null,
 
     async init() {
         // Check if admin
@@ -379,17 +381,27 @@ const settings = {
         const mapEl = document.getElementById('attendance-location-map');
         if (!mapEl) return;
 
-        const inputLatitude = Number(document.getElementById('setting-attendance-location-latitude')?.value);
-        const inputLongitude = Number(document.getElementById('setting-attendance-location-longitude')?.value);
+        const latitudeValue = document.getElementById('setting-attendance-location-latitude')?.value?.trim() || '';
+        const longitudeValue = document.getElementById('setting-attendance-location-longitude')?.value?.trim() || '';
+        const inputLatitude = latitudeValue === '' ? NaN : Number(latitudeValue);
+        const inputLongitude = longitudeValue === '' ? NaN : Number(longitudeValue);
         const shouldUseDefaultPreview = !previewPoint && this.isAttendanceLocationPlaceholder(inputLatitude, inputLongitude);
         const fallbackPreviewPoint = shouldUseDefaultPreview ? this.getDefaultAttendanceLocationPreviewPoint() : null;
-        const activePreviewPoint = previewPoint || fallbackPreviewPoint;
+        const activePreviewPoint = previewPoint || fallbackPreviewPoint
+            || (!Number.isFinite(inputLatitude) || !Number.isFinite(inputLongitude)
+                ? this.getDefaultAttendanceLocationPreviewPoint()
+                : null);
         const latitude = activePreviewPoint ? Number(activePreviewPoint.latitude) : inputLatitude;
         const longitude = activePreviewPoint ? Number(activePreviewPoint.longitude) : inputLongitude;
         const hasPoint = Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
             && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
 
         if (!hasPoint) {
+            if (this.attendanceLocationMap) {
+                this.attendanceLocationMap.remove();
+                this.attendanceLocationMap = null;
+                this.attendanceLocationMarker = null;
+            }
             mapEl.classList.add('attendance-location-map--empty', 'location-map--empty');
             mapEl.innerHTML = `
                 <div class="map-placeholder">
@@ -401,82 +413,73 @@ const settings = {
         }
 
         mapEl.classList.remove('attendance-location-map--empty', 'location-map--empty');
-        const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}&z=18&t=k&output=embed`;
         const accuracyText = activePreviewPoint
             ? activePreviewPoint.defaultPreview
                 ? 'Tampilan awal perkiraan lokasi, belum disimpan'
                 : `Tampilan awal dari lokasi perangkat, belum disimpan${accuracy ? ` (+/-${Math.round(Number(accuracy))}m)` : ''}`
             : accuracy ? `Akurasi GPS sekitar +/-${Math.round(Number(accuracy))}m` : 'Titik kantor dari koordinat tersimpan';
-        mapEl.innerHTML = `
-            <div class="map-container settings-map-container" data-map-latitude="${latitude}" data-map-longitude="${longitude}">
-                <div class="map-static-fallback" aria-hidden="true">
-                    <div class="map-fallback-road road-a"></div>
-                    <div class="map-fallback-road road-b"></div>
-                    <div class="map-fallback-block block-a"></div>
-                    <div class="map-fallback-block block-b"></div>
+        if (typeof L === 'undefined') {
+            mapEl.innerHTML = `
+                <div class="map-placeholder">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <p>Peta gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.</p>
                 </div>
-                <iframe
-                    class="map-satellite-frame settings-map-frame"
-                    title="Peta titik kantor absensi"
-                    src="${mapUrl}"
-                    loading="lazy"
-                    referrerpolicy="no-referrer-when-downgrade"
-                ></iframe>
-                <button type="button" class="settings-map-click-layer" aria-label="Klik peta untuk memilih titik kantor"></button>
-                <div class="map-note settings-map-note">
-                    <i class="fas fa-location-dot"></i>
-                    ${accuracyText}
-                </div>
-            </div>
-        `;
-
-        const clickLayer = mapEl.querySelector('.settings-map-click-layer');
-        if (clickLayer) {
-            clickLayer.addEventListener('click', (event) => this.selectAttendanceLocationFromMapClick(event, latitude, longitude));
+            `;
+            return;
         }
 
+        let mapCanvas = mapEl.querySelector('.settings-map-canvas');
+        if (!this.attendanceLocationMap || !mapCanvas) {
+            mapEl.innerHTML = `
+                <div class="settings-map-container">
+                    <div class="settings-map-canvas" aria-label="Peta satelit titik kantor"></div>
+                    <div class="map-note settings-map-note">
+                        <i class="fas fa-location-dot"></i>
+                        <span>${accuracyText}</span>
+                    </div>
+                </div>
+            `;
+            mapCanvas = mapEl.querySelector('.settings-map-canvas');
+            this.attendanceLocationMap = L.map(mapCanvas, {
+                zoomControl: true,
+                attributionControl: true
+            }).setView([latitude, longitude], 18);
+
+            L.tileLayer(
+                'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                {
+                    maxZoom: 19,
+                    attribution: 'Tiles &copy; Esri'
+                }
+            ).addTo(this.attendanceLocationMap);
+
+            this.attendanceLocationMarker = L.marker([latitude, longitude]).addTo(this.attendanceLocationMap);
+            this.attendanceLocationMap.on('click', (event) => this.selectAttendanceLocationFromMapClick(event));
+        } else {
+            this.attendanceLocationMap.setView([latitude, longitude], this.attendanceLocationMap.getZoom() || 18);
+            this.attendanceLocationMarker.setLatLng([latitude, longitude]);
+            const noteText = mapEl.querySelector('.settings-map-note span');
+            if (noteText) noteText.textContent = accuracyText;
+        }
+
+        requestAnimationFrame(() => {
+            if (this.attendanceLocationMap) this.attendanceLocationMap.invalidateSize();
+        });
     },
 
-    selectAttendanceLocationFromMapClick(event, centerLatitude, centerLongitude) {
-        const nextPoint = this.calculateMapClickCoordinates(event, centerLatitude, centerLongitude);
-        if (!nextPoint) return;
+    selectAttendanceLocationFromMapClick(event) {
+        const latitude = Number(event?.latlng?.lat);
+        const longitude = Number(event?.latlng?.lng);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
 
         const latitudeInput = document.getElementById('setting-attendance-location-latitude');
         const longitudeInput = document.getElementById('setting-attendance-location-longitude');
-        if (latitudeInput) latitudeInput.value = nextPoint.latitude.toFixed(7);
-        if (longitudeInput) longitudeInput.value = nextPoint.longitude.toFixed(7);
+        if (latitudeInput) latitudeInput.value = latitude.toFixed(7);
+        if (longitudeInput) longitudeInput.value = longitude.toFixed(7);
 
         this.markSectionDirty('system');
         this.renderAttendanceLocationMap();
         toast.success('Titik kantor dipilih dari peta');
-    },
-
-    calculateMapClickCoordinates(event, centerLatitude, centerLongitude) {
-        const target = event?.currentTarget;
-        const bounds = target?.getBoundingClientRect?.();
-        const latitude = Number(centerLatitude);
-        const longitude = Number(centerLongitude);
-        if (!bounds || !bounds.width || !bounds.height || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-            return null;
-        }
-
-        const xFromCenter = Number(event.clientX) - (bounds.left + bounds.width / 2);
-        const yFromCenter = Number(event.clientY) - (bounds.top + bounds.height / 2);
-        const zoom = 18;
-        const earthMetersPerPixel = 156543.03392;
-        const latRadians = latitude * Math.PI / 180;
-        const metersPerPixel = earthMetersPerPixel * Math.cos(latRadians) / Math.pow(2, zoom);
-        const metersEast = xFromCenter * metersPerPixel;
-        const metersNorth = -yFromCenter * metersPerPixel;
-        const metersPerDegreeLatitude = 111320;
-        const metersPerDegreeLongitude = Math.max(1, metersPerDegreeLatitude * Math.cos(latRadians));
-        const nextLatitude = latitude + metersNorth / metersPerDegreeLatitude;
-        const nextLongitude = longitude + metersEast / metersPerDegreeLongitude;
-
-        return {
-            latitude: Math.max(-90, Math.min(90, nextLatitude)),
-            longitude: Math.max(-180, Math.min(180, nextLongitude))
-        };
     },
 
     async saveWorkdays() {
