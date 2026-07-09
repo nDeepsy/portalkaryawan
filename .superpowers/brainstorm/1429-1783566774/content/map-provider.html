@@ -1,0 +1,37 @@
+<h2>Pilih tampilan peta lokasi kantor</h2>
+<p class="subtitle">Keduanya tetap memakai satu titik kantor dan radius yang sama. Perbedaannya hanya penyedia dan tampilan peta.</p>
+
+<div class="cards">
+  <div class="card" data-choice="google-maps" onclick="toggleSelect(this)">
+    <div class="card-image" style="height:260px;position:relative;overflow:hidden;background:#d9ead3">
+      <div style="position:absolute;inset:0;background:
+        linear-gradient(25deg,transparent 46%,#f8f8f8 47%,#f8f8f8 53%,transparent 54%),
+        linear-gradient(115deg,transparent 42%,#fff 43%,#fff 49%,transparent 50%),
+        repeating-linear-gradient(0deg,rgba(124,174,109,.22) 0 34px,rgba(232,226,190,.55) 35px 69px)">
+      </div>
+      <div style="position:absolute;left:50%;top:48%;transform:translate(-50%,-100%);font-size:42px;color:#d93025">●</div>
+      <div style="position:absolute;left:50%;top:48%;width:20px;height:28px;background:#d93025;transform:translate(-50%,-55%) rotate(45deg);border-radius:50% 50% 50% 0"></div>
+      <div style="position:absolute;right:12px;bottom:12px;background:white;padding:8px 10px;border-radius:4px;box-shadow:0 1px 5px #999">+ &nbsp; −</div>
+      <div style="position:absolute;left:12px;bottom:10px;font-weight:600;color:#52606d">Google</div>
+    </div>
+    <div class="card-body">
+      <h3>Google Maps asli</h3>
+      <p>Tampilan familier seperti Google Maps, dapat digeser, diperbesar, dan diklik untuk memilih titik. Memerlukan Google Maps JavaScript API key dan billing Google Cloud.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="esri-satellite" onclick="toggleSelect(this)">
+    <div class="card-image" style="height:260px;position:relative;overflow:hidden;background:#527348">
+      <div style="position:absolute;inset:0;background:
+        linear-gradient(35deg,transparent 43%,#8d8b83 44%,#b8b4a8 50%,transparent 51%),
+        repeating-linear-gradient(90deg,rgba(48,86,42,.65) 0 48px,rgba(98,111,74,.65) 49px 92px)"></div>
+      <div style="position:absolute;left:50%;top:48%;width:20px;height:28px;background:#d93025;transform:translate(-50%,-55%) rotate(45deg);border-radius:50% 50% 50% 0"></div>
+      <div style="position:absolute;left:12px;top:12px;background:white;padding:8px;border-radius:4px;box-shadow:0 1px 5px #333">+<br><hr style="margin:7px 0">−</div>
+      <div style="position:absolute;right:12px;bottom:10px;font-weight:600;color:white;text-shadow:0 1px 3px #000">Esri World Imagery</div>
+    </div>
+    <div class="card-body">
+      <h3>Peta satelit saat ini</h3>
+      <p>Tidak memerlukan API key dan sudah mendukung klik, geser, serta zoom. Tampilan dan label tidak sama dengan Google Maps.</p>
+    </div>
+  </div>
+</div>
