@@ -432,7 +432,7 @@ const settings = {
         if (!this.attendanceLocationMap || !mapCanvas) {
             mapEl.innerHTML = `
                 <div class="settings-map-container">
-                    <div class="settings-map-canvas" aria-label="Peta satelit titik kantor"></div>
+                    <div class="settings-map-canvas" aria-label="Peta titik kantor"></div>
                     <div class="map-note settings-map-note">
                         <i class="fas fa-location-dot"></i>
                         <span>${accuracyText}</span>
@@ -445,14 +445,30 @@ const settings = {
                 attributionControl: true
             }).setView([latitude, longitude], 18);
 
-            L.tileLayer(
+            const roadLayer = L.tileLayer(
+                'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap contributors'
+                }
+            );
+            const satelliteLayer = L.tileLayer(
                 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
                 {
                     maxZoom: 19,
                     attribution: 'Tiles &copy; Esri'
                 }
-            ).addTo(this.attendanceLocationMap);
+            );
+            const baseLayers = {
+                'Peta Jalan': roadLayer,
+                'Satelit': satelliteLayer
+            };
 
+            roadLayer.addTo(this.attendanceLocationMap);
+            L.control.layers(baseLayers, null, {
+                position: 'topright',
+                collapsed: true
+            }).addTo(this.attendanceLocationMap);
             this.attendanceLocationMarker = L.marker([latitude, longitude]).addTo(this.attendanceLocationMap);
             this.attendanceLocationMap.on('click', (event) => this.selectAttendanceLocationFromMapClick(event));
         } else {

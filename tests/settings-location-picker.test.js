@@ -85,6 +85,36 @@ function testSettingsMapPreviewHasStableStyles() {
     assertContains(settingsJs, 'map-note', 'settings map should reuse the attendance map note styling');
 }
 
+function testSettingsMapOffersFreeRoadAndSatelliteLayers() {
+    assertContains(
+        settingsJs,
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'settings should provide a readable OpenStreetMap road layer'
+    );
+    assertContains(
+        settingsJs,
+        'World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        'settings should retain the free Esri satellite layer'
+    );
+    assertContains(settingsJs, "'Peta Jalan': roadLayer", 'layer control should use an Indonesian road label');
+    assertContains(settingsJs, "'Satelit': satelliteLayer", 'layer control should use an Indonesian satellite label');
+    assertContains(
+        settingsJs,
+        'roadLayer.addTo(this.attendanceLocationMap)',
+        'road layer should be visible by default'
+    );
+    assertContains(
+        settingsJs,
+        'L.control.layers(baseLayers, null',
+        'settings should use the native Leaflet layer switcher'
+    );
+    assert.strictEqual(
+        (settingsJs.match(/L\.marker\(/g) || []).length,
+        1,
+        'switching base layers must not introduce another office marker'
+    );
+}
+
 testSettingsHasLocationPickerControls();
 testSettingsAssetsUseCacheBustingVersion();
 testSettingsJsHandlesCurrentLocationPicker();
@@ -92,4 +122,5 @@ testSettingsDoesNotRenderExampleCoordinatesAsSavedOfficePoint();
 testSettingsMapSupportsManualPointSelection();
 testSettingsMapDoesNotDuplicateGoogleControls();
 testSettingsMapPreviewHasStableStyles();
+testSettingsMapOffersFreeRoadAndSatelliteLayers();
 console.log('settings location picker tests passed');
