@@ -84,6 +84,8 @@ function testRegularShiftWindow() {
     const { absensi } = createHarness([{ name: 'Pagi', startTime: '08:00', endTime: '17:00' }]);
     absensi.attendanceData = absensi.getDefaultAttendance('KRY001');
 
+    assert.strictEqual(absensi.getClockInWindowStatus(new Date(2026, 6, 9, 7, 30)).allowed, true);
+    assert.strictEqual(absensi.getClockInWindowStatus(new Date(2026, 6, 9, 7, 29)).allowed, false);
     assert.strictEqual(absensi.getClockInWindowStatus(new Date(2026, 6, 9, 10, 0)).allowed, true);
     assert.strictEqual(absensi.getClockInWindowStatus(new Date(2026, 6, 9, 21, 0)).allowed, false);
 }
@@ -160,6 +162,13 @@ function createBackendHarness(shifts) {
 function testBackendRejectsOnlyFirstClockInOutsideShiftWindow() {
     const backend = createBackendHarness([{ name: 'Pagi', startTime: '08:00', endTime: '17:00' }]);
     const firstClockIn = { userId: 'KRY001', shift: 'Pagi', clockIn: '21:00' };
+
+    const earlyAllowed = backend.validateAttendanceClockInShiftWindow(
+        { userId: 'KRY001', shift: 'Pagi', clockIn: '07:30' },
+        null,
+        new Date(2026, 6, 9, 7, 30)
+    );
+    assert.strictEqual(earlyAllowed.success, true, 'clock in should open 30 minutes before shift');
 
     const rejected = backend.validateAttendanceClockInShiftWindow(
         firstClockIn,

@@ -17,6 +17,7 @@ const absensi = {
     selectedHistoryMonth: '',
     settingsListenerBound: false,
     dataUpdateBound: false,
+    earlyClockInMinutes: 30,
 
     async init() {
         this.clearPendingAttendanceAction();
@@ -1288,9 +1289,11 @@ const absensi = {
         }
 
         const currentMinutes = (now.getHours() * 60) + now.getMinutes();
-        const allowed = startMinutes <= endMinutes
-            ? currentMinutes >= startMinutes && currentMinutes <= endMinutes
-            : currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+        const clockInStartMinutes = (startMinutes - this.earlyClockInMinutes + (24 * 60)) % (24 * 60);
+        const shiftDuration = (endMinutes - startMinutes + (24 * 60)) % (24 * 60);
+        const allowedDuration = shiftDuration + this.earlyClockInMinutes;
+        const elapsedFromClockInStart = (currentMinutes - clockInStartMinutes + (24 * 60)) % (24 * 60);
+        const allowed = allowedDuration >= (24 * 60) - 1 || elapsedFromClockInStart <= allowedDuration;
 
         return { configured: true, allowed, shiftName, startTime, endTime };
     },
