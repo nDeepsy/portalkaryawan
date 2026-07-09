@@ -721,7 +721,8 @@ const api = {
 
     // ========== SETTINGS ==========
 
-    async getSettings() {
+    async getSettings(options = {}) {
+        const includeLocalOverrides = options.includeLocalOverrides !== false;
         const override = storage.get('settings_local_override', {});
         const localSettings = {
             ...storage.get('app_settings', {}),
@@ -750,10 +751,15 @@ const api = {
             };
         }
         const result = await this.request('getSettings');
-        if (result?.success) {
+        if (result?.success && includeLocalOverrides) {
             result.data = { ...(result.data || {}), ...localSettings };
         }
         return result;
+    },
+
+    async getFreshSettings() {
+        this.clearRequestCacheForActions(['getSettings', 'batch']);
+        return this.getSettings({ includeLocalOverrides: false });
     },
 
     async saveSetting(key, value) {

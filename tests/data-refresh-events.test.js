@@ -32,6 +32,19 @@ assert(
 );
 
 assert(
+    apiJs.includes('async getFreshSettings()') &&
+    apiJs.includes("this.clearRequestCacheForActions(['getSettings', 'batch'])") &&
+    apiJs.includes('return this.getSettings({ includeLocalOverrides: false })'),
+    'api should expose a focused fresh settings read without stale local overlays'
+);
+
+assert(
+    apiJs.includes('async getSettings(options = {})') &&
+    apiJs.includes('options.includeLocalOverrides !== false'),
+    'settings reads should explicitly control whether local overlays are applied'
+);
+
+assert(
     settingsJs.includes('refreshAfterSettingsChange') &&
     settingsJs.includes("api.broadcastDataUpdated('settings'"),
     'settings saves should broadcast a shared refresh event after persistence'
