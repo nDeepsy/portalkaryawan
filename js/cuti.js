@@ -130,7 +130,9 @@ const cuti = {
     isAnnualLeaveCountedForBalance(leave, userId) {
         if (!leave) return false;
         const status = String(leave.status || '').toLowerCase();
+        const type = String(leave.type || '').toLowerCase();
         return String(leave.userId || '') === String(userId || '') &&
+            type === 'annual' &&
             status === 'approved';
     },
 
@@ -213,13 +215,15 @@ const cuti = {
             return;
         }
 
-        // Check balance before allowing any leave request.
+        // The configured allowance applies only to annual leave.
         const currentUser = auth.getCurrentUser();
         const userId = currentUser?.id || 'demo-user';
-        this.refreshLeaveBalance(userId);
-        if (diffDays > this.leaveBalance) {
-            toast.error('Sisa cuti tidak mencukupi!');
-            return;
+        if (type.value === 'annual') {
+            this.refreshLeaveBalance(userId);
+            if (diffDays > this.leaveBalance) {
+                toast.error('Sisa cuti tahunan tidak mencukupi!');
+                return;
+            }
         }
 
         const typeLabels = {

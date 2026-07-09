@@ -105,6 +105,22 @@ function testLeaveBalanceUsesApprovedLeaveRequestsInCurrentYearOnly() {
         },
         {
             userId: 'KRY001',
+            type: 'important',
+            startDate: '2026-04-10',
+            endDate: '2026-04-11',
+            duration: 2,
+            status: 'approved'
+        },
+        {
+            userId: 'KRY001',
+            type: 'maternity',
+            startDate: '2026-06-01',
+            endDate: '2026-06-30',
+            duration: 30,
+            status: 'approved'
+        },
+        {
+            userId: 'KRY001',
             type: 'annual',
             startDate: '2026-05-01',
             endDate: '2026-05-01',
@@ -113,8 +129,58 @@ function testLeaveBalanceUsesApprovedLeaveRequestsInCurrentYearOnly() {
         }
     ];
 
-    assert.strictEqual(cuti.calculateLeaveBalance(2026, 'KRY001'), 9);
+    assert.strictEqual(cuti.calculateLeaveBalance(2026, 'KRY001'), 11);
     assert.strictEqual(cuti.calculateLeaveBalance(2027, 'KRY001'), 14);
+}
+
+function loadLeaveBackend({ allowance = 12, leaves = [] } = {}) {
+    const context = {
+        console,
+        getAllRows(sheetName) {
+            if (sheetName === 'Settings') return [{ key: 'annual_leave_days', value: allowance }];
+            if (sheetName === 'Leaves') return leaves;
+            return [];
+        }
+    };
+    vm.runInNewContext(backendLeaveSource, context, { filename: 'Leave.js' });
+    return context;
+}
+
+function testBackendAnnualLeaveQuotaValidationOnlyAppliesToAnnualType() {
+    const backend = loadLeaveBackend({
+        allowance: 5,
+        leaves: [{
+            id: 1,
+            userId: 'KRY001',
+            type: 'annual',
+            startDate: '2026-01-10',
+            endDate: '2026-01-12',
+            duration: 3,
+            status: 'approved'
+        }]
+    });
+
+    const rejectedAnnual = backend.validateAnnualLeaveBalance({
+        id: 2,
+        userId: 'KRY001',
+        type: 'annual',
+        startDate: '2026-02-01',
+        endDate: '2026-02-03',
+        duration: 3
+    });
+    assert.strictEqual(rejectedAnnual.success, false);
+    assert.match(rejectedAnnual.error, /Sisa cuti tahunan.*2 hari/);
+
+    ['important', 'maternity', 'other', 'sick'].forEach(type => {
+        const result = backend.validateAnnualLeaveBalance({
+            userId: 'KRY001',
+            type,
+            startDate: '2026-02-01',
+            endDate: '2026-03-31',
+            duration: 59
+        });
+        assert.strictEqual(result.success, true, `${type} should not use annual leave quota`);
+    });
 }
 
 function testAnnualLeaveOverlapCountsOnlyDaysInSelectedYear() {
@@ -145,7 +211,8 @@ function testZeroAnnualLeaveAllowanceIsValid() {
 
 function testLeaveBackendRepairsAndNormalizesRowsForAdminReports() {
     assert(
-        backendLeaveSource.includes('ensureLeaveSheetHeaders();\naddRow'),
+        backendLeaveSource.indexOf('ensureLeaveSheetHeaders();', backendLeaveSource.indexOf('function submitLeaveData')) <
+            backendLeaveSource.indexOf('addRow(\'Leaves\'', backendLeaveSource.indexOf('function submitLeaveData')),
         'backend leave submit should repair Leaves headers before saving a request'
     );
     assert(
@@ -223,6 +290,7 @@ function testEmployeeHistoryControlsShareAlignedPlacement() {
 }
 
 testLeaveBalanceUsesApprovedLeaveRequestsInCurrentYearOnly();
+testBackendAnnualLeaveQuotaValidationOnlyAppliesToAnnualType();
 testAnnualLeaveOverlapCountsOnlyDaysInSelectedYear();
 testZeroAnnualLeaveAllowanceIsValid();
 testLeaveBackendRepairsAndNormalizesRowsForAdminReports();
