@@ -287,7 +287,7 @@ const faceRecognition = {
             officeLongitude: settings.longitude,
             message: allowed
                 ? `Dalam radius absensi (${roundedDistance}m dari kantor, batas ${settings.radius}m)`
-                : `Di luar radius absensi. Jarak Anda ${roundedDistance}m dari kantor, batas ${settings.radius}m.`
+                : `Anda berada di luar radius absensi. Jarak Anda ${roundedDistance}m dari kantor, batas ${settings.radius}m.`
         };
     },
 
@@ -664,7 +664,19 @@ const faceRecognition = {
 
     checkCanSubmit() {
         const confirmBtn = document.getElementById('btn-confirm-attendance');
-        if (confirmBtn) confirmBtn.disabled = !(this.photoCaptured && this.locationVerified) || this.isConfirming;
+        if (!confirmBtn) return;
+
+        const radiusStatus = this.locationRadiusStatus;
+        const isOutsideRadius = Boolean(radiusStatus
+            && radiusStatus.configured && radiusStatus.enabled && radiusStatus.allowed === false);
+
+        confirmBtn.disabled = !(this.photoCaptured && this.locationVerified) || this.isConfirming;
+
+        if (this.isConfirming) return;
+
+        confirmBtn.innerHTML = isOutsideRadius
+            ? '<i class="fas fa-ban"></i><span>Di Luar Radius</span>'
+            : '<i class="fas fa-check-circle"></i><span>Konfirmasi Absensi</span>';
     },
 
     confirmAttendance() {

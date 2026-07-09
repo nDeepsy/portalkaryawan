@@ -41,7 +41,7 @@ function testFrontendLocksConfirmationOutsideRadius() {
     assertContains(faceRecognitionJs, 'withinAttendanceRadius', 'location payload should include radius validation status');
     assertContains(faceRecognitionJs, 'distanceFromOffice', 'location payload should include distance from office');
     assertContains(faceRecognitionJs, 'Lokasi absensi belum diatur admin', 'employee should see a clear unconfigured-location message');
-    assertContains(faceRecognitionJs, 'Di luar radius absensi', 'employee should see a clear outside-radius message');
+    assertContains(faceRecognitionJs, 'di luar radius absensi', 'employee should see a clear outside-radius message');
     assertContains(
         faceRecognitionJs,
         'Anda berada di luar radius absensi',
