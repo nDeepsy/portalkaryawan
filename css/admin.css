@@ -2018,6 +2018,29 @@
         display: none !important;
     }
 
+    body.printing-attendance #attendance-reports-table {
+        table-layout: fixed !important;
+        font-size: 8.6pt;
+    }
+
+    body.printing-attendance #attendance-reports-table col.attendance-col-name { width: 22% !important; }
+    body.printing-attendance #attendance-reports-table col.attendance-col-dept { width: 16% !important; }
+    body.printing-attendance #attendance-reports-table col.attendance-col-number { width: 8.85% !important; }
+
+    body.printing-attendance #attendance-reports-table .attendance-summary-subhead th {
+        white-space: normal !important;
+        line-height: 1.1;
+        overflow-wrap: normal;
+        word-break: normal;
+        padding: 4px 2px !important;
+        vertical-align: middle;
+    }
+
+    body.printing-attendance #attendance-reports-table tbody td {
+        padding: 4px 3px !important;
+        vertical-align: middle;
+    }
+
     body.printing-jurnal #jurnal-reports-table {
         table-layout: fixed !important;
         font-size: 9.8pt;

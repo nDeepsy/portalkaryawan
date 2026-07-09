@@ -69,6 +69,17 @@ assert(
 );
 
 assert(
+    /body\.printing-attendance #attendance-reports-table \.attendance-summary-subhead th\s*\{[^}]*white-space:\s*normal\s*!important;[^}]*line-height:\s*1\.1;/s.test(adminCss),
+    'printed attendance summary headers should wrap instead of colliding'
+);
+
+assert(
+    /body\.printing-attendance #attendance-reports-table col\.attendance-col-name\s*\{\s*width:\s*22%\s*!important;\s*\}/s.test(adminCss) &&
+    /body\.printing-attendance #attendance-reports-table col\.attendance-col-number\s*\{\s*width:\s*8\.85%\s*!important;\s*\}/s.test(adminCss),
+    'printed attendance table should reserve balanced widths for seven summary columns'
+);
+
+assert(
     mobileCss.includes('.print-only'),
     'mobile print CSS should not conflict with formal print-only elements'
 );
