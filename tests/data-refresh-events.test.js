@@ -34,14 +34,15 @@ assert(
 assert(
     apiJs.includes('async getFreshSettings()') &&
     apiJs.includes("this.clearRequestCacheForActions(['getSettings', 'batch'])") &&
-    apiJs.includes('return this.getSettings({ includeLocalOverrides: false })'),
+    apiJs.includes('return this.getSettings({ includeLocalOverrides: false, fresh: true })'),
     'api should expose a focused fresh settings read without stale local overlays'
 );
 
 assert(
     apiJs.includes('async getSettings(options = {})') &&
-    apiJs.includes('options.includeLocalOverrides !== false'),
-    'settings reads should explicitly control whether local overlays are applied'
+    apiJs.includes('options.includeLocalOverrides !== false') &&
+    apiJs.includes("this.request('getSettings', options.fresh ? { fresh: true } : {})"),
+    'settings reads should explicitly control local overlays and isolate fresh requests'
 );
 
 assert(

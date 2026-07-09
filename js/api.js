@@ -750,7 +750,7 @@ const api = {
                 }
             };
         }
-        const result = await this.request('getSettings');
+        const result = await this.request('getSettings', options.fresh ? { fresh: true } : {});
         if (result?.success && includeLocalOverrides) {
             result.data = { ...(result.data || {}), ...localSettings };
         }
@@ -759,7 +759,7 @@ const api = {
 
     async getFreshSettings() {
         this.clearRequestCacheForActions(['getSettings', 'batch']);
-        return this.getSettings({ includeLocalOverrides: false });
+        return this.getSettings({ includeLocalOverrides: false, fresh: true });
     },
 
     async saveSetting(key, value) {
