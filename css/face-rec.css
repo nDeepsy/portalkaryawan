@@ -576,6 +576,23 @@
     padding: var(--spacing-md);
 }
 
+#btn-confirm-attendance.outside-radius:disabled {
+    background: var(--color-danger);
+    border-color: var(--color-danger);
+    color: var(--color-white);
+    opacity: 1;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+#btn-confirm-attendance.outside-radius:disabled:hover,
+#btn-confirm-attendance.outside-radius:disabled:active {
+    background: var(--color-danger);
+    border-color: var(--color-danger);
+    color: var(--color-white);
+    box-shadow: none;
+}
+
 /* Captured Photo Preview */
 .captured-photo {
     width: 100%;

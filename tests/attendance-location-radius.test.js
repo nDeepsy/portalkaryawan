@@ -8,6 +8,7 @@ const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const settingsJs = fs.readFileSync(path.join(root, 'js', 'settings.js'), 'utf8');
 const apiJs = fs.readFileSync(path.join(root, 'js', 'api.js'), 'utf8');
 const faceRecognitionJs = fs.readFileSync(path.join(root, 'js', 'face-recognition.js'), 'utf8');
+const faceCss = fs.readFileSync(path.join(root, 'css', 'face-rec.css'), 'utf8');
 const attendanceGs = fs.readFileSync(path.join(projectRoot, 'apps-script-absensi', 'Attendance.js'), 'utf8');
 const settingsGs = fs.readFileSync(path.join(projectRoot, 'apps-script-absensi', 'Settings.js'), 'utf8');
 
@@ -49,8 +50,17 @@ function testFrontendLocksConfirmationOutsideRadius() {
     );
     assertContains(
         faceRecognitionJs,
-        '<i class="fas fa-ban"></i><span>Di Luar Radius</span>',
-        'confirmation button should explain that attendance is blocked outside radius'
+        '<i class="fas fa-ban"></i><span>Di Luar Area Absensi</span>',
+        'confirmation button should use professional outside-area wording'
+    );
+    assertContains(
+        faceRecognitionJs,
+        "confirmBtn.classList.toggle('outside-radius', isOutsideRadius)",
+        'confirmation button should toggle its outside-radius visual state'
+    );
+    assert(
+        /#btn-confirm-attendance\.outside-radius:disabled\s*\{[^}]*background:\s*var\(--color-danger\);[^}]*color:\s*var\(--color-white\);[^}]*opacity:\s*1;[^}]*cursor:\s*not-allowed;/s.test(faceCss),
+        'outside-area confirmation button should remain visibly red while disabled'
     );
     assertContains(
         faceRecognitionJs,

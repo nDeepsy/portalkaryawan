@@ -683,12 +683,13 @@ const faceRecognition = {
         const isOutsideRadius = Boolean(radiusStatus
             && radiusStatus.configured && radiusStatus.enabled && radiusStatus.allowed === false);
 
+        confirmBtn.classList.toggle('outside-radius', isOutsideRadius);
         confirmBtn.disabled = !(this.photoCaptured && this.locationVerified) || this.isConfirming;
 
         if (this.isConfirming) return;
 
         confirmBtn.innerHTML = isOutsideRadius
-            ? '<i class="fas fa-ban"></i><span>Di Luar Radius</span>'
+            ? '<i class="fas fa-ban"></i><span>Di Luar Area Absensi</span>'
             : '<i class="fas fa-check-circle"></i><span>Konfirmasi Absensi</span>';
     },
 
