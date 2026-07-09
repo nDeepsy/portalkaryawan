@@ -852,7 +852,7 @@ async function testConfiguredWorkdayOverridesStaleEmployeeHolidayShift() {
                             })
                         }
                     },
-                    shifts: { success: true, data: [{ name: 'Pagi', startTime: '09:00', endTime: '17:00' }] }
+                    shifts: { success: true, data: [{ name: 'Pagi', startTime: '00:00', endTime: '23:59' }] }
                 }
             }),
             getAllAttendance: async () => ({ success: true, data: [] })
@@ -887,7 +887,7 @@ function testCachedHolidayAttendanceIsReconciledWhenAdminEnablesWorkday() {
                 minggu: false
             })
         },
-        shifts: [{ name: 'Pagi', startTime: '09:00', endTime: '17:00' }],
+        shifts: [{ name: 'Pagi', startTime: '00:00', endTime: '23:59' }],
         attendance: [{
             userId: 'KRY001',
             date: '2026-05-25',

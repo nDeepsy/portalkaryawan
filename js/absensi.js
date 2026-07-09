@@ -355,6 +355,8 @@ const absensi = {
             this.currentState = 'on-leave';
         } else if (todayAttendance.shift === 'Libur' && !todayAttendance.clockIn) {
             this.currentState = 'libur';
+        } else if (!todayAttendance.clockIn && !this.getClockInWindowStatus().allowed) {
+            this.currentState = 'outside-shift-window';
         } else if (todayAttendance.clockOut) {
             this.currentState = 'completed';
         } else if (this.isOnAnyBreak(todayAttendance)) {
@@ -1026,6 +1028,16 @@ const absensi = {
                     }
                     break;
                 }
+                case 'outside-shift-window': {
+                    const windowStatus = this.getClockInWindowStatus();
+                    statusRing.classList.add('waiting');
+                    if (statusIcon) statusIcon.className = 'fas fa-clock';
+                    if (statusText) statusText.textContent = 'Di Luar Jam Shift';
+                    if (statusSubtext) {
+                        statusSubtext.textContent = `Shift ${windowStatus.shiftName}: ${windowStatus.startTime} - ${windowStatus.endTime}`;
+                    }
+                    break;
+                }
                 case 'waiting':
                     statusRing.classList.add('waiting');
                     if (statusText) statusText.textContent = 'Siap Masuk';
@@ -1064,14 +1076,15 @@ const absensi = {
         if (btnClockIn) {
             const isClockedIn = this.attendanceData.clockIn !== null && this.attendanceData.clockIn !== undefined;
             const isLibur = this.currentState === 'libur';
+            const isOutsideShiftWindow = this.currentState === 'outside-shift-window';
 
-            btnClockIn.disabled = isClockedIn || isLibur || isAttendanceLocked;
+            btnClockIn.disabled = isClockedIn || isLibur || isAttendanceLocked || isOutsideShiftWindow;
 
             if (isClockedIn) {
                 btnClockIn.classList.add('completed');
                 const timeEl = document.getElementById('clock-in-time');
                 if (timeEl) timeEl.textContent = this.formatHistoryTime(this.attendanceData.clockIn);
-            } else if (isLibur) {
+            } else if (isLibur || isOutsideShiftWindow) {
                 btnClockIn.classList.add('completed');
             } else {
                 btnClockIn.classList.remove('completed');
@@ -1247,6 +1260,39 @@ const absensi = {
 
     getCurrentShiftName() {
         return String(this.attendanceData.shift || auth.getCurrentUser()?.shift || '').trim();
+    },
+
+    parseShiftTimeToMinutes(value) {
+        const match = String(value || '').trim().match(/^(\d{1,2})[.:](\d{2})$/);
+        if (!match) return null;
+
+        const hours = Number(match[1]);
+        const minutes = Number(match[2]);
+        if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+        return (hours * 60) + minutes;
+    },
+
+    getClockInWindowStatus(now = new Date()) {
+        const shiftName = this.getCurrentShiftName() || this.getScheduledShiftName();
+        const shifts = storage.get('shifts', []) || [];
+        const shift = shifts.find(item =>
+            String(item?.name || '').trim().toLowerCase() === String(shiftName || '').trim().toLowerCase()
+        );
+        const startTime = String(shift?.startTime || '').trim();
+        const endTime = String(shift?.endTime || '').trim();
+        const startMinutes = this.parseShiftTimeToMinutes(startTime);
+        const endMinutes = this.parseShiftTimeToMinutes(endTime);
+
+        if (startMinutes === null || endMinutes === null) {
+            return { configured: false, allowed: true, shiftName, startTime: '', endTime: '' };
+        }
+
+        const currentMinutes = (now.getHours() * 60) + now.getMinutes();
+        const allowed = startMinutes <= endMinutes
+            ? currentMinutes >= startMinutes && currentMinutes <= endMinutes
+            : currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+
+        return { configured: true, allowed, shiftName, startTime, endTime };
     },
 
     getMaxBreakSessions() {
