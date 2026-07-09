@@ -414,9 +414,14 @@ const faceRecognition = {
         const isPrecise = accuracy <= this.desiredAccuracyMeters;
         const radiusStatus = this.getLocationRadiusStatus(position);
         this.locationRadiusStatus = radiusStatus;
+        const isRejected = Boolean(
+            radiusStatus.configured && radiusStatus.enabled && radiusStatus.allowed === false
+        );
 
         if (statusEl) {
-            statusEl.className = `location-status ${isReady ? 'verified' : ''}`;
+            statusEl.className = 'location-status';
+            statusEl.classList.toggle('verified', isReady);
+            statusEl.classList.toggle('rejected', isRejected);
             statusEl.innerHTML = isReady
                 ? '<i class="fas fa-check-circle"></i> Terverifikasi'
                 : radiusStatus.allowed
@@ -437,6 +442,7 @@ const faceRecognition = {
                     ? (isReady ? radiusStatus.message : 'Lokasi terdeteksi, menunggu GPS lebih akurat')
                     : radiusStatus.message;
                 addressEl.classList.toggle('location-ready', isReady);
+                addressEl.classList.toggle('location-rejected', isRejected);
             }
             if (timeEl) this.updateLocationTime();
             if (accuracyEl) accuracyEl.textContent = `+/-${accuracy}m`;

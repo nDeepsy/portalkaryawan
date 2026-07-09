@@ -403,6 +403,34 @@ function testVerifiedLocationUsesProfessionalGreenStatus() {
     assert(faceCss.includes('var(--color-success)'), 'verified GPS status should use the success color token');
 }
 
+function testLocationEligibilityUsesSemanticColors() {
+    const faceCss = fs.readFileSync(path.join(root, 'css', 'face-rec.css'), 'utf8');
+
+    assert(
+        faceRecognitionJs.includes("statusEl.classList.toggle('rejected', isRejected)"),
+        'outside-radius status badge should receive a rejected class'
+    );
+    assert(
+        faceRecognitionJs.includes("addressEl.classList.toggle('location-rejected', isRejected)"),
+        'outside-radius location description should receive a rejected class'
+    );
+    assert(
+        faceRecognitionJs.includes("addressEl.classList.toggle('location-ready', isReady)") &&
+        faceRecognitionJs.includes('radiusStatus.configured && radiusStatus.enabled && radiusStatus.allowed === false'),
+        'ready and rejected states should be derived explicitly'
+    );
+    assert(
+        faceCss.includes('.location-status.rejected') &&
+        faceCss.includes('.info-value.location-rejected'),
+        'rejected badge and description should have dedicated styles'
+    );
+    assert(
+        /\.location-status\.rejected\s*\{[^}]*color:\s*var\(--color-danger\);/s.test(faceCss) &&
+        /\.info-value\.location-rejected\s*\{[^}]*color:\s*var\(--color-danger\);/s.test(faceCss),
+        'rejected location UI should use the shared danger token'
+    );
+}
+
 function testLocationMapUsesSingleSatelliteEmbed() {
     const faceCss = fs.readFileSync(path.join(root, 'css', 'face-rec.css'), 'utf8');
 
@@ -921,6 +949,7 @@ function testMobileAttendanceStatusDoesNotClipPulseAnimation() {
     testLocationRefreshButtonHasStableLayout();
     testLocationTimeHasIndependentLiveClock();
     testVerifiedLocationUsesProfessionalGreenStatus();
+    testLocationEligibilityUsesSemanticColors();
     testLocationMapUsesSingleSatelliteEmbed();
     testAttendanceDurationAlwaysDisplaysShortWorkDurations();
     testAttendanceButtonsUseActionColorEffects();
