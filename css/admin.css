@@ -607,29 +607,6 @@
     opacity: 1;
     appearance: none;
     background-image: none;
-    padding-right: 48px;
-}
-
-.btn-clear-print-target {
-    position: absolute;
-    right: 10px;
-    bottom: 8px;
-    width: 28px;
-    height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    border-radius: 999px;
-    background: #dbeafe;
-    color: #1d4ed8;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.btn-clear-print-target:hover {
-    background: #2563eb;
-    color: var(--color-white);
 }
 
 .filter-group.has-icon input {
@@ -1998,22 +1975,6 @@
         text-transform: uppercase;
     }
 
-    body.printing-formal-report .print-scope-badge {
-        display: block !important;
-        width: max-content;
-        max-width: 100%;
-        margin: -4px auto 12px;
-        padding: 3px 12px;
-        border: 1px solid #000000;
-        color: #000000;
-        font-family: "Times New Roman", Times, serif;
-        font-size: 9.5pt;
-        font-weight: 700;
-        line-height: 1.2;
-        text-align: center;
-        text-transform: uppercase;
-    }
-
     body.printing-formal-report .print-report-info {
         display: grid !important;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2081,6 +2042,10 @@
         line-height: inherit !important;
         text-transform: none !important;
         box-shadow: none !important;
+    }
+
+    body.printing-formal-report .reports-table tr.print-target-hidden {
+        display: none !important;
     }
 
     body.printing-formal-report .reports-table thead tr:first-child th:last-child,

@@ -754,7 +754,6 @@ const adminReports = {
         select.disabled = false;
         select.classList.toggle('employee-filter-active', Boolean(nextValue));
         select.classList.toggle('employee-filter-locked', false);
-        this.updateEmployeeClearButton(select, false);
 
         if (String(currentValue || '') !== nextValue) {
             this.setEmployeeFilterBySelectId(id, nextValue);
@@ -770,24 +769,6 @@ const adminReports = {
         select.disabled = true;
         select.classList.toggle('employee-filter-active', true);
         select.classList.toggle('employee-filter-locked', true);
-        this.updateEmployeeClearButton(select, true);
-    },
-
-    updateEmployeeClearButton(select, visible) {
-        if (!select || !select.parentElement) return;
-
-        let button = select.parentElement.querySelector('.btn-clear-print-target');
-        if (!button) {
-            button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'btn-clear-print-target';
-            button.title = 'Kembali ke cetak semua karyawan';
-            button.innerHTML = '<i class="fas fa-times"></i>';
-            button.onclick = () => this.clearReportPrintTarget('attendance', { resetEmployeeDisplay: true });
-            select.parentElement.appendChild(button);
-        }
-
-        button.hidden = !visible;
     },
 
     setEmployeeFilterBySelectId(id, value) {
@@ -1145,7 +1126,7 @@ const adminReports = {
         tbody.innerHTML = data.map(row => {
             const safeUserId = this.escapeAttr(String(row.userId || ''));
             return `
-            <tr>
+            <tr data-report-user-id="${safeUserId}">
                 <td class="attendance-name-cell">
                     <div class="employee-info">
                         <div class="employee-details">
@@ -1691,6 +1672,8 @@ const adminReports = {
         if (!container) return;
 
         container.querySelectorAll('.formal-print-block').forEach(node => node.remove());
+        this.clearPrintTargetRows(container);
+        this.markPrintTargetRows(container, config);
 
         const header = document.createElement('div');
         header.className = 'formal-print-block print-only print-formal-header';
@@ -1707,6 +1690,23 @@ const adminReports = {
         document.body.classList.add('printing-formal-report', `printing-${type}`);
     },
 
+    clearPrintTargetRows(container) {
+        if (!container) return;
+        container.querySelectorAll('.print-target-hidden').forEach(row => {
+            row.classList.remove('print-target-hidden');
+        });
+    },
+
+    markPrintTargetRows(container, config = {}) {
+        if (!container || !config.printTargetUserId) return;
+
+        container.querySelectorAll('[data-report-user-id]').forEach(row => {
+            if (String(row.getAttribute('data-report-user-id') || '') !== String(config.printTargetUserId)) {
+                row.classList.add('print-target-hidden');
+            }
+        });
+    },
+
     getPrintReportConfig(type) {
         const attendanceEmployee = this.getSelectedReportEmployee('attendance');
         const jurnalEmployee = this.getSelectedReportEmployee('jurnal');
@@ -1715,7 +1715,7 @@ const adminReports = {
             attendance: {
                 pageId: 'page-attendance-reports',
                 title: attendanceEmployee ? 'LAPORAN REKAP ABSENSI PER KARYAWAN' : 'LAPORAN REKAP ABSENSI KARYAWAN',
-                scope: attendanceEmployee ? 'Laporan Per Karyawan' : 'Laporan Keseluruhan',
+                printTargetUserId: attendanceEmployee?.id || '',
                 filters: [
                     { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('attendance-month')?.value) },
                     { label: 'Divisi', value: attendanceEmployee?.division || this.getSelectedOptionText('report-division-filter') || 'Semua Divisi' },
@@ -1726,7 +1726,6 @@ const adminReports = {
             jurnal: {
                 pageId: 'page-jurnal-reports',
                 title: jurnalEmployee ? 'LAPORAN REKAP JURNAL KERJA PER KARYAWAN' : 'LAPORAN REKAP JURNAL KERJA KARYAWAN',
-                scope: jurnalEmployee ? 'Laporan Per Karyawan' : 'Laporan Keseluruhan',
                 filters: [
                     { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('jurnal-month')?.value) },
                     { label: 'Divisi', value: jurnalEmployee?.division || '-' },
@@ -1737,7 +1736,6 @@ const adminReports = {
             leave: {
                 pageId: 'page-leave-reports',
                 title: leaveEmployee ? 'LAPORAN REKAP CUTI DAN IZIN PER KARYAWAN' : 'LAPORAN REKAP CUTI DAN IZIN KARYAWAN',
-                scope: leaveEmployee ? 'Laporan Per Karyawan' : 'Laporan Keseluruhan',
                 filters: [
                     { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('leave-month')?.value) },
                     { label: 'Jenis', value: this.getSelectedOptionText('leave-type-filter') || 'Semua' },
@@ -1765,7 +1763,6 @@ const adminReports = {
             <div class="print-letterhead-line"></div>
             <div class="print-report-title">
                 <h2>${this.escapeHtml(config.title)}</h2>
-                <div class="print-scope-badge">${this.escapeHtml(config.scope || 'Laporan')}</div>
             </div>
             <div class="print-report-info">
                 ${this.buildPrintInfoRows(config)}
