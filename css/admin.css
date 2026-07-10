@@ -595,6 +595,14 @@
     min-width: 0;
 }
 
+.filter-group select.employee-filter-active {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 700;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
 .filter-group.has-icon input {
     padding-right: 42px;
 }

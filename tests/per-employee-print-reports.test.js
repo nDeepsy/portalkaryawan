@@ -17,6 +17,7 @@ const sandbox = {
     storage: {
         get: () => []
     },
+    normalizeEmployeeList: employees => employees,
     getEmployeeDivision: employee => employee.division || '',
     auth: { getCurrentUser: () => null }
 };
@@ -44,12 +45,13 @@ assert(
 
 assert(
     adminCss.includes('.btn-action.print') &&
-        adminCss.includes('.print-scope-badge'),
+        adminCss.includes('.print-scope-badge') &&
+        adminCss.includes('.employee-filter-active'),
     'per-employee print UI should have dedicated screen and print styling'
 );
 
 sandbox.adminReports.rawEmployees = [
-    { id: 'KRY001', name: 'Dewi Lestari', division: 'Penyiar' },
+    { id: 'KRY001', name: 'Dewi Lestari', division: 'Penyiar', status: 'active' },
     { id: 'KRY002', name: 'Raka Pratama', division: 'Produksi' }
 ];
 sandbox.adminReports.rawAttendance = [
@@ -68,6 +70,33 @@ sandbox.adminReports.filters.attendance = {
 const attendanceRows = sandbox.adminReports.getFilteredAttendance();
 assert.strictEqual(attendanceRows.length, 1, 'attendance should filter to one selected employee');
 assert.strictEqual(attendanceRows[0].name, 'Dewi Lestari');
+
+const selectedAttendanceEmployee = sandbox.adminReports.getSelectedReportEmployee('attendance');
+assert.strictEqual(selectedAttendanceEmployee.name, 'Dewi Lestari', 'selected report employee should resolve by id');
+assert.strictEqual(selectedAttendanceEmployee.division, 'Penyiar', 'selected report employee should expose the employee division');
+assert.strictEqual(selectedAttendanceEmployee.statusLabel, 'Aktif', 'selected report employee should expose a readable employee status');
+
+sandbox.document.getElementById = id => {
+    const elements = {
+        'attendance-month': { value: '2026-07' },
+        'report-division-filter': { options: [{ textContent: 'Semua Divisi' }], selectedIndex: 0 },
+        'report-status-filter': { options: [{ textContent: 'Semua' }], selectedIndex: 0 },
+        'attendance-employee-filter': { options: [{ textContent: 'Dewi Lestari - Penyiar' }], selectedIndex: 0 }
+    };
+    return elements[id] || null;
+};
+
+const attendancePrintConfig = sandbox.adminReports.getPrintReportConfig('attendance');
+assert.strictEqual(
+    JSON.stringify(attendancePrintConfig.filters.map(row => [row.label, row.value])),
+    JSON.stringify([
+        ['Periode', 'Juli 2026'],
+        ['Divisi', 'Penyiar'],
+        ['Status', 'Aktif'],
+        ['Karyawan', 'Dewi Lestari']
+    ]),
+    'per-employee attendance print metadata should use employee data and keep employee name clean'
+);
 
 sandbox.adminReports.jurnalData = [
     { userId: 'KRY001', name: 'Dewi Lestari', division: 'Penyiar', date: '2026-07-01', updatedAt: '2026-07-01' },

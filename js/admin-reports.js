@@ -706,6 +706,7 @@ const adminReports = {
                 return `<option value="${this.escapeAttr(emp.id)}">${this.escapeHtml(label)}</option>`;
             }).join('');
         select.value = nextValue;
+        select.classList.toggle('employee-filter-active', Boolean(nextValue));
 
         if (String(currentValue || '') !== nextValue) {
             this.setEmployeeFilterBySelectId(id, nextValue);
@@ -1556,6 +1557,30 @@ const adminReports = {
         this.printReport('attendance');
     },
 
+    getSelectedReportEmployee(type) {
+        const employeeId = this.filters?.[type]?.employee;
+        if (!employeeId) return null;
+
+        const employee = this.getEmployeeFilterSource().find(emp => String(emp.id) === String(employeeId));
+        if (!employee) return null;
+
+        return {
+            id: employee.id,
+            name: employee.name || '-',
+            division: getEmployeeDivision(employee) || '-',
+            statusLabel: this.getEmployeeStatusLabel(employee.status)
+        };
+    },
+
+    getEmployeeStatusLabel(status) {
+        const labels = {
+            active: 'Aktif',
+            'on-leave': 'Cuti',
+            inactive: 'Non-Aktif'
+        };
+        return labels[String(status || '').toLowerCase()] || String(status || 'Aktif');
+    },
+
     printReport(type) {
         this.prepareFormalPrintReport(type);
         window.print();
@@ -1587,9 +1612,9 @@ const adminReports = {
     },
 
     getPrintReportConfig(type) {
-        const attendanceEmployee = this.getSelectedOptionText('attendance-employee-filter') || 'Semua Karyawan';
-        const jurnalEmployee = this.getSelectedOptionText('jurnal-employee-filter') || 'Semua Karyawan';
-        const leaveEmployee = this.getSelectedOptionText('leave-employee-filter') || 'Semua Karyawan';
+        const attendanceEmployee = this.getSelectedReportEmployee('attendance');
+        const jurnalEmployee = this.getSelectedReportEmployee('jurnal');
+        const leaveEmployee = this.getSelectedReportEmployee('leave');
         const configs = {
             attendance: {
                 pageId: 'page-attendance-reports',
@@ -1597,9 +1622,9 @@ const adminReports = {
                 scope: this.filters.attendance.employee ? 'Laporan Per Karyawan' : 'Laporan Keseluruhan',
                 filters: [
                     { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('attendance-month')?.value) },
-                    { label: 'Divisi', value: this.getSelectedOptionText('report-division-filter') || 'Semua Divisi' },
-                    { label: 'Status', value: this.getSelectedOptionText('report-status-filter') || 'Semua' },
-                    { label: 'Karyawan', value: attendanceEmployee }
+                    { label: 'Divisi', value: attendanceEmployee?.division || this.getSelectedOptionText('report-division-filter') || 'Semua Divisi' },
+                    { label: 'Status', value: attendanceEmployee?.statusLabel || this.getSelectedOptionText('report-status-filter') || 'Semua' },
+                    { label: 'Karyawan', value: attendanceEmployee?.name || 'Semua Karyawan' }
                 ]
             },
             jurnal: {
@@ -1608,7 +1633,9 @@ const adminReports = {
                 scope: this.filters.jurnal.employee ? 'Laporan Per Karyawan' : 'Laporan Keseluruhan',
                 filters: [
                     { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('jurnal-month')?.value) },
-                    { label: 'Karyawan', value: jurnalEmployee }
+                    { label: 'Divisi', value: jurnalEmployee?.division || '-' },
+                    { label: 'Status', value: jurnalEmployee?.statusLabel || 'Semua' },
+                    { label: 'Karyawan', value: jurnalEmployee?.name || 'Semua Karyawan' }
                 ]
             },
             leave: {
@@ -1618,8 +1645,9 @@ const adminReports = {
                 filters: [
                     { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('leave-month')?.value) },
                     { label: 'Jenis', value: this.getSelectedOptionText('leave-type-filter') || 'Semua' },
-                    { label: 'Status', value: this.getSelectedOptionText('leave-status-filter') || 'Semua' },
-                    { label: 'Karyawan', value: leaveEmployee }
+                    { label: 'Status', value: leaveEmployee?.statusLabel || this.getSelectedOptionText('leave-status-filter') || 'Semua' },
+                    { label: 'Divisi', value: leaveEmployee?.division || '-' },
+                    { label: 'Karyawan', value: leaveEmployee?.name || 'Semua Karyawan' }
                 ]
             }
         };
