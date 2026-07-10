@@ -112,10 +112,9 @@ assert.strictEqual(
     JSON.stringify([
         ['Periode', 'Juli 2026'],
         ['Divisi', 'Penyiar'],
-        ['Status Kehadiran', 'Aktif'],
         ['Karyawan', 'Dewi Lestari']
     ]),
-    'per-employee attendance print metadata should use employee data and keep employee name clean'
+    'per-employee attendance print metadata should use employee data, hide status, and keep employee name clean'
 );
 
 let renderedAfterRowPrint = false;

@@ -1719,7 +1719,7 @@ const adminReports = {
                 filters: [
                     { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('attendance-month')?.value) },
                     { label: 'Divisi', value: attendanceEmployee?.division || this.getSelectedOptionText('report-division-filter') || 'Semua Divisi' },
-                    { label: 'Status Kehadiran', value: attendanceEmployee?.statusLabel || this.getSelectedOptionText('report-status-filter') || 'Semua' },
+                    ...(!attendanceEmployee ? [{ label: 'Status Kehadiran', value: this.getSelectedOptionText('report-status-filter') || 'Semua' }] : []),
                     { label: 'Karyawan', value: attendanceEmployee?.name || 'Semua Karyawan' }
                 ]
             },
