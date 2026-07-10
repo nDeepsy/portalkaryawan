@@ -21,6 +21,11 @@ const adminReports = {
         jurnal: { month: '', employee: '', status: '' },
         leave: { month: '', type: '', status: '', employee: '' }
     },
+    printTargets: {
+        attendance: '',
+        jurnal: '',
+        leave: ''
+    },
 
     canAccessAdminReports() {
         return Boolean(auth && typeof auth.canAccessAdminReports === 'function' && auth.canAccessAdminReports());
@@ -674,9 +679,14 @@ const adminReports = {
 
     populateEmployeeFilter() {
         const employees = this.getEmployeeFilterSource();
-        this.populateEmployeeSelect('attendance-employee-filter', employees, this.filters.attendance.employee, {
-            division: this.filters.attendance.division
-        });
+        const attendancePrintEmployee = this.getPrintTargetEmployee('attendance');
+        if (attendancePrintEmployee) {
+            this.renderLockedEmployeeDisplay('attendance-employee-filter', attendancePrintEmployee);
+        } else {
+            this.populateEmployeeSelect('attendance-employee-filter', employees, this.filters.attendance.employee, {
+                division: this.filters.attendance.division
+            });
+        }
         this.populateEmployeeSelect('jurnal-employee-filter', employees, this.filters.jurnal.employee);
         this.populateEmployeeSelect('leave-employee-filter', employees, this.filters.leave.employee);
         this.updateReportPrintLabels();
@@ -687,6 +697,12 @@ const adminReports = {
             ? this.rawEmployees
             : storage.get('admin_employees', []);
         return this.filterValidEmployees(normalizeEmployeeList(employees));
+    },
+
+    getPrintTargetEmployee(type) {
+        const employeeId = this.printTargets?.[type];
+        if (!employeeId) return null;
+        return this.getEmployeeFilterSource().find(emp => String(emp.id) === String(employeeId)) || null;
     },
 
     populateEmployeeSelect(id, employees, currentValue = '', options = {}) {
@@ -706,11 +722,24 @@ const adminReports = {
                 return `<option value="${this.escapeAttr(emp.id)}">${this.escapeHtml(label)}</option>`;
             }).join('');
         select.value = nextValue;
+        select.disabled = false;
         select.classList.toggle('employee-filter-active', Boolean(nextValue));
+        select.classList.toggle('employee-filter-locked', false);
 
         if (String(currentValue || '') !== nextValue) {
             this.setEmployeeFilterBySelectId(id, nextValue);
         }
+    },
+
+    renderLockedEmployeeDisplay(id, employee) {
+        const select = document.getElementById(id);
+        if (!select || !employee) return;
+
+        select.innerHTML = `<option value="${this.escapeAttr(employee.id)}">${this.escapeHtml(employee.name || '-')}</option>`;
+        select.value = String(employee.id || '');
+        select.disabled = true;
+        select.classList.toggle('employee-filter-active', true);
+        select.classList.toggle('employee-filter-locked', true);
     },
 
     setEmployeeFilterBySelectId(id, value) {
@@ -724,6 +753,14 @@ const adminReports = {
     },
 
     syncAttendanceEmployeeFilterWithDivision() {
+        if (this.printTargets.attendance) {
+            const employee = this.getPrintTargetEmployee('attendance');
+            if (employee) {
+                this.renderLockedEmployeeDisplay('attendance-employee-filter', employee);
+                return;
+            }
+        }
+
         this.populateEmployeeSelect(
             'attendance-employee-filter',
             this.getEmployeeFilterSource(),
@@ -761,7 +798,9 @@ const adminReports = {
         const monthFilter = document.getElementById('attendance-month');
         if (monthFilter) {
             monthFilter.onchange = (e) => {
+                this.clearReportPrintTarget('attendance');
                 this.filters.attendance.month = e.target.value;
+                this.syncAttendanceEmployeeFilterWithDivision();
                 this.updateReportPrintLabels();
                 this.renderAttendanceReports();
             };
@@ -771,6 +810,7 @@ const adminReports = {
         const divisionFilter = document.getElementById('report-division-filter');
         if (divisionFilter) {
             divisionFilter.onchange = (e) => {
+                this.clearReportPrintTarget('attendance');
                 this.filters.attendance.division = e.target.value;
                 this.syncAttendanceEmployeeFilterWithDivision();
                 this.updateReportPrintLabels();
@@ -782,7 +822,9 @@ const adminReports = {
         const statusFilter = document.getElementById('report-status-filter');
         if (statusFilter) {
             statusFilter.onchange = (e) => {
+                this.clearReportPrintTarget('attendance');
                 this.filters.attendance.status = e.target.value;
+                this.syncAttendanceEmployeeFilterWithDivision();
                 this.updateReportPrintLabels();
                 this.renderAttendanceReports();
             };
@@ -791,6 +833,7 @@ const adminReports = {
         const empFilter = document.getElementById('attendance-employee-filter');
         if (empFilter) {
             empFilter.onchange = (e) => {
+                this.clearReportPrintTarget('attendance');
                 this.filters.attendance.employee = e.target.value;
                 this.updateReportPrintLabels();
                 this.renderAttendanceReports();
@@ -885,9 +928,9 @@ const adminReports = {
     },
 
     updateReportPrintLabels() {
-        this.updatePrintButtonLabel('btn-print-attendance', this.filters.attendance.employee);
-        this.updatePrintButtonLabel('btn-print-jurnal', this.filters.jurnal.employee);
-        this.updatePrintButtonLabel('btn-print-leave', this.filters.leave.employee);
+        this.updatePrintButtonLabel('btn-print-attendance', this.printTargets.attendance || this.filters.attendance.employee);
+        this.updatePrintButtonLabel('btn-print-jurnal', this.printTargets.jurnal || this.filters.jurnal.employee);
+        this.updatePrintButtonLabel('btn-print-leave', this.printTargets.leave || this.filters.leave.employee);
     },
 
     updatePrintButtonLabel(buttonId, employeeId) {
@@ -1541,24 +1584,20 @@ const adminReports = {
             return;
         }
 
-        const division = getEmployeeDivision(employee);
-        this.filters.attendance.employee = String(employee.id);
-        this.filters.attendance.division = division || '';
-
-        const divisionSelect = document.getElementById('report-division-filter');
-        if (divisionSelect) divisionSelect.value = this.filters.attendance.division;
-
-        this.syncAttendanceEmployeeFilterWithDivision();
-        const employeeSelect = document.getElementById('attendance-employee-filter');
-        if (employeeSelect) employeeSelect.value = this.filters.attendance.employee;
-
+        this.printTargets.attendance = String(employee.id);
+        this.filters.attendance.employee = '';
+        this.renderLockedEmployeeDisplay('attendance-employee-filter', employee);
         this.updateReportPrintLabels();
-        this.renderAttendanceReports();
         this.printReport('attendance');
     },
 
+    clearReportPrintTarget(type) {
+        if (!this.printTargets || !this.printTargets[type]) return;
+        this.printTargets[type] = '';
+    },
+
     getSelectedReportEmployee(type) {
-        const employeeId = this.filters?.[type]?.employee;
+        const employeeId = this.printTargets?.[type] || this.filters?.[type]?.employee;
         if (!employeeId) return null;
 
         const employee = this.getEmployeeFilterSource().find(emp => String(emp.id) === String(employeeId));
@@ -1618,8 +1657,8 @@ const adminReports = {
         const configs = {
             attendance: {
                 pageId: 'page-attendance-reports',
-                title: this.filters.attendance.employee ? 'LAPORAN REKAP ABSENSI PER KARYAWAN' : 'LAPORAN REKAP ABSENSI KARYAWAN',
-                scope: this.filters.attendance.employee ? 'Laporan Per Karyawan' : 'Laporan Keseluruhan',
+                title: attendanceEmployee ? 'LAPORAN REKAP ABSENSI PER KARYAWAN' : 'LAPORAN REKAP ABSENSI KARYAWAN',
+                scope: attendanceEmployee ? 'Laporan Per Karyawan' : 'Laporan Keseluruhan',
                 filters: [
                     { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('attendance-month')?.value) },
                     { label: 'Divisi', value: attendanceEmployee?.division || this.getSelectedOptionText('report-division-filter') || 'Semua Divisi' },
@@ -1629,8 +1668,8 @@ const adminReports = {
             },
             jurnal: {
                 pageId: 'page-jurnal-reports',
-                title: this.filters.jurnal.employee ? 'LAPORAN REKAP JURNAL KERJA PER KARYAWAN' : 'LAPORAN REKAP JURNAL KERJA KARYAWAN',
-                scope: this.filters.jurnal.employee ? 'Laporan Per Karyawan' : 'Laporan Keseluruhan',
+                title: jurnalEmployee ? 'LAPORAN REKAP JURNAL KERJA PER KARYAWAN' : 'LAPORAN REKAP JURNAL KERJA KARYAWAN',
+                scope: jurnalEmployee ? 'Laporan Per Karyawan' : 'Laporan Keseluruhan',
                 filters: [
                     { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('jurnal-month')?.value) },
                     { label: 'Divisi', value: jurnalEmployee?.division || '-' },
@@ -1640,8 +1679,8 @@ const adminReports = {
             },
             leave: {
                 pageId: 'page-leave-reports',
-                title: this.filters.leave.employee ? 'LAPORAN REKAP CUTI DAN IZIN PER KARYAWAN' : 'LAPORAN REKAP CUTI DAN IZIN KARYAWAN',
-                scope: this.filters.leave.employee ? 'Laporan Per Karyawan' : 'Laporan Keseluruhan',
+                title: leaveEmployee ? 'LAPORAN REKAP CUTI DAN IZIN PER KARYAWAN' : 'LAPORAN REKAP CUTI DAN IZIN KARYAWAN',
+                scope: leaveEmployee ? 'Laporan Per Karyawan' : 'Laporan Keseluruhan',
                 filters: [
                     { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('leave-month')?.value) },
                     { label: 'Jenis', value: this.getSelectedOptionText('leave-type-filter') || 'Semua' },

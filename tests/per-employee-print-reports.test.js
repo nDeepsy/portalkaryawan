@@ -46,7 +46,8 @@ assert(
 assert(
     adminCss.includes('.btn-action.print') &&
         adminCss.includes('.print-scope-badge') &&
-        adminCss.includes('.employee-filter-active'),
+        adminCss.includes('.employee-filter-active') &&
+        adminCss.includes('.employee-filter-locked'),
     'per-employee print UI should have dedicated screen and print styling'
 );
 
@@ -97,6 +98,47 @@ assert.strictEqual(
     ]),
     'per-employee attendance print metadata should use employee data and keep employee name clean'
 );
+
+let renderedAfterRowPrint = false;
+let printedType = '';
+const attendanceSelect = {
+    value: '',
+    disabled: false,
+    innerHTML: '',
+    classList: {
+        classes: new Set(),
+        toggle(name, enabled) {
+            if (enabled) this.classes.add(name);
+            else this.classes.delete(name);
+        }
+    }
+};
+sandbox.document.getElementById = id => {
+    if (id === 'attendance-employee-filter') return attendanceSelect;
+    return null;
+};
+sandbox.toast = { error: message => { throw new Error(message); } };
+sandbox.adminReports.filters.attendance = {
+    month: '2026-07',
+    division: '',
+    status: '',
+    employee: ''
+};
+sandbox.adminReports.renderAttendanceReports = () => { renderedAfterRowPrint = true; };
+sandbox.adminReports.printReport = type => { printedType = type; };
+
+sandbox.adminReports.printAttendanceEmployee('KRY001');
+
+assert.strictEqual(sandbox.adminReports.filters.attendance.employee, '', 'row print should not turn the employee display into an active table filter');
+assert.strictEqual(sandbox.adminReports.filters.attendance.division, '', 'row print should not change the division filter that controls the visible table');
+assert.strictEqual(renderedAfterRowPrint, false, 'row print should not rerender the table into a single employee list');
+assert.strictEqual(printedType, 'attendance', 'row print should still print the attendance report');
+assert.strictEqual(attendanceSelect.disabled, true, 'row print employee display should be locked');
+assert(attendanceSelect.innerHTML.includes('Dewi Lestari'), 'locked employee display should show the employee name');
+assert(!attendanceSelect.innerHTML.includes('Penyiar'), 'locked employee display should show only the employee name');
+
+const selectedRowPrintEmployee = sandbox.adminReports.getSelectedReportEmployee('attendance');
+assert.strictEqual(selectedRowPrintEmployee.name, 'Dewi Lestari', 'row print target should drive print metadata');
 
 sandbox.adminReports.jurnalData = [
     { userId: 'KRY001', name: 'Dewi Lestari', division: 'Penyiar', date: '2026-07-01', updatedAt: '2026-07-01' },
