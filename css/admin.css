@@ -608,6 +608,29 @@
     opacity: 1;
     appearance: none;
     background-image: none;
+    padding-right: 48px;
+}
+
+.btn-clear-print-target {
+    position: absolute;
+    right: 10px;
+    bottom: 8px;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-clear-print-target:hover {
+    background: #2563eb;
+    color: var(--color-white);
 }
 
 .filter-group.has-icon input {

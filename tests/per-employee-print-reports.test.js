@@ -47,7 +47,8 @@ assert(
     adminCss.includes('.btn-action.print') &&
         adminCss.includes('.print-scope-badge') &&
         adminCss.includes('.employee-filter-active') &&
-        adminCss.includes('.employee-filter-locked'),
+        adminCss.includes('.employee-filter-locked') &&
+        adminCss.includes('.btn-clear-print-target'),
     'per-employee print UI should have dedicated screen and print styling'
 );
 
@@ -102,6 +103,10 @@ assert.strictEqual(
 let renderedAfterRowPrint = false;
 let printedType = '';
 const attendanceSelect = {
+    parentElement: {
+        querySelector: selector => selector === '.btn-clear-print-target' ? null : null,
+        appendChild: button => { attendanceSelect.clearButton = button; }
+    },
     value: '',
     disabled: false,
     innerHTML: '',
@@ -112,6 +117,19 @@ const attendanceSelect = {
             else this.classes.delete(name);
         }
     }
+};
+let createdButton = null;
+sandbox.document.createElement = tag => {
+    createdButton = {
+        tagName: tag,
+        type: '',
+        className: '',
+        title: '',
+        innerHTML: '',
+        hidden: false,
+        onclick: null
+    };
+    return createdButton;
 };
 sandbox.document.getElementById = id => {
     if (id === 'attendance-employee-filter') return attendanceSelect;
@@ -136,9 +154,16 @@ assert.strictEqual(printedType, 'attendance', 'row print should still print the 
 assert.strictEqual(attendanceSelect.disabled, true, 'row print employee display should be locked');
 assert(attendanceSelect.innerHTML.includes('Dewi Lestari'), 'locked employee display should show the employee name');
 assert(!attendanceSelect.innerHTML.includes('Penyiar'), 'locked employee display should show only the employee name');
+assert(createdButton && createdButton.className.includes('btn-clear-print-target'), 'locked employee display should show an X clear button');
 
 const selectedRowPrintEmployee = sandbox.adminReports.getSelectedReportEmployee('attendance');
 assert.strictEqual(selectedRowPrintEmployee.name, 'Dewi Lestari', 'row print target should drive print metadata');
+
+sandbox.adminReports.updateReportPrintLabels = () => {};
+sandbox.adminReports.clearReportPrintTarget('attendance', { resetEmployeeDisplay: true });
+assert.strictEqual(sandbox.adminReports.printTargets.attendance, '', 'X clear should remove the per-employee print target');
+assert.strictEqual(attendanceSelect.disabled, false, 'X clear should unlock the employee field');
+assert(attendanceSelect.innerHTML.includes('Semua Karyawan'), 'X clear should restore the employee field to all employees');
 
 sandbox.adminReports.jurnalData = [
     { userId: 'KRY001', name: 'Dewi Lestari', division: 'Penyiar', date: '2026-07-01', updatedAt: '2026-07-01' },

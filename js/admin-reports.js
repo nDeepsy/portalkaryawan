@@ -51,6 +51,7 @@ const adminReports = {
             return;
         }
 
+        this.clearReportPrintTarget('attendance');
         this.bindAttendanceEvents();
         this.bindDataUpdateEvents();
         this.loadCachedAttendanceReports();
@@ -725,6 +726,7 @@ const adminReports = {
         select.disabled = false;
         select.classList.toggle('employee-filter-active', Boolean(nextValue));
         select.classList.toggle('employee-filter-locked', false);
+        this.updateEmployeeClearButton(select, false);
 
         if (String(currentValue || '') !== nextValue) {
             this.setEmployeeFilterBySelectId(id, nextValue);
@@ -740,6 +742,24 @@ const adminReports = {
         select.disabled = true;
         select.classList.toggle('employee-filter-active', true);
         select.classList.toggle('employee-filter-locked', true);
+        this.updateEmployeeClearButton(select, true);
+    },
+
+    updateEmployeeClearButton(select, visible) {
+        if (!select || !select.parentElement) return;
+
+        let button = select.parentElement.querySelector('.btn-clear-print-target');
+        if (!button) {
+            button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn-clear-print-target';
+            button.title = 'Kembali ke cetak semua karyawan';
+            button.innerHTML = '<i class="fas fa-times"></i>';
+            button.onclick = () => this.clearReportPrintTarget('attendance', { resetEmployeeDisplay: true });
+            select.parentElement.appendChild(button);
+        }
+
+        button.hidden = !visible;
     },
 
     setEmployeeFilterBySelectId(id, value) {
@@ -1591,9 +1611,18 @@ const adminReports = {
         this.printReport('attendance');
     },
 
-    clearReportPrintTarget(type) {
+    clearReportPrintTarget(type, options = {}) {
         if (!this.printTargets || !this.printTargets[type]) return;
         this.printTargets[type] = '';
+        if (options.resetEmployeeDisplay && type === 'attendance') {
+            this.populateEmployeeSelect(
+                'attendance-employee-filter',
+                this.getEmployeeFilterSource(),
+                this.filters.attendance.employee,
+                { division: this.filters.attendance.division }
+            );
+            this.updateReportPrintLabels();
+        }
     },
 
     getSelectedReportEmployee(type) {
