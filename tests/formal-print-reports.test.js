@@ -47,6 +47,12 @@ assert(
 );
 
 assert(
+    adminReportsJs.includes("{ label: 'Status Kehadiran'") &&
+        !adminReportsJs.includes("{ label: 'Status', value: attendanceEmployee?.statusLabel"),
+    'attendance print metadata should use the clearer Status Kehadiran label'
+);
+
+assert(
     adminCss.includes('@media print') &&
     adminCss.includes('.print-only') &&
     adminCss.includes('.print-letterhead') &&
@@ -77,6 +83,12 @@ assert(
     /body\.printing-attendance #attendance-reports-table col\.attendance-col-name\s*\{\s*width:\s*22%\s*!important;\s*\}/s.test(adminCss) &&
     /body\.printing-attendance #attendance-reports-table col\.attendance-col-number\s*\{\s*width:\s*8\.85%\s*!important;\s*\}/s.test(adminCss),
     'printed attendance table should reserve balanced widths for seven summary columns'
+);
+
+assert(
+    /body\.printing-formal-report \.print-info-row\s*\{[^}]*grid-template-columns:\s*128px 1fr;/s.test(adminCss) &&
+        /body\.printing-formal-report \.print-report-info\s*\{[^}]*gap:\s*6px 30px;/s.test(adminCss),
+    'formal print metadata should reserve enough label width and tidy row spacing'
 );
 
 assert(

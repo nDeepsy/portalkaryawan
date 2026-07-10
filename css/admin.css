@@ -1978,8 +1978,8 @@
     body.printing-formal-report .print-report-info {
         display: grid !important;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 4px 24px;
-        margin: 0 0 14px;
+        gap: 6px 30px;
+        margin: 0 0 16px;
         color: #000000;
         font-family: "Times New Roman", Times, serif;
         font-size: 10pt;
@@ -1987,8 +1987,10 @@
 
     body.printing-formal-report .print-info-row {
         display: grid;
-        grid-template-columns: 98px 1fr;
-        gap: 6px;
+        grid-template-columns: 128px 1fr;
+        gap: 8px;
+        align-items: start;
+        min-width: 0;
     }
 
     body.printing-formal-report .print-info-row span::after {
@@ -1998,6 +2000,8 @@
 
     body.printing-formal-report .print-info-row strong {
         font-weight: 400;
+        min-width: 0;
+        overflow-wrap: anywhere;
     }
 
     body.printing-formal-report .reports-table {
