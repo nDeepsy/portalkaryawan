@@ -46,10 +46,8 @@ assert(
     'attendance report should show separate Cuti, Izin, and Sakit columns'
 );
 assert(
-    /<option value="leave">Cuti<\/option>/.test(html) &&
-        /<option value="permission">Izin<\/option>/.test(html) &&
-        /<option value="sick">Sakit<\/option>/.test(html),
-    'attendance status filter should separate Cuti, Izin, and Sakit'
+    !html.includes('id="report-status-filter"'),
+    'attendance report should not show the ambiguous status filter'
 );
 assert(
     source.includes("{ header: 'Cuti', value: row => row.leave || 0") &&

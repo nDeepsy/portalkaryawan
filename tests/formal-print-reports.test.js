@@ -47,9 +47,9 @@ assert(
 );
 
 assert(
-    adminReportsJs.includes("{ label: 'Status Kehadiran'") &&
-        !adminReportsJs.includes("{ label: 'Status', value: attendanceEmployee?.statusLabel"),
-    'attendance print metadata should use the clearer Status Kehadiran label'
+    !adminReportsJs.includes("{ label: 'Status Kehadiran'") &&
+        !adminReportsJs.includes("document.getElementById('report-status-filter')"),
+    'attendance print metadata should not include ambiguous attendance status text'
 );
 
 assert(

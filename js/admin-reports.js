@@ -847,18 +847,6 @@ const adminReports = {
             };
         }
 
-        // Status filter
-        const statusFilter = document.getElementById('report-status-filter');
-        if (statusFilter) {
-            statusFilter.onchange = (e) => {
-                this.clearReportPrintTarget('attendance');
-                this.filters.attendance.status = e.target.value;
-                this.syncAttendanceEmployeeFilterWithDivision();
-                this.updateReportPrintLabels();
-                this.renderAttendanceReports();
-            };
-        }
-
         const empFilter = document.getElementById('attendance-employee-filter');
         if (empFilter) {
             empFilter.onchange = (e) => {
@@ -1719,7 +1707,6 @@ const adminReports = {
                 filters: [
                     { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('attendance-month')?.value) },
                     { label: 'Divisi', value: attendanceEmployee?.division || this.getSelectedOptionText('report-division-filter') || 'Semua Divisi' },
-                    ...(!attendanceEmployee ? [{ label: 'Status Kehadiran', value: this.getSelectedOptionText('report-status-filter') || 'Semua' }] : []),
                     { label: 'Karyawan', value: attendanceEmployee?.name || 'Semua Karyawan' }
                 ]
             },
