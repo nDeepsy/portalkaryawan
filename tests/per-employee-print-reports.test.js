@@ -52,6 +52,11 @@ assert(
     'per-employee print UI should have dedicated screen and print styling'
 );
 
+assert(
+    !/\.filter-group select\.employee-filter-active\s*\{[^}]*box-shadow:/s.test(adminCss),
+    'active employee print field should not render the oversized blue focus shadow'
+);
+
 sandbox.adminReports.rawEmployees = [
     { id: 'KRY001', name: 'Dewi Lestari', division: 'Penyiar', status: 'active' },
     { id: 'KRY002', name: 'Raka Pratama', division: 'Produksi' }

@@ -120,12 +120,14 @@ const adminReports = {
     },
 
     async loadData() {
-        let employees = [];
-        let jurnals = [];
-        let leaves = [];
-        let izinList = [];
-        let attendances = [];
+        const cachedRows = this.getCachedReportRows();
+        let employees = cachedRows.employees;
+        let jurnals = cachedRows.jurnals;
+        let leaves = cachedRows.leaves;
+        let izinList = cachedRows.izinList;
+        let attendances = cachedRows.attendances;
         const usesRemoteApi = typeof API_BASE_URL !== 'undefined' && Boolean(API_BASE_URL);
+        let hasFreshRemoteRows = false;
 
         try {
             const batchResult = await api.batch([
@@ -141,20 +143,25 @@ const adminReports = {
             const leaveResult = batch.leaves;
             const izinResult = batch.izin;
             const attResult = batch.attendance;
-            employees = empResult?.success ? (empResult.data || []) : [];
-            jurnals = jurnalResult?.success ? (jurnalResult.data || []) : [];
-            leaves = leaveResult?.success ? (leaveResult.data || []) : [];
-            izinList = izinResult?.success ? (izinResult.data || []) : [];
-            attendances = attResult?.success ? (attResult.data || []) : [];
+            hasFreshRemoteRows = Boolean(
+                empResult?.success ||
+                jurnalResult?.success ||
+                leaveResult?.success ||
+                izinResult?.success ||
+                attResult?.success
+            );
+            employees = this.resolveRemoteRowsWithCache(empResult, cachedRows.employees, { preserveNonEmptyCache: true });
+            jurnals = jurnalResult?.success ? (jurnalResult.data || []) : cachedRows.jurnals;
+            leaves = leaveResult?.success ? (leaveResult.data || []) : cachedRows.leaves;
+            izinList = izinResult?.success ? (izinResult.data || []) : cachedRows.izinList;
+            attendances = attResult?.success ? (attResult.data || []) : cachedRows.attendances;
         } catch (error) {
             console.error('Error loading report data:', error);
-            if (!usesRemoteApi) {
-                employees = storage.get('admin_employees', []);
-                jurnals = storage.get('jurnals', []);
-                leaves = storage.get('leaves', []);
-                izinList = storage.get('izin', []);
-                attendances = storage.get('attendance', []);
-            }
+            employees = cachedRows.employees;
+            jurnals = cachedRows.jurnals;
+            leaves = cachedRows.leaves;
+            izinList = cachedRows.izinList;
+            attendances = cachedRows.attendances;
         }
 
         leaves = this.mergeRowsByStableKey(leaves, storage.get('leaves', []));
@@ -168,11 +175,32 @@ const adminReports = {
         izinList = this.filterRowsForEmployees(izinList, employeeIds);
         leaves = this.filterValidLeaves(leaves);
         izinList = this.filterValidIzin(izinList);
-        if (usesRemoteApi) {
+        if (usesRemoteApi && hasFreshRemoteRows) {
             this.syncReportCache({ employees, jurnals, leaves, izinList, attendances });
         }
 
         this.applyReportRows({ employees, jurnals, leaves, izinList, attendances });
+    },
+
+    getCachedReportRows() {
+        return {
+            employees: storage.get('admin_employees', []),
+            jurnals: storage.get('jurnals', []),
+            leaves: storage.get('leaves', []),
+            izinList: storage.get('izin', []),
+            attendances: storage.get('attendance', [])
+        };
+    },
+
+    resolveRemoteRowsWithCache(result, cachedRows = [], options = {}) {
+        if (!result?.success) return cachedRows;
+
+        const remoteRows = Array.isArray(result.data) ? result.data : [];
+        if (options.preserveNonEmptyCache && remoteRows.length === 0 && Array.isArray(cachedRows) && cachedRows.length > 0) {
+            return cachedRows;
+        }
+
+        return remoteRows;
     },
 
     loadCachedReportData() {
