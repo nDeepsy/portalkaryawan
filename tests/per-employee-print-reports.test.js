@@ -120,6 +120,7 @@ assert.strictEqual(
 
 let renderedAfterRowPrint = false;
 let printedType = '';
+let printedOptions = null;
 const attendanceSelect = {
     parentElement: {
         querySelector: () => null,
@@ -159,7 +160,10 @@ sandbox.adminReports.filters.attendance = {
     employee: ''
 };
 sandbox.adminReports.renderAttendanceReports = () => { renderedAfterRowPrint = true; };
-sandbox.adminReports.printReport = type => { printedType = type; };
+sandbox.adminReports.printReport = (type, options = {}) => {
+    printedType = type;
+    printedOptions = options;
+};
 
 sandbox.adminReports.printAttendanceEmployee('KRY001');
 
@@ -167,12 +171,13 @@ assert.strictEqual(sandbox.adminReports.filters.attendance.employee, '', 'row pr
 assert.strictEqual(sandbox.adminReports.filters.attendance.division, '', 'row print should not change the division filter that controls the visible table');
 assert.strictEqual(renderedAfterRowPrint, false, 'row print should not rerender the table into a single employee list');
 assert.strictEqual(printedType, 'attendance', 'row print should still print the attendance report');
-assert.strictEqual(attendanceSelect.disabled, true, 'row print employee display should be locked');
-assert(attendanceSelect.innerHTML.includes('Dewi Lestari'), 'locked employee display should show the employee name');
-assert(!attendanceSelect.innerHTML.includes('Penyiar'), 'locked employee display should show only the employee name');
+assert.strictEqual(printedOptions.printTargetUserId, 'KRY001', 'row print should pass a one-time print target');
+assert.strictEqual(attendanceSelect.disabled, false, 'row print should not lock the employee dropdown');
+assert.strictEqual(attendanceSelect.innerHTML, '', 'row print should not rewrite the employee dropdown');
 
-const selectedRowPrintEmployee = sandbox.adminReports.getSelectedReportEmployee('attendance');
-assert.strictEqual(selectedRowPrintEmployee.name, 'Dewi Lestari', 'row print target should drive print metadata');
+const rowPrintConfig = sandbox.adminReports.getPrintReportConfig('attendance', { printTargetUserId: 'KRY001' });
+assert.strictEqual(rowPrintConfig.title, 'LAPORAN REKAP ABSENSI KARYAWAN', 'per-employee attendance print title should stay formal without "per" wording');
+assert.strictEqual(rowPrintConfig.printTargetUserId, 'KRY001', 'one-time print target should drive print row filtering');
 
 sandbox.adminReports.jurnalData = [
     { userId: 'KRY001', name: 'Dewi Lestari', division: 'Penyiar', date: '2026-07-01', updatedAt: '2026-07-01' },

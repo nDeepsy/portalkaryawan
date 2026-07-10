@@ -957,17 +957,17 @@ const adminReports = {
     },
 
     updateReportPrintLabels() {
-        this.updatePrintButtonLabel('btn-print-attendance', this.printTargets.attendance || this.filters.attendance.employee);
-        this.updatePrintButtonLabel('btn-print-jurnal', this.printTargets.jurnal || this.filters.jurnal.employee);
-        this.updatePrintButtonLabel('btn-print-leave', this.printTargets.leave || this.filters.leave.employee);
+        this.updatePrintButtonLabel('btn-print-attendance');
+        this.updatePrintButtonLabel('btn-print-jurnal');
+        this.updatePrintButtonLabel('btn-print-leave');
     },
 
-    updatePrintButtonLabel(buttonId, employeeId) {
+    updatePrintButtonLabel(buttonId) {
         const button = document.getElementById(buttonId);
         if (!button) return;
         const label = button.querySelector('span');
         if (label) {
-            label.textContent = employeeId ? 'Cetak Per Karyawan' : 'Cetak';
+            label.textContent = 'Cetak';
         }
     },
 
@@ -1613,11 +1613,7 @@ const adminReports = {
             return;
         }
 
-        this.printTargets.attendance = String(employee.id);
-        this.filters.attendance.employee = '';
-        this.renderLockedEmployeeDisplay('attendance-employee-filter', employee);
-        this.updateReportPrintLabels();
-        this.printReport('attendance');
+        this.printReport('attendance', { printTargetUserId: String(employee.id) });
     },
 
     clearReportPrintTarget(type, options = {}) {
@@ -1634,8 +1630,8 @@ const adminReports = {
         }
     },
 
-    getSelectedReportEmployee(type) {
-        const employeeId = this.printTargets?.[type] || this.filters?.[type]?.employee;
+    getSelectedReportEmployee(type, options = {}) {
+        const employeeId = options.printTargetUserId || this.printTargets?.[type] || this.filters?.[type]?.employee;
         if (!employeeId) return null;
 
         const employee = this.getEmployeeFilterSource().find(emp => String(emp.id) === String(employeeId));
@@ -1658,13 +1654,17 @@ const adminReports = {
         return labels[String(status || '').toLowerCase()] || String(status || 'Aktif');
     },
 
-    printReport(type) {
-        this.prepareFormalPrintReport(type);
+    printReport(type, options = {}) {
+        if (options && Object.keys(options).length > 0) {
+            this.prepareFormalPrintReport(type, options);
+        } else {
+            this.prepareFormalPrintReport(type);
+        }
         window.print();
     },
 
-    prepareFormalPrintReport(type) {
-        const config = this.getPrintReportConfig(type);
+    prepareFormalPrintReport(type, options = {}) {
+        const config = this.getPrintReportConfig(type, options);
         if (!config || typeof document === 'undefined') return;
 
         const page = document.getElementById(config.pageId);
@@ -1707,14 +1707,14 @@ const adminReports = {
         });
     },
 
-    getPrintReportConfig(type) {
-        const attendanceEmployee = this.getSelectedReportEmployee('attendance');
-        const jurnalEmployee = this.getSelectedReportEmployee('jurnal');
-        const leaveEmployee = this.getSelectedReportEmployee('leave');
+    getPrintReportConfig(type, options = {}) {
+        const attendanceEmployee = this.getSelectedReportEmployee('attendance', type === 'attendance' ? options : {});
+        const jurnalEmployee = this.getSelectedReportEmployee('jurnal', type === 'jurnal' ? options : {});
+        const leaveEmployee = this.getSelectedReportEmployee('leave', type === 'leave' ? options : {});
         const configs = {
             attendance: {
                 pageId: 'page-attendance-reports',
-                title: attendanceEmployee ? 'LAPORAN REKAP ABSENSI PER KARYAWAN' : 'LAPORAN REKAP ABSENSI KARYAWAN',
+                title: 'LAPORAN REKAP ABSENSI KARYAWAN',
                 printTargetUserId: attendanceEmployee?.id || '',
                 filters: [
                     { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('attendance-month')?.value) },
