@@ -762,8 +762,16 @@
     text-align: center !important;
 }
 
+#attendance-reports-table .attendance-action-buttons {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+}
+
 #attendance-reports-table .attendance-action-cell .btn-action {
-    margin: 0 auto !important;
+    margin: 0 !important;
 }
 
 #attendance-reports-table .employee-info,
@@ -1124,6 +1132,16 @@
 
 .btn-action.delete:hover {
     background: var(--color-danger);
+}
+
+.btn-action.print {
+    color: #2563eb;
+    background: #eff6ff;
+}
+
+.btn-action.print:hover {
+    color: var(--color-white);
+    background: #2563eb;
 }
 
 .leave-report-actions {
@@ -1939,6 +1957,22 @@
         font-size: 13pt;
         font-weight: 700;
         letter-spacing: 0;
+        text-align: center;
+        text-transform: uppercase;
+    }
+
+    body.printing-formal-report .print-scope-badge {
+        display: block !important;
+        width: max-content;
+        max-width: 100%;
+        margin: -4px auto 12px;
+        padding: 3px 12px;
+        border: 1px solid #000000;
+        color: #000000;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 9.5pt;
+        font-weight: 700;
+        line-height: 1.2;
         text-align: center;
         text-transform: uppercase;
     }
