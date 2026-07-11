@@ -33,14 +33,18 @@ assert(
 );
 
 assert(
-    source.includes('printAttendanceEmployee('),
-    'attendance reports should expose a per-row print helper'
+    source.includes('printAttendanceEmployee(') &&
+        source.includes('printJurnalEmployee(') &&
+        source.includes('printLeaveEmployee('),
+    'all report pages should expose a per-row print helper'
 );
 
 assert(
     source.includes('data-print-action') &&
-        source.includes('title="Cetak laporan karyawan"'),
-    'attendance row action should include a visible per-employee print button'
+        source.includes('title="Cetak laporan karyawan"') &&
+        source.includes('adminReports.printJurnalEmployee') &&
+        source.includes('adminReports.printLeaveEmployee'),
+    'all report row actions should include a visible per-employee print button'
 );
 
 assert(
@@ -178,6 +182,48 @@ const rowPrintConfig = sandbox.adminReports.getPrintReportConfig('attendance', {
 assert.strictEqual(rowPrintConfig.title, 'LAPORAN REKAP ABSENSI KARYAWAN', 'per-employee attendance print title should stay formal without "per" wording');
 assert.strictEqual(rowPrintConfig.printTargetUserId, 'KRY001', 'one-time print target should drive print row filtering');
 
+let printedJurnalType = '';
+let printedJurnalOptions = null;
+let renderedAfterJurnalRowPrint = false;
+sandbox.adminReports.filters.jurnal = {
+    month: '2026-07',
+    employee: ''
+};
+sandbox.adminReports.renderJurnalReports = () => { renderedAfterJurnalRowPrint = true; };
+sandbox.adminReports.printReport = (type, options = {}) => {
+    printedJurnalType = type;
+    printedJurnalOptions = options;
+};
+
+sandbox.adminReports.printJurnalEmployee('KRY001');
+
+assert.strictEqual(sandbox.adminReports.filters.jurnal.employee, '', 'jurnal row print should not turn the selected employee into a table filter');
+assert.strictEqual(renderedAfterJurnalRowPrint, false, 'jurnal row print should not rerender the visible table');
+assert.strictEqual(printedJurnalType, 'jurnal', 'jurnal row print should print the jurnal report');
+assert.strictEqual(printedJurnalOptions.printTargetUserId, 'KRY001', 'jurnal row print should pass a one-time print target');
+
+let printedLeaveType = '';
+let printedLeaveOptions = null;
+let renderedAfterLeaveRowPrint = false;
+sandbox.adminReports.filters.leave = {
+    month: '2026-07',
+    type: '',
+    status: '',
+    employee: ''
+};
+sandbox.adminReports.renderLeaveReports = () => { renderedAfterLeaveRowPrint = true; };
+sandbox.adminReports.printReport = (type, options = {}) => {
+    printedLeaveType = type;
+    printedLeaveOptions = options;
+};
+
+sandbox.adminReports.printLeaveEmployee('KRY001');
+
+assert.strictEqual(sandbox.adminReports.filters.leave.employee, '', 'leave row print should not turn the selected employee into a table filter');
+assert.strictEqual(renderedAfterLeaveRowPrint, false, 'leave row print should not rerender the visible table');
+assert.strictEqual(printedLeaveType, 'leave', 'leave row print should print the cuti and izin report');
+assert.strictEqual(printedLeaveOptions.printTargetUserId, 'KRY001', 'leave row print should pass a one-time print target');
+
 sandbox.adminReports.jurnalData = [
     { userId: 'KRY001', name: 'Dewi Lestari', division: 'Penyiar', date: '2026-07-01', updatedAt: '2026-07-01' },
     { userId: 'KRY002', name: 'Raka Pratama', division: 'Produksi', date: '2026-07-01', updatedAt: '2026-07-01' }
@@ -191,6 +237,10 @@ sandbox.adminReports.filters.jurnal = {
 const jurnalRows = sandbox.adminReports.getFilteredJurnal();
 assert.strictEqual(jurnalRows.length, 1, 'jurnal should filter by selected employee id');
 assert.strictEqual(jurnalRows[0].name, 'Dewi Lestari');
+
+const jurnalRowPrintConfig = sandbox.adminReports.getPrintReportConfig('jurnal', { printTargetUserId: 'KRY001' });
+assert.strictEqual(jurnalRowPrintConfig.title, 'LAPORAN REKAP JURNAL KERJA KARYAWAN', 'jurnal print title should stay formal without "per" wording');
+assert.strictEqual(jurnalRowPrintConfig.printTargetUserId, 'KRY001', 'jurnal one-time print target should drive print row filtering');
 
 sandbox.adminReports.leaveData = [
     { userId: 'KRY001', name: 'Dewi Lestari', type: 'Cuti', status: 'approved', appliedAt: '2026-07-01' },
@@ -206,5 +256,9 @@ sandbox.adminReports.filters.leave = {
 const leaveRows = sandbox.adminReports.getFilteredLeave();
 assert.strictEqual(leaveRows.length, 1, 'leave and permission should filter by selected employee id');
 assert.strictEqual(leaveRows[0].name, 'Dewi Lestari');
+
+const leaveRowPrintConfig = sandbox.adminReports.getPrintReportConfig('leave', { printTargetUserId: 'KRY001' });
+assert.strictEqual(leaveRowPrintConfig.title, 'LAPORAN REKAP CUTI DAN IZIN KARYAWAN', 'leave print title should stay formal without "per" wording');
+assert.strictEqual(leaveRowPrintConfig.printTargetUserId, 'KRY001', 'leave one-time print target should drive print row filtering');
 
 console.log('per-employee print report tests passed');

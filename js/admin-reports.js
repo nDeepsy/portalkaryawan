@@ -1215,6 +1215,7 @@ const adminReports = {
 
         const canDeleteJurnal = Boolean(auth && typeof auth.isAdmin === 'function' && auth.isAdmin());
         tbody.innerHTML = data.map((row, index) => {
+            const safeUserId = this.escapeAttr(String(row.userId || row.user_id || ''));
             const rawTasks = String(row.tasks || '-');
             const tasksPreview = rawTasks.length > 46 ? `${rawTasks.substring(0, 46)}...` : rawTasks;
             const displayDate = this.formatJurnalReportDate(row.date || '-');
@@ -1223,7 +1224,7 @@ const adminReports = {
                 '<span class="jurnal-photo-wrap"><span class="no-photo-cell">-</span></span>';
 
             return `
-            <tr>
+            <tr data-report-user-id="${safeUserId}">
                 <td class="jurnal-date-cell">${this.escapeHtml(displayDate)}</td>
                 <td class="jurnal-name-cell">${this.escapeHtml(row.name || '-')}</td>
                 <td class="jurnal-dept-cell">${this.escapeHtml(row.division || '-')}</td>
@@ -1241,6 +1242,9 @@ const adminReports = {
                         <button class="btn-action view" onclick="adminReports.viewJurnalDetail(${index})">
                             <i class="fas fa-eye"></i>
                         </button>
+                        <button class="btn-action print" data-print-action title="Cetak laporan karyawan" onclick="adminReports.printJurnalEmployee('${safeUserId}')">
+                            <i class="fas fa-print"></i>
+                        </button>
                         ${canDeleteJurnal ? `<button class="btn-action delete" onclick="adminReports.deleteJurnal(${index})" title="Hapus">
                             <i class="fas fa-trash"></i>
                         </button>` : ''}
@@ -1253,6 +1257,7 @@ const adminReports = {
         const mobileContainer = document.getElementById('jurnal-mobile-cards');
         if (mobileContainer) {
             mobileContainer.innerHTML = data.map((row, index) => {
+                const safeUserId = this.escapeAttr(String(row.userId || row.user_id || ''));
                 const rawTasks = String(row.tasks || '-');
                 const tasksPreview = rawTasks.length > 90 ? `${rawTasks.substring(0, 90)}...` : rawTasks;
                 const displayDate = this.formatJurnalReportDate(row.date || '-');
@@ -1279,6 +1284,9 @@ const adminReports = {
                         <div class="mobile-card-actions">
                             <button class="btn-action view" onclick="adminReports.viewJurnalDetail(${index})">
                                 <i class="fas fa-eye"></i><span>Lihat</span>
+                            </button>
+                            <button class="btn-action print" data-print-action onclick="adminReports.printJurnalEmployee('${safeUserId}')">
+                                <i class="fas fa-print"></i><span>Cetak</span>
                             </button>
                             ${canDeleteJurnal ? `<button class="btn-action delete" onclick="adminReports.deleteJurnal(${index})" title="Hapus">
                                 <i class="fas fa-trash"></i><span>Hapus</span>
@@ -1319,6 +1327,7 @@ const adminReports = {
 
         const canConfirm = this.canConfirmLeaveRequests();
         tbody.innerHTML = data.map((row, index) => {
+            const safeUserId = this.escapeAttr(String(row.userId || row.user_id || ''));
             const displayDate = this.formatLeaveReportDateRange(row);
             const actionButtons = canConfirm && row.status === 'pending'
                 ? `
@@ -1335,7 +1344,7 @@ const adminReports = {
                 : '';
 
             return `
-            <tr>
+            <tr data-report-user-id="${safeUserId}">
                 <td class="leave-name-cell">${this.escapeHtml(row.name || '-')}</td>
                 <td class="leave-dept-cell">${this.escapeHtml(row.division || '-')}</td>
                 <td class="leave-type-cell">${this.escapeHtml(row.type || '-')}</td>
@@ -1353,6 +1362,10 @@ const adminReports = {
                             onclick="adminReports.viewLeaveDetail(${index})">
                             <i class="fas fa-eye"></i>
                         </button>
+                        <button class="btn-action print" data-print-action title="Cetak laporan karyawan"
+                            onclick="adminReports.printLeaveEmployee('${safeUserId}')">
+                            <i class="fas fa-print"></i>
+                        </button>
 
                         ${actionButtons}
                     </div>
@@ -1364,6 +1377,7 @@ const adminReports = {
         const mobileContainer = document.getElementById('leave-mobile-cards');
         if (mobileContainer) {
             mobileContainer.innerHTML = data.map((row, index) => {
+                const safeUserId = this.escapeAttr(String(row.userId || row.user_id || ''));
                 const displayDate = this.formatLeaveReportDateRange(row);
                 const actionButtons = canConfirm && row.status === 'pending'
                     ? `
@@ -1403,6 +1417,9 @@ const adminReports = {
                         <div class="mobile-card-actions">
                             <button class="btn-action view" title="Lihat Detail" onclick="adminReports.viewLeaveDetail(${index})">
                                 <i class="fas fa-eye"></i><span>Detail</span>
+                            </button>
+                            <button class="btn-action print" data-print-action onclick="adminReports.printLeaveEmployee('${safeUserId}')">
+                                <i class="fas fa-print"></i><span>Cetak</span>
                             </button>
                             ${actionButtons}
                         </div>
@@ -1604,6 +1621,26 @@ const adminReports = {
         this.printReport('attendance', { printTargetUserId: String(employee.id) });
     },
 
+    printJurnalEmployee(userId) {
+        const employee = this.getEmployeeFilterSource().find(emp => String(emp.id) === String(userId));
+        if (!employee) {
+            toast.error('Data karyawan tidak ditemukan');
+            return;
+        }
+
+        this.printReport('jurnal', { printTargetUserId: String(employee.id) });
+    },
+
+    printLeaveEmployee(userId) {
+        const employee = this.getEmployeeFilterSource().find(emp => String(emp.id) === String(userId));
+        if (!employee) {
+            toast.error('Data karyawan tidak ditemukan');
+            return;
+        }
+
+        this.printReport('leave', { printTargetUserId: String(employee.id) });
+    },
+
     clearReportPrintTarget(type, options = {}) {
         if (!this.printTargets || !this.printTargets[type]) return;
         this.printTargets[type] = '';
@@ -1712,7 +1749,8 @@ const adminReports = {
             },
             jurnal: {
                 pageId: 'page-jurnal-reports',
-                title: jurnalEmployee ? 'LAPORAN REKAP JURNAL KERJA PER KARYAWAN' : 'LAPORAN REKAP JURNAL KERJA KARYAWAN',
+                title: 'LAPORAN REKAP JURNAL KERJA KARYAWAN',
+                printTargetUserId: jurnalEmployee?.id || '',
                 filters: [
                     { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('jurnal-month')?.value) },
                     { label: 'Divisi', value: jurnalEmployee?.division || '-' },
@@ -1722,7 +1760,8 @@ const adminReports = {
             },
             leave: {
                 pageId: 'page-leave-reports',
-                title: leaveEmployee ? 'LAPORAN REKAP CUTI DAN IZIN PER KARYAWAN' : 'LAPORAN REKAP CUTI DAN IZIN KARYAWAN',
+                title: 'LAPORAN REKAP CUTI DAN IZIN KARYAWAN',
+                printTargetUserId: leaveEmployee?.id || '',
                 filters: [
                     { label: 'Periode', value: this.formatPrintMonthValue(document.getElementById('leave-month')?.value) },
                     { label: 'Jenis', value: this.getSelectedOptionText('leave-type-filter') || 'Semua' },
