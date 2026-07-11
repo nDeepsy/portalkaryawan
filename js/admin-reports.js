@@ -1770,7 +1770,6 @@ const adminReports = {
         const currentUser = auth?.getCurrentUser ? auth.getCurrentUser() : null;
         const baseRows = [
             ...(config.filters || []),
-            { label: 'Tanggal Cetak', value: this.formatPrintLongDate(new Date()) },
             { label: 'Dicetak Oleh', value: currentUser?.name || currentUser?.email || '-' }
         ];
 

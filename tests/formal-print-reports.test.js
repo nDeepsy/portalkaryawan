@@ -41,9 +41,14 @@ assert(
 
 assert(
     adminReportsJs.includes('buildPrintInfoRows') &&
-    adminReportsJs.includes('Tanggal Cetak') &&
     adminReportsJs.includes('Dicetak Oleh'),
-    'formal print should include report metadata such as print date and printed by'
+    'formal print should include report metadata such as printed by'
+);
+
+assert(
+    !adminReportsJs.includes("{ label: 'Tanggal Cetak'") &&
+        adminReportsJs.includes('print-signature-date'),
+    'formal print metadata should omit Tanggal Cetak while keeping the signature date'
 );
 
 assert(
