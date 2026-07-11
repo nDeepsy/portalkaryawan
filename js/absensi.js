@@ -82,9 +82,12 @@ const absensi = {
         const today = dateTime.getLocalDate();
         const allData = storage.get('attendance', []);
         const todayAttendance = allData.find(d => d.date === today && String(d.userId) === String(userId));
+        const overnightAttendance = this.findActiveOvernightAttendance(userId, today, allData);
 
         if (todayAttendance) {
             this.attendanceData = this.normalizeAttendance(todayAttendance);
+        } else if (overnightAttendance) {
+            this.attendanceData = this.normalizeAttendance(overnightAttendance);
         } else if (!this.attendanceData?.date || this.attendanceData.date !== today || String(this.attendanceData.userId || '') !== String(userId)) {
             this.attendanceData = this.getDefaultAttendance(userId);
         }
@@ -96,6 +99,23 @@ const absensi = {
             today
         );
         this.setCurrentState();
+    },
+
+    findActiveOvernightAttendance(userId, today, rows = []) {
+        if (!Array.isArray(rows) || !today) return null;
+
+        return rows.find(row => {
+            if (String(row.userId || '') !== String(userId)) return false;
+            if (!row.clockIn || row.clockOut) return false;
+
+            const rowDate = String(row.date || row.tanggal || '');
+            if (this.addDaysToDateString(rowDate, 1) !== today) return false;
+
+            const shift = this.getShiftConfig(row.shift || this.getScheduledShiftName(userId, rowDate));
+            if (!shift) return false;
+
+            return this.isOvernightShift(shift);
+        }) || null;
     },
 
     reconcileAttendanceShiftWithCurrentSchedule(userId, dateValue) {
@@ -273,6 +293,7 @@ const absensi = {
 
             const batchResult = await api.batch([
                 { key: 'todayAttendance', action: 'getTodayAttendance', userId },
+                { key: 'attendance', action: 'getAttendance', userId },
                 { key: 'leaves', action: 'getLeaves', userId },
                 { key: 'izin', action: 'getIzin', userId },
                 { key: 'settings', action: 'getSettings' },
@@ -280,6 +301,7 @@ const absensi = {
             ]);
             const batch = batchResult?.data || {};
             const result = batch.todayAttendance;
+            const attendanceResult = batch.attendance;
             const leavesResult = batch.leaves;
             const izinResult = batch.izin;
             const settingsRes = batch.settings;
@@ -321,8 +343,14 @@ const absensi = {
 
             const today = dateTime.getLocalDate();
             const currentShift = this.getScheduledShiftName(userId, today);
+            const attendanceRows = attendanceResult?.success
+                ? (attendanceResult.data || [])
+                : storage.get('attendance', []);
+            const overnightAttendance = this.findActiveOvernightAttendance(userId, today, attendanceRows);
 
-            if (!todayAttendance.date) {
+            if ((!todayAttendance.date || !todayAttendance.clockIn) && overnightAttendance) {
+                todayAttendance = overnightAttendance;
+            } else if (!todayAttendance.date) {
                 todayAttendance = this.getDefaultAttendance(userId);
             } else if (!todayAttendance.clockIn) {
                 todayAttendance.shift = currentShift;
@@ -1294,12 +1322,23 @@ const absensi = {
         return (hours * 60) + minutes;
     },
 
+    getShiftConfig(shiftName) {
+        const shifts = storage.get('shifts', []) || [];
+        return shifts.find(item =>
+            String(item?.name || '').trim().toLowerCase() === String(shiftName || '').trim().toLowerCase()
+        ) || null;
+    },
+
+    isOvernightShift(shift) {
+        const startMinutes = this.parseShiftTimeToMinutes(shift?.startTime);
+        const endMinutes = this.parseShiftTimeToMinutes(shift?.endTime);
+        if (startMinutes === null || endMinutes === null) return false;
+        return endMinutes <= startMinutes;
+    },
+
     getClockInWindowStatus(now = new Date()) {
         const shiftName = this.getCurrentShiftName() || this.getScheduledShiftName();
-        const shifts = storage.get('shifts', []) || [];
-        const shift = shifts.find(item =>
-            String(item?.name || '').trim().toLowerCase() === String(shiftName || '').trim().toLowerCase()
-        );
+        const shift = this.getShiftConfig(shiftName);
         const startTime = String(shift?.startTime || '').trim();
         const endTime = String(shift?.endTime || '').trim();
         const startMinutes = this.parseShiftTimeToMinutes(startTime);

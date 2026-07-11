@@ -7,8 +7,13 @@ const root = path.join(__dirname, '..');
 const absensiJs = fs.readFileSync(path.join(root, 'js', 'absensi.js'), 'utf8');
 const attendanceBackendJs = fs.readFileSync(path.join(root, '..', 'apps-script-absensi', 'Attendance.js'), 'utf8');
 
-function createHarness(shifts) {
+function createHarness(shifts, overrides = {}) {
     const elements = new Map();
+    const store = {
+        attendance: [],
+        shifts,
+        ...(overrides.store || {})
+    };
     const getElement = id => {
         if (!elements.has(id)) {
             elements.set(id, {
@@ -48,24 +53,26 @@ function createHarness(shifts) {
         },
         auth: { getCurrentUser: () => ({ id: 'KRY001', shift: 'Pagi' }) },
         dateTime: {
-            getLocalDate: () => '2026-07-09',
+            getLocalDate: () => overrides.localDate || '2026-07-09',
             formatTime: date => `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
         },
         storage: {
             get(key, fallback) {
-                return key === 'shifts' ? shifts : fallback;
+                return Object.prototype.hasOwnProperty.call(store, key) ? store[key] : fallback;
             },
-            set() {},
+            set(key, value) {
+                store[key] = value;
+            },
             remove() {}
         },
         toast: { success() {}, info() {}, error() {} },
-        api: { getAllAttendance: async () => ({ success: true, data: [] }) }
+        api: overrides.api || { getAllAttendance: async () => ({ success: true, data: [] }) }
     };
 
     sandbox.window = sandbox;
     vm.createContext(sandbox);
     vm.runInContext(absensiJs, sandbox);
-    return { absensi: sandbox.absensi, elements };
+    return { absensi: sandbox.absensi, elements, store };
 }
 
 function prepareButtons(elements) {
@@ -138,6 +145,83 @@ function testOutsideWindowUsesLockedStatusAndOnlyClockInIsTimeLocked() {
     assert.strictEqual(elements.get('btn-clock-out').disabled, false, 'clock out is available after clock in');
 }
 
+function testHydrateKeepsOvernightShiftActiveOnNextMorning() {
+    const { absensi } = createHarness(
+        [{ name: 'Malam', startTime: '23:00', endTime: '08:00' }],
+        {
+            localDate: '2026-07-10',
+            store: {
+                attendance: [{
+                    userId: 'KRY001',
+                    date: '2026-07-09',
+                    shift: 'Malam',
+                    clockIn: '23:10',
+                    clockOut: null,
+                    status: 'ontime'
+                }]
+            }
+        }
+    );
+
+    absensi.hydrateCachedAttendance();
+
+    assert.strictEqual(absensi.attendanceData.date, '2026-07-09', 'overnight attendance should keep the original clock-in date');
+    assert.strictEqual(absensi.attendanceData.clockIn, '23:10');
+    assert.strictEqual(absensi.currentState, 'clocked-in', 'next morning should still allow clock-out for active overnight shift');
+}
+
+async function testFetchKeepsRemoteOvernightShiftActiveOnNextMorning() {
+    const { absensi, store } = createHarness(
+        [{ name: 'Malam', startTime: '23:00', endTime: '08:00' }],
+        {
+            localDate: '2026-07-10',
+            api: {
+                batch: async () => ({
+                    success: true,
+                    data: {
+                        todayAttendance: {
+                            success: true,
+                            data: {
+                                userId: 'KRY001',
+                                date: '2026-07-10',
+                                shift: 'Malam',
+                                clockIn: null,
+                                clockOut: null,
+                                status: 'waiting'
+                            }
+                        },
+                        attendance: {
+                            success: true,
+                            data: [{
+                                userId: 'KRY001',
+                                date: '2026-07-09',
+                                shift: 'Malam',
+                                clockIn: '23:10',
+                                clockOut: null,
+                                status: 'ontime'
+                            }]
+                        },
+                        leaves: { success: true, data: [] },
+                        izin: { success: true, data: [] },
+                        settings: { success: true, data: {} },
+                        shifts: { success: true, data: [{ name: 'Malam', startTime: '23:00', endTime: '08:00' }] }
+                    }
+                })
+            }
+        }
+    );
+
+    absensi.updateUI = () => {};
+    absensi.renderTimeline = () => {};
+
+    await absensi.fetchTodayAttendance();
+
+    assert.strictEqual(absensi.attendanceData.date, '2026-07-09', 'remote overnight attendance should keep the original clock-in date');
+    assert.strictEqual(absensi.attendanceData.clockIn, '23:10');
+    assert.strictEqual(absensi.currentState, 'clocked-in', 'remote overnight attendance should keep clock-out available next morning');
+    assert.strictEqual(store.attendance[0].date, '2026-07-09', 'overnight record should remain cached under the clock-in date');
+}
+
 function createBackendHarness(shifts) {
     const sandbox = {
         console,
@@ -186,9 +270,16 @@ function testBackendRejectsOnlyFirstClockInOutsideShiftWindow() {
     assert.strictEqual(laterClockOut.success, true, 'later actions must remain available after clock in');
 }
 
-testRegularShiftWindow();
-testOvernightShiftWindow();
-testMissingShiftConfigurationFailsOpen();
-testOutsideWindowUsesLockedStatusAndOnlyClockInIsTimeLocked();
-testBackendRejectsOnlyFirstClockInOutsideShiftWindow();
-console.log('attendance shift window tests passed');
+(async () => {
+    testRegularShiftWindow();
+    testOvernightShiftWindow();
+    testMissingShiftConfigurationFailsOpen();
+    testOutsideWindowUsesLockedStatusAndOnlyClockInIsTimeLocked();
+    testHydrateKeepsOvernightShiftActiveOnNextMorning();
+    await testFetchKeepsRemoteOvernightShiftActiveOnNextMorning();
+    testBackendRejectsOnlyFirstClockInOutsideShiftWindow();
+    console.log('attendance shift window tests passed');
+})().catch(error => {
+    console.error(error);
+    process.exit(1);
+});
