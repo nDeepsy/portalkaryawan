@@ -90,4 +90,16 @@ assert(
     );
 });
 
+[
+    ['attendance page', absensiJs, 'saveAttendance'],
+    ['journal page', jurnalJs, 'saveJournal'],
+    ['permission page', izinJs, 'submitIzin'],
+    ['leave page', cutiJs, 'submitLeave']
+].forEach(([label, source, action]) => {
+    assert(
+        source.includes('notificationCenter.refreshForCurrentUser({ silent: true })'),
+        `${label} should refresh notifications after ${action} so admin and pemilik see activity quickly`
+    );
+});
+
 console.log('Data refresh event tests passed');

@@ -766,6 +766,9 @@ const jurnal = {
                 this.persistCurrentUserJournals();
             }
             toast.success('Jurnal berhasil disimpan!');
+            if (window.notificationCenter) {
+                notificationCenter.refreshForCurrentUser({ silent: true });
+            }
             this.resetFormAfterSuccessfulSubmit();
         } catch (error) {
             console.error('Error saving journal:', error);

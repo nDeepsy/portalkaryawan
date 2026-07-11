@@ -930,6 +930,9 @@ const absensi = {
                 this.attendanceData = this.mergeAttendanceRecords(this.attendanceData, result.data);
             }
             this.syncAttendanceCache();
+            if (window.notificationCenter) {
+                notificationCenter.refreshForCurrentUser({ silent: true });
+            }
         } catch (error) {
             console.error('Error saving attendance:', error);
             if (window.toast?.error) {
