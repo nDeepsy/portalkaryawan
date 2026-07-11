@@ -119,6 +119,48 @@ async function testAttendanceUiUpdatesBeforeBackendSaveResolves() {
     await processPromise;
 }
 
+async function testClockInOptimisticStatusUsesShiftTolerance() {
+    let saveResolved = false;
+    let resolveSave;
+    const { absensi } = createAbsensiHarness({
+        store: {
+            app_settings: { late_tolerance: '15' },
+            shifts: [{ name: 'Pagi', startTime: '08:00', endTime: '16:00' }]
+        },
+        dateTime: {
+            formatTime: () => '08.20'
+        }
+    });
+
+    absensi.attendanceData = {
+        ...absensi.getDefaultAttendance('KRY001'),
+        shift: 'Pagi'
+    };
+    absensi.updateUI = () => {};
+    absensi.renderTimeline = () => {};
+    absensi.loadAttendanceHistory = async () => {};
+    absensi.saveAttendance = () => new Promise(resolve => {
+        resolveSave = () => {
+            saveResolved = true;
+            resolve();
+        };
+    });
+
+    const processPromise = absensi.processWithVerification('clock-in', {
+        timestamp: '2026-05-24T01:20:00.000Z',
+        location: { latitude: -7.1, longitude: 108.2, accuracy: 20 },
+        photo: 'data:image/jpeg;base64,test'
+    });
+
+    await Promise.resolve();
+
+    assert.strictEqual(saveResolved, false, 'save should still be pending while checking the optimistic status');
+    assert.strictEqual(absensi.attendanceData.status, 'Terlambat', 'optimistic clock-in status should use shift start and late tolerance');
+
+    resolveSave();
+    await processPromise;
+}
+
 async function testAttendanceTimeUsesVerificationTimestamp() {
     const { absensi } = createAbsensiHarness({
         dateTime: {
@@ -938,6 +980,7 @@ function testMobileAttendanceStatusDoesNotClipPulseAnimation() {
 
 (async () => {
     await testAttendanceUiUpdatesBeforeBackendSaveResolves();
+    await testClockInOptimisticStatusUsesShiftTolerance();
     await testAttendanceTimeUsesVerificationTimestamp();
     await testBreak2VerificationEvidenceIsStoredInDedicatedFields();
     await testSavePayloadKeepsPhotosOutOfAttendanceLogs();

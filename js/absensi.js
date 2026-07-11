@@ -609,6 +609,24 @@ const absensi = {
         return (hours * 60) + minutes;
     },
 
+    getClockInStatus(clockIn, shiftName = this.getCurrentShiftName()) {
+        const clockInMinutes = this.timeToMinutes(clockIn);
+        if (clockInMinutes === null) return 'ontime';
+
+        const shifts = storage.get('shifts', []) || [];
+        const shift = shifts.find(item =>
+            String(item?.name || '').trim().toLowerCase() === String(shiftName || '').trim().toLowerCase()
+        );
+        const shiftStart = String(shift?.startTime || '08:00').replace('.', ':').slice(0, 5);
+        const shiftStartMinutes = this.timeToMinutes(shiftStart);
+        if (shiftStartMinutes === null) return 'ontime';
+
+        const appSettings = storage.get('app_settings', {}) || {};
+        const tolerance = Number(appSettings.late_tolerance || appSettings.lateTolerance || 15) || 15;
+
+        return clockInMinutes > shiftStartMinutes + tolerance ? 'Terlambat' : 'ontime';
+    },
+
     initLiveClock() {
         // Clear existing interval
         if (this.liveClockInterval) {
@@ -745,7 +763,7 @@ const absensi = {
         switch (action) {
             case 'clock-in':
                 this.attendanceData.clockIn = timeStr;
-                this.attendanceData.status = 'ontime';
+                this.attendanceData.status = this.getClockInStatus(timeStr, this.attendanceData.shift);
                 this.currentState = 'clocked-in';
                 toast.success(`Masuk berhasil: ${timeStr}`);
                 break;
