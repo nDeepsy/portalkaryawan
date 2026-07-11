@@ -568,14 +568,6 @@
     position: relative;
 }
 
-.jurnal-reports-filters {
-    align-items: flex-end;
-}
-
-.jurnal-reports-filters .filter-group {
-    flex: 0 1 260px;
-}
-
 .filter-group label {
     font-size: var(--font-size-xs);
     font-weight: 600;

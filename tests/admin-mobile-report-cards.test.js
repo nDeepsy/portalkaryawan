@@ -189,8 +189,9 @@ function testJurnalReportsDoNotShowUnusedStatusFilter() {
         'journal filtering should not depend on the removed status filter'
     );
     assert(
-        /\.jurnal-reports-filters\s+\.filter-group\s*\{[^}]*flex:\s*0\s+1\s*260px;/s.test(adminCss),
-        'journal report filters should stay aligned with two compact controls'
+        indexHtml.includes('id="jurnal-division-filter"') &&
+            !/\.jurnal-reports-filters\s+\.filter-group\s*\{[^}]*flex:\s*0\s+1\s*260px;/s.test(adminCss),
+        'journal report filters should match the shared period, division, and employee layout'
     );
 }
 

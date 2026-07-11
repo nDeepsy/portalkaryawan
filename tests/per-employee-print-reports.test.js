@@ -33,6 +33,26 @@ assert(
 );
 
 assert(
+    !html.includes('value="2026-03"') &&
+        source.includes('setDefaultReportMonths') &&
+        source.includes('getCurrentReportMonth'),
+    'report month filters should default to the current local month instead of a hardcoded March value'
+);
+
+assert(
+    html.includes('id="jurnal-division-filter"') &&
+        html.includes('id="leave-division-filter"') &&
+        !html.includes('id="leave-type-filter"') &&
+        !html.includes('id="leave-status-filter"'),
+    'jurnal and leave report filters should match attendance with period, division, and employee controls'
+);
+
+assert(
+    !/\.jurnal-reports-filters\s+\.filter-group\s*\{[^}]*flex:\s*0\s+1\s*260px;/s.test(adminCss),
+    'jurnal report filters should not keep the old compact two-control layout'
+);
+
+assert(
     source.includes('printAttendanceEmployee(') &&
         source.includes('printJurnalEmployee(') &&
         source.includes('printLeaveEmployee('),
@@ -103,8 +123,11 @@ assert.strictEqual(selectedAttendanceEmployee.statusLabel, 'Aktif', 'selected re
 sandbox.document.getElementById = id => {
     const elements = {
         'attendance-month': { value: '2026-07' },
+        'jurnal-month': { value: '2026-07' },
+        'leave-month': { value: '2026-07' },
         'report-division-filter': { options: [{ textContent: 'Semua Divisi' }], selectedIndex: 0 },
-        'report-status-filter': { options: [{ textContent: 'Semua' }], selectedIndex: 0 },
+        'jurnal-division-filter': { options: [{ textContent: 'Semua Divisi' }], selectedIndex: 0 },
+        'leave-division-filter': { options: [{ textContent: 'Semua Divisi' }], selectedIndex: 0 },
         'attendance-employee-filter': { options: [{ textContent: 'Dewi Lestari - Penyiar' }], selectedIndex: 0 }
     };
     return elements[id] || null;
@@ -241,6 +264,15 @@ assert.strictEqual(jurnalRows[0].name, 'Dewi Lestari');
 const jurnalRowPrintConfig = sandbox.adminReports.getPrintReportConfig('jurnal', { printTargetUserId: 'KRY001' });
 assert.strictEqual(jurnalRowPrintConfig.title, 'LAPORAN REKAP JURNAL KERJA KARYAWAN', 'jurnal print title should stay formal without "per" wording');
 assert.strictEqual(jurnalRowPrintConfig.printTargetUserId, 'KRY001', 'jurnal one-time print target should drive print row filtering');
+assert.strictEqual(
+    JSON.stringify(jurnalRowPrintConfig.filters.map(row => [row.label, row.value])),
+    JSON.stringify([
+        ['Periode', 'Juli 2026'],
+        ['Divisi', 'Penyiar'],
+        ['Karyawan', 'Dewi Lestari']
+    ]),
+    'jurnal print metadata should match attendance and omit Semua status rows'
+);
 
 sandbox.adminReports.leaveData = [
     { userId: 'KRY001', name: 'Dewi Lestari', type: 'Cuti', status: 'approved', appliedAt: '2026-07-01' },
@@ -260,5 +292,14 @@ assert.strictEqual(leaveRows[0].name, 'Dewi Lestari');
 const leaveRowPrintConfig = sandbox.adminReports.getPrintReportConfig('leave', { printTargetUserId: 'KRY001' });
 assert.strictEqual(leaveRowPrintConfig.title, 'LAPORAN REKAP CUTI DAN IZIN KARYAWAN', 'leave print title should stay formal without "per" wording');
 assert.strictEqual(leaveRowPrintConfig.printTargetUserId, 'KRY001', 'leave one-time print target should drive print row filtering');
+assert.strictEqual(
+    JSON.stringify(leaveRowPrintConfig.filters.map(row => [row.label, row.value])),
+    JSON.stringify([
+        ['Periode', 'Juli 2026'],
+        ['Divisi', 'Penyiar'],
+        ['Karyawan', 'Dewi Lestari']
+    ]),
+    'leave print metadata should match attendance and omit Semua type/status rows'
+);
 
 console.log('per-employee print report tests passed');
