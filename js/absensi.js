@@ -17,6 +17,8 @@ const absensi = {
     selectedHistoryMonth: '',
     settingsListenerBound: false,
     dataUpdateBound: false,
+    resumeListenerBound: false,
+    lastLocalDate: '',
     earlyClockInMinutes: 30,
 
     async init() {
@@ -51,6 +53,25 @@ const absensi = {
             window.addEventListener('dataUpdated', (event) => this.handleDataUpdated(event));
             this.dataUpdateBound = true;
         }
+        if (!this.resumeListenerBound) {
+            window.addEventListener('focus', () => this.handleAttendanceResume());
+            if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden) this.handleAttendanceResume();
+                });
+            }
+            this.resumeListenerBound = true;
+        }
+    },
+
+    handleAttendanceResume() {
+        if (router?.currentPage && router.currentPage !== 'absensi') return;
+
+        this.hydrateCachedAttendance();
+        this.updateUI();
+        this.renderTimeline();
+        this.loadTodayAttendance();
+        this.loadAttendanceHistory({ force: true });
     },
 
     handleSettingsUpdated(event) {
@@ -664,6 +685,7 @@ const absensi = {
         const updateClock = () => {
             const clockEl = document.getElementById('live-clock');
             const dateEl = document.getElementById('live-date');
+            const currentLocalDate = dateTime.getLocalDate ? dateTime.getLocalDate() : '';
 
             if (clockEl) {
                 clockEl.textContent = dateTime.getCurrentTime();
@@ -671,6 +693,10 @@ const absensi = {
             if (dateEl) {
                 dateEl.textContent = dateTime.getCurrentDate();
             }
+            if (this.lastLocalDate && currentLocalDate && this.lastLocalDate !== currentLocalDate) {
+                this.handleAttendanceResume();
+            }
+            this.lastLocalDate = currentLocalDate || this.lastLocalDate;
         };
 
         updateClock();

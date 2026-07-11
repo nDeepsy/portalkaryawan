@@ -170,6 +170,17 @@ function testHydrateKeepsOvernightShiftActiveOnNextMorning() {
     assert.strictEqual(absensi.currentState, 'clocked-in', 'next morning should still allow clock-out for active overnight shift');
 }
 
+function testAttendanceResumeRefreshesOvernightState() {
+    assert(
+        absensiJs.includes('handleAttendanceResume()') &&
+            absensiJs.includes("window.addEventListener('focus'") &&
+            absensiJs.includes("document.addEventListener('visibilitychange'") &&
+            absensiJs.includes('this.lastLocalDate !== currentLocalDate') &&
+            absensiJs.includes('this.hydrateCachedAttendance();'),
+        'attendance page should rehydrate active overnight shifts after focus, visibility, or local date rollover'
+    );
+}
+
 async function testFetchKeepsRemoteOvernightShiftActiveOnNextMorning() {
     const { absensi, store } = createHarness(
         [{ name: 'Malam', startTime: '23:00', endTime: '08:00' }],
@@ -276,6 +287,7 @@ function testBackendRejectsOnlyFirstClockInOutsideShiftWindow() {
     testMissingShiftConfigurationFailsOpen();
     testOutsideWindowUsesLockedStatusAndOnlyClockInIsTimeLocked();
     testHydrateKeepsOvernightShiftActiveOnNextMorning();
+    testAttendanceResumeRefreshesOvernightState();
     await testFetchKeepsRemoteOvernightShiftActiveOnNextMorning();
     testBackendRejectsOnlyFirstClockInOutsideShiftWindow();
     console.log('attendance shift window tests passed');
