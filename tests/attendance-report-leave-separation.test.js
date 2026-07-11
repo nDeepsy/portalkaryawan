@@ -6,6 +6,7 @@ const vm = require('vm');
 const root = path.join(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'js', 'admin-reports.js'), 'utf8');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const adminCss = fs.readFileSync(path.join(root, 'css', 'admin.css'), 'utf8');
 
 const sandbox = {
     console,
@@ -56,10 +57,26 @@ assert(
     'Excel export should include separate Cuti, Izin, and Sakit columns'
 );
 assert(
-    source.includes('<span>Cuti: <strong>${employee.leave}</strong></span>') &&
-        source.includes('<span>Izin: <strong>${employee.permission}</strong></span>') &&
-        source.includes('<span>Sakit: <strong>${employee.sick}</strong></span>'),
-    'attendance detail summary should separate Cuti, Izin, and Sakit'
+    source.includes('attendance-detail-summary-grid') &&
+        source.includes('attendance-detail-stat attendance-detail-present') &&
+        source.includes('attendance-detail-stat attendance-detail-late') &&
+        source.includes('attendance-detail-stat attendance-detail-leave') &&
+        source.includes('attendance-detail-stat attendance-detail-permission') &&
+        source.includes('attendance-detail-stat attendance-detail-sick') &&
+        source.includes('attendance-detail-stat attendance-detail-absent') &&
+        source.includes('attendance-detail-stat attendance-detail-total') &&
+        !source.includes('<span>Cuti: <strong>${employee.leave}</strong></span>'),
+    'attendance detail summary should use colored stat cards instead of one inline text row'
+);
+assert(
+    /\.attendance-detail-summary-grid\s*\{[^}]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\);/s.test(adminCss) &&
+        /\.attendance-detail-present\s+\.attendance-detail-stat-value\s*\{[^}]*color:\s*var\(--color-success\);/s.test(adminCss) &&
+        /\.attendance-detail-late\s+\.attendance-detail-stat-value\s*\{[^}]*color:\s*var\(--color-warning\);/s.test(adminCss) &&
+        /\.attendance-detail-leave\s+\.attendance-detail-stat-value\s*\{[^}]*color:\s*#8B5CF6;/s.test(adminCss) &&
+        /\.attendance-detail-permission\s+\.attendance-detail-stat-value\s*\{[^}]*color:\s*#0EA5E9;/s.test(adminCss) &&
+        /\.attendance-detail-sick\s+\.attendance-detail-stat-value\s*\{[^}]*color:\s*#F97316;/s.test(adminCss) &&
+        /\.attendance-detail-absent\s+\.attendance-detail-stat-value\s*\{[^}]*color:\s*var\(--color-danger\);/s.test(adminCss),
+    'attendance detail stat cards should use the same colors as the attendance recap list'
 );
 
 console.log('attendance report leave separation tests passed');

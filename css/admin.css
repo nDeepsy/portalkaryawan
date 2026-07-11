@@ -1730,14 +1730,56 @@
     gap: var(--spacing-md);
 }
 
-.attendance-detail-summary {
-    display: flex;
-    flex-wrap: wrap;
+.attendance-detail-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--spacing-sm);
-    padding: var(--spacing);
-    background: var(--bg-secondary);
+}
+
+.attendance-detail-stat {
+    min-height: 86px;
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
+    background: var(--bg-secondary);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--spacing-xs);
+}
+
+.attendance-detail-stat-label {
     color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.35px;
+    text-transform: uppercase;
+}
+
+.attendance-detail-stat-value {
+    color: var(--text-primary);
+    font-size: 1.65rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.attendance-detail-present .attendance-detail-stat-value { color: var(--color-success); }
+.attendance-detail-late .attendance-detail-stat-value { color: var(--color-warning); }
+.attendance-detail-leave .attendance-detail-stat-value { color: #8B5CF6; }
+.attendance-detail-permission .attendance-detail-stat-value { color: #0EA5E9; }
+.attendance-detail-sick .attendance-detail-stat-value { color: #F97316; }
+.attendance-detail-absent .attendance-detail-stat-value { color: var(--color-danger); }
+.attendance-detail-total .attendance-detail-stat-value { color: var(--text-primary); }
+
+@media (max-width: 720px) {
+    .attendance-detail-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .attendance-detail-stat {
+        min-height: 76px;
+        padding: 12px 14px;
+    }
 }
 
 .attendance-detail-list {

@@ -1944,13 +1944,35 @@ const adminReports = {
                     <label>Divisi:</label>
                     <p>${this.escapeHtml(employee.division || '-')}</p>
                 </div>
-                <div class="attendance-detail-summary">
-                    <span>Hadir: <strong>${employee.present}</strong></span>
-                    <span>Terlambat: <strong>${employee.late}</strong></span>
-                    <span>Cuti: <strong>${employee.leave}</strong></span>
-                    <span>Izin: <strong>${employee.permission}</strong></span>
-                    <span>Sakit: <strong>${employee.sick}</strong></span>
-                    <span>Tidak Hadir: <strong>${employee.absent}</strong></span>
+                <div class="attendance-detail-summary-grid">
+                    <div class="attendance-detail-stat attendance-detail-present">
+                        <span class="attendance-detail-stat-label">Hadir</span>
+                        <strong class="attendance-detail-stat-value">${employee.present}</strong>
+                    </div>
+                    <div class="attendance-detail-stat attendance-detail-late">
+                        <span class="attendance-detail-stat-label">Telat</span>
+                        <strong class="attendance-detail-stat-value">${employee.late}</strong>
+                    </div>
+                    <div class="attendance-detail-stat attendance-detail-leave">
+                        <span class="attendance-detail-stat-label">Cuti</span>
+                        <strong class="attendance-detail-stat-value">${employee.leave}</strong>
+                    </div>
+                    <div class="attendance-detail-stat attendance-detail-permission">
+                        <span class="attendance-detail-stat-label">Izin</span>
+                        <strong class="attendance-detail-stat-value">${employee.permission}</strong>
+                    </div>
+                    <div class="attendance-detail-stat attendance-detail-sick">
+                        <span class="attendance-detail-stat-label">Sakit</span>
+                        <strong class="attendance-detail-stat-value">${employee.sick}</strong>
+                    </div>
+                    <div class="attendance-detail-stat attendance-detail-absent">
+                        <span class="attendance-detail-stat-label">Tidak Hadir</span>
+                        <strong class="attendance-detail-stat-value">${employee.absent}</strong>
+                    </div>
+                    <div class="attendance-detail-stat attendance-detail-total">
+                        <span class="attendance-detail-stat-label">Total</span>
+                        <strong class="attendance-detail-stat-value">${employee.total}</strong>
+                    </div>
                 </div>
                 <div class="attendance-detail-list">
                     ${rowsHtml}
