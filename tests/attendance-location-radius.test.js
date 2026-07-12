@@ -38,6 +38,8 @@ function testAdminCanConfigureAttendanceLocation() {
 
 function testFrontendLocksConfirmationOutsideRadius() {
     assertContains(faceRecognitionJs, 'loadAttendanceLocationSettings', 'face verification should load latest attendance location settings');
+    assertContains(faceRecognitionJs, 'requiresAttendanceRadius()', 'face verification should decide which attendance actions require office radius');
+    assertContains(faceRecognitionJs, "return String(this.currentAction || '') === 'clock-in'", 'only clock-in should require office radius validation');
     assertContains(faceRecognitionJs, 'calculateDistanceMeters', 'face verification should calculate user distance from office');
     assertContains(faceRecognitionJs, 'withinAttendanceRadius', 'location payload should include radius validation status');
     assertContains(faceRecognitionJs, 'distanceFromOffice', 'location payload should include distance from office');
@@ -69,13 +71,15 @@ function testFrontendLocksConfirmationOutsideRadius() {
     );
     assertContains(
         faceRecognitionJs,
-        'radiusStatus.configured && radiusStatus.enabled && radiusStatus.allowed === false',
-        'outside-radius button state should not replace unconfigured or disabled-radius behavior'
+        'const requiresRadius = this.requiresAttendanceRadius()',
+        'confirmation button should only apply radius blocking to actions that require radius'
     );
 }
 
 function testBackendRejectsManipulatedOutsideRadiusAttendance() {
     assertContains(attendanceGs, 'validateAttendanceLocationRadius', 'backend should validate radius before saving attendance');
+    assertContains(attendanceGs, 'shouldValidateClockInLocationRadius(data, existing)', 'backend should scope radius validation to the first clock-in only');
+    assertContains(attendanceGs, 'if (shouldValidateClockInLocationRadius(data, existing))', 'backend should skip radius validation for break and clock-out updates');
     assertContains(attendanceGs, 'calculateDistanceMeters', 'backend should calculate distance independently');
     assertContains(attendanceGs, 'return { success: false, error: locationValidation.error }', 'backend should reject invalid location saves');
     assertContains(attendanceGs, 'Di luar radius absensi', 'backend should return a clear outside-radius error');

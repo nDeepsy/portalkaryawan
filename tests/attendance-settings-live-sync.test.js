@@ -139,7 +139,7 @@ async function run() {
     assert(indexHtml.includes('js/attendance-settings-sync.js'), 'page should load the synchronizer');
     assert(
         faceRecognitionSource.includes('applyAttendanceLocationSettings') &&
-        faceRecognitionSource.includes('this.locationVerified = accuracyReady && this.locationRadiusStatus.allowed'),
+        faceRecognitionSource.includes('this.locationVerified = accuracyReady && (!this.requiresAttendanceRadius() || this.locationRadiusStatus.allowed)'),
         'open attendance modal should recalculate validity from synchronized settings'
     );
     assert(

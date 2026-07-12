@@ -219,7 +219,7 @@ const faceRecognition = {
         const waitedLongEnough = (Date.now() - this.locationStartedAt) >= this.locationMaxWaitMs;
         const accuracyReady = accuracy <= this.maxAcceptableAccuracyMeters || waitedLongEnough;
         this.locationRadiusStatus = this.getLocationRadiusStatus(this.position);
-        this.locationVerified = accuracyReady && this.locationRadiusStatus.allowed;
+        this.locationVerified = accuracyReady && (!this.requiresAttendanceRadius() || this.locationRadiusStatus.allowed);
         this.renderLocation(this.position, this.locationVerified);
         this.checkCanSubmit();
     },
@@ -238,7 +238,7 @@ const faceRecognition = {
     },
 
     requiresAttendanceRadius() {
-        return this.currentAction !== 'izin';
+        return String(this.currentAction || '') === 'clock-in';
     },
 
     calculateDistanceMeters(lat1, lon1, lat2, lon2) {
@@ -340,7 +340,7 @@ const faceRecognition = {
         const waitedLongEnough = (Date.now() - this.locationStartedAt) >= this.locationMaxWaitMs;
         const accuracyReady = accuracy <= this.maxAcceptableAccuracyMeters || waitedLongEnough;
         this.locationRadiusStatus = this.getLocationRadiusStatus(this.position);
-        this.locationVerified = accuracyReady && this.locationRadiusStatus.allowed;
+        this.locationVerified = accuracyReady && (!this.requiresAttendanceRadius() || this.locationRadiusStatus.allowed);
 
         this.renderLocation(this.position, this.locationVerified);
         this.checkCanSubmit();
@@ -351,7 +351,7 @@ const faceRecognition = {
             this.locationAccuracyTimer = setTimeout(() => {
                 if (this.position && !this.locationVerified) {
                     this.locationRadiusStatus = this.getLocationRadiusStatus(this.position);
-                    this.locationVerified = this.locationRadiusStatus.allowed;
+                    this.locationVerified = !this.requiresAttendanceRadius() || this.locationRadiusStatus.allowed;
                     this.renderLocation(this.position, this.locationVerified);
                     this.checkCanSubmit();
                 }
@@ -680,7 +680,8 @@ const faceRecognition = {
         if (!confirmBtn) return;
 
         const radiusStatus = this.locationRadiusStatus;
-        const isOutsideRadius = Boolean(radiusStatus
+        const requiresRadius = this.requiresAttendanceRadius();
+        const isOutsideRadius = Boolean(requiresRadius && radiusStatus
             && radiusStatus.configured && radiusStatus.enabled && radiusStatus.allowed === false);
 
         confirmBtn.classList.toggle('outside-radius', isOutsideRadius);
