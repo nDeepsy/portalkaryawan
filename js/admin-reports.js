@@ -15,6 +15,8 @@ const adminReports = {
     currentLeaveAttachmentStorage: '',
     currentDocumentObjectUrl: '',
     attendanceRefreshTimer: null,
+    jurnalRefreshTimer: null,
+    leaveRefreshTimer: null,
     dataUpdateBound: false,
     filters: {
         attendance: { month: '', division: '', status: '', employee: '' },
@@ -78,6 +80,7 @@ const adminReports = {
         this.populateEmployeeFilter();
         this.renderJurnalReports();
         this.refreshJurnalReports();
+        this.startJurnalAutoRefresh();
     },
 
     async initLeaveReports() {
@@ -95,6 +98,7 @@ const adminReports = {
         this.populateEmployeeFilter();
         this.renderLeaveReports();
         this.refreshLeaveReports();
+        this.startLeaveAutoRefresh();
     },
 
     getCurrentReportMonth() {
@@ -497,6 +501,34 @@ const adminReports = {
             if (router?.currentPage === 'attendance-reports') {
                 this.refreshAttendanceReports().catch(error => {
                     console.error('Error refreshing attendance reports:', error);
+                });
+            }
+        }, 30000);
+    },
+
+    startJurnalAutoRefresh() {
+        if (this.jurnalRefreshTimer) {
+            clearInterval(this.jurnalRefreshTimer);
+        }
+
+        this.jurnalRefreshTimer = setInterval(() => {
+            if (router?.currentPage === 'jurnal-reports') {
+                this.refreshJurnalReports().catch(error => {
+                    console.error('Error refreshing jurnal reports:', error);
+                });
+            }
+        }, 30000);
+    },
+
+    startLeaveAutoRefresh() {
+        if (this.leaveRefreshTimer) {
+            clearInterval(this.leaveRefreshTimer);
+        }
+
+        this.leaveRefreshTimer = setInterval(() => {
+            if (router?.currentPage === 'leave-reports') {
+                this.refreshLeaveReports().catch(error => {
+                    console.error('Error refreshing leave reports:', error);
                 });
             }
         }, 30000);

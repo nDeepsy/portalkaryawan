@@ -228,8 +228,18 @@ function testAdminReportsRenderCachedDataBeforeBackendRefresh() {
         'admin journal reports should render cached data before refreshing backend data'
     );
     assert(
+        /initJurnalReports\(\)\s*\{[\s\S]*this\.startJurnalAutoRefresh\(\);/.test(adminReportsJs) &&
+            adminReportsJs.includes("router?.currentPage === 'jurnal-reports'"),
+        'admin journal reports should auto-refresh while the page is active'
+    );
+    assert(
         /initLeaveReports\(\)\s*\{[\s\S]*this\.loadCachedReportData\(\);[\s\S]*this\.renderLeaveReports\(\);[\s\S]*this\.refreshLeaveReports\(\);/.test(adminReportsJs),
         'admin leave reports should render cached data before refreshing backend data'
+    );
+    assert(
+        /initLeaveReports\(\)\s*\{[\s\S]*this\.startLeaveAutoRefresh\(\);/.test(adminReportsJs) &&
+            adminReportsJs.includes("router?.currentPage === 'leave-reports'"),
+        'admin leave reports should auto-refresh while the page is active'
     );
 }
 
