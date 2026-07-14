@@ -955,6 +955,84 @@ function testCachedHolidayAttendanceIsReconciledWhenAdminEnablesWorkday() {
     assert.strictEqual(absensi.currentState, 'waiting', 'corrected cached attendance should unlock the attendance page immediately');
 }
 
+async function testStaleUnclosedDayShiftIsAutoClosedOnNextAttendanceLoad() {
+    const savedPayloads = [];
+    const store = {
+        shifts: [{ name: 'Pagi', startTime: '09:00', endTime: '17:00' }],
+        attendance: [{
+            userId: 'KRY001',
+            date: '2026-07-10',
+            shift: 'Pagi',
+            status: 'Tepat Waktu',
+            clockIn: '09:02',
+            clockOut: null,
+            clockOutPhoto: 'old-proof-should-not-exist',
+            attendanceLogs: JSON.stringify([{ action: 'clock-in', label: 'Masuk', time: '09:02' }])
+        }]
+    };
+    const { absensi } = createAbsensiHarness({
+        store,
+        dateTime: {
+            getLocalDate: () => '2026-07-14'
+        },
+        api: {
+            saveAttendance: async payload => {
+                savedPayloads.push(payload);
+                return { success: true, data: payload };
+            }
+        }
+    });
+
+    absensi.hydrateCachedAttendance();
+    await Promise.resolve();
+
+    const closedRecord = store.attendance.find(row => row.date === '2026-07-10');
+    assert.strictEqual(closedRecord.clockOut, '20:00', 'old day-shift attendance should be closed three hours after shift end time');
+    assert.strictEqual(closedRecord.clockOutPhoto, '', 'automatic clock-out should not invent a photo');
+    assert.strictEqual(closedRecord.clockOutLocation, '', 'automatic clock-out should not invent a location');
+    assert.strictEqual(savedPayloads.length, 1, 'automatic close should be persisted through the existing attendance API');
+    assert.strictEqual(savedPayloads[0].clockOut, '20:00');
+    assert(savedPayloads[0].attendanceLogs.includes('"automatic":true'), 'automatic close should be visible in attendance logs');
+}
+
+async function testActiveOvernightAttendanceIsNotAutoClosedAsStale() {
+    const savedPayloads = [];
+    const store = {
+        shifts: [
+            { name: 'Pagi', startTime: '09:00', endTime: '17:00' },
+            { name: 'Malam', startTime: '23:00', endTime: '08:00' }
+        ],
+        attendance: [{
+            userId: 'KRY001',
+            date: '2026-07-13',
+            shift: 'Malam',
+            status: 'Tepat Waktu',
+            clockIn: '23:05',
+            clockOut: null
+        }]
+    };
+    const { absensi } = createAbsensiHarness({
+        store,
+        dateTime: {
+            getLocalDate: () => '2026-07-14'
+        },
+        api: {
+            saveAttendance: async payload => {
+                savedPayloads.push(payload);
+                return { success: true, data: payload };
+            }
+        }
+    });
+
+    absensi.hydrateCachedAttendance();
+    await Promise.resolve();
+
+    assert.strictEqual(store.attendance[0].clockOut, null, 'active overnight shift should stay open for next-morning clock-out');
+    assert.strictEqual(savedPayloads.length, 0, 'active overnight shift should not be auto-saved as closed');
+    assert.strictEqual(absensi.attendanceData.date, '2026-07-13', 'active overnight attendance remains the current record');
+    assert.strictEqual(absensi.currentState, 'clocked-in', 'active overnight attendance should still allow clock-out');
+}
+
 function testAttendanceLeaveLockIconMatchesPermissionType() {
     const { absensi } = createAbsensiHarness();
 
@@ -1007,6 +1085,8 @@ function testMobileAttendanceStatusDoesNotClipPulseAnimation() {
     await testShiftScheduleOverridesConfiguredHoliday();
     await testConfiguredWorkdayOverridesStaleEmployeeHolidayShift();
     testCachedHolidayAttendanceIsReconciledWhenAdminEnablesWorkday();
+    await testStaleUnclosedDayShiftIsAutoClosedOnNextAttendanceLoad();
+    await testActiveOvernightAttendanceIsNotAutoClosedAsStale();
     testAttendanceLeaveLockIconMatchesPermissionType();
     testMobileAttendanceStatusDoesNotClipPulseAnimation();
     console.log('absensi responsive update tests passed');

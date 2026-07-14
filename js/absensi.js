@@ -102,6 +102,7 @@ const absensi = {
         const userId = currentUser?.id || 'demo-user';
         const today = dateTime.getLocalDate();
         const allData = storage.get('attendance', []);
+        this.autoCloseStaleAttendances(userId, today, allData);
         const todayAttendance = allData.find(d => d.date === today && String(d.userId) === String(userId));
         const overnightAttendance = this.findActiveOvernightAttendance(userId, today, allData);
 
@@ -137,6 +138,100 @@ const absensi = {
 
             return this.isOvernightShift(shift);
         }) || null;
+    },
+
+    autoCloseStaleAttendances(userId, today, rows = storage.get('attendance', [])) {
+        if (!Array.isArray(rows) || !today) return [];
+
+        const todayDate = this.parseLocalDate(today);
+        if (!todayDate) return [];
+
+        const closedRecords = [];
+        let changed = false;
+
+        rows.forEach((row, index) => {
+            if (String(row?.userId || '') !== String(userId)) return;
+            if (!row.clockIn || row.clockOut) return;
+
+            const rowDateValue = String(row.date || row.tanggal || '');
+            const rowDate = this.parseLocalDate(rowDateValue);
+            if (!rowDate || rowDate >= todayDate) return;
+            if (this.findActiveOvernightAttendance(userId, today, [row])) return;
+
+            const closedRecord = this.buildAutoClosedAttendance(row);
+            rows[index] = closedRecord;
+            closedRecords.push(closedRecord);
+            changed = true;
+        });
+
+        if (changed) {
+            storage.set('attendance', rows);
+            closedRecords.forEach(record => this.persistAutoClosedAttendance(record));
+        }
+
+        return closedRecords;
+    },
+
+    buildAutoClosedAttendance(row = {}) {
+        const normalized = this.normalizeAttendance(row);
+        const shift = this.getShiftConfig(normalized.shift || this.getScheduledShiftName(normalized.userId, normalized.date));
+        const fallbackEndTime = shift?.endTime || '17:00';
+        const clockOut = this.addHoursToClockTime(fallbackEndTime, 3) || this.normalizeClockField(fallbackEndTime) || fallbackEndTime;
+        const clockOutDate = shift && this.isOvernightShift(shift)
+            ? this.addDaysToDateString(normalized.date, 1)
+            : normalized.date;
+        const clockOutTimestamp = `${clockOutDate}T${String(clockOut).replace('.', ':')}:00`;
+        const logs = this.normalizeAttendanceLogs(normalized.attendanceLogs)
+            .filter(log => String(log?.action || '') !== 'clock-out');
+
+        logs.push({
+            action: 'clock-out',
+            label: 'Pulang',
+            time: clockOut,
+            timestamp: clockOutTimestamp,
+            location: '',
+            photo: '',
+            automatic: true
+        });
+
+        return {
+            ...normalized,
+            clockOut,
+            clockOutPhoto: '',
+            clockOutLocation: '',
+            clockOutTimestamp,
+            attendanceLogs: logs,
+            clientUpdatedAt: new Date().toISOString()
+        };
+    },
+
+    addHoursToClockTime(value, hoursToAdd = 0) {
+        const minutes = this.parseShiftTimeToMinutes(value);
+        if (minutes === null) return null;
+
+        const nextMinutes = (minutes + (Number(hoursToAdd || 0) * 60) + (24 * 60)) % (24 * 60);
+        const hours = Math.floor(nextMinutes / 60);
+        const minutesPart = nextMinutes % 60;
+        return `${String(hours).padStart(2, '0')}:${String(minutesPart).padStart(2, '0')}`;
+    },
+
+    persistAutoClosedAttendance(record) {
+        if (!api?.saveAttendance) return Promise.resolve();
+
+        const payload = {
+            ...record,
+            attendanceLogs: JSON.stringify(this.normalizeAttendanceLogs(record.attendanceLogs))
+        };
+
+        return api.saveAttendance(payload)
+            .then(result => {
+                if (result && !result.success) {
+                    throw new Error(result.error || 'Gagal menutup absensi otomatis');
+                }
+            })
+            .catch(error => {
+                console.error('Error auto-closing stale attendance:', error);
+            });
     },
 
     reconcileAttendanceShiftWithCurrentSchedule(userId, dateValue) {
@@ -364,9 +459,13 @@ const absensi = {
 
             const today = dateTime.getLocalDate();
             const currentShift = this.getScheduledShiftName(userId, today);
-            const attendanceRows = attendanceResult?.success
+            let attendanceRows = attendanceResult?.success
                 ? (attendanceResult.data || [])
                 : storage.get('attendance', []);
+            const autoClosedRecords = this.autoCloseStaleAttendances(userId, today, attendanceRows);
+            if (autoClosedRecords.length > 0) {
+                attendanceRows = storage.get('attendance', attendanceRows);
+            }
             const overnightAttendance = this.findActiveOvernightAttendance(userId, today, attendanceRows);
 
             if ((!todayAttendance.date || !todayAttendance.clockIn) && overnightAttendance) {
