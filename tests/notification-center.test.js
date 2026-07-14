@@ -182,6 +182,22 @@ function testNotificationPollingIsFastEnoughForCrossDeviceActivity() {
     );
 }
 
+function testAttendanceBreakNotificationsUseGenericBreakLabels() {
+    const attendanceSource = fs.readFileSync(path.join(__dirname, '..', '..', 'apps-script-absensi', 'Attendance.js'), 'utf8');
+
+    assert(
+        attendanceSource.includes("{ key: 'break2Start', title: 'Mulai Istirahat', label: 'memulai istirahat' }"),
+        'second break start notification should use the same generic break label'
+    );
+    assert(
+        attendanceSource.includes("{ key: 'break2End', title: 'Selesai Istirahat', label: 'menyelesaikan istirahat' }"),
+        'second break end notification should use the same generic break label'
+    );
+    assert(!attendanceSource.includes('Mulai Istirahat 2'), 'attendance notification title should not show break session number');
+    assert(!attendanceSource.includes('Selesai Istirahat 2'), 'attendance notification title should not show break session number');
+    assert(!attendanceSource.includes('sesi 2'), 'attendance notification message should not show break session number');
+}
+
 async function testMarkAllIgnoresStaleRefresh() {
     const loadRequest = createDeferred();
     const markAllRequest = createDeferred();
@@ -394,6 +410,7 @@ function testRouterClearsNotificationsWhenShowingPage() {
 Promise.resolve()
     .then(testBackendDeletesNotificationsBySameMenu)
     .then(testNotificationPollingIsFastEnoughForCrossDeviceActivity)
+    .then(testAttendanceBreakNotificationsUseGenericBreakLabels)
     .then(testMarkAllIgnoresStaleRefresh)
     .then(testMarkAllClosesDropdownAfterClick)
     .then(testMarkSingleDecrementsTotalUnreadCount)
